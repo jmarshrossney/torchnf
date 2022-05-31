@@ -67,34 +67,34 @@ class FlowLayer(_FlowLayer):
         self.conditioner = conditioner
 
     def conditioner_forward(self, xy: torch.Tensor) -> torch.Tensor:
-        return self.conditioner(xy)
+        return self.conditioner(xy, self.context)
 
     def transformer_forward(
         self,
         x: torch.Tensor,
         params: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        return self.transformer(x, params)
+        return self.transformer(x, params, self.context)
 
     def transformer_inverse(
         self,
         y: torch.Tensor,
         params: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        return self.transformer.inv(y, params)
+        return self.transformer.inv(y, params, self.context)
 
     def forward(
         self, x: torch.Tensor, context: dict = {}
     ) -> tuple[torch.Tensor, torch.Tensor]:
         self.context = context
-        params = self.conditioner_forward(x, context)
-        y, ldj = self.transformer_forward(x, params, context)
+        params = self.conditioner_forward(x)
+        y, ldj = self.transformer_forward(x, params)
         return y, ldj
 
     def inverse(
         self, y: torch.Tensor, context: dict = {}
     ) -> tuple[torch.Tensor, torch.Tensor]:
         self.context = context
-        params = self.conditioner_forward(y, context)
-        x, ldj = self.transformer_forward(y, params, context)
+        params = self.conditioner_forward(y)
+        x, ldj = self.transformer_forward(y, params)
         return x, ldj

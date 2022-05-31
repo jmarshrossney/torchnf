@@ -1,4 +1,9 @@
+import datetime
 import torch
+
+
+def timestamp(fmt: str = "%y%m%dT%H%M%S") -> str:
+    return datetime.datetime.now().strftime(fmt)
 
 
 def sum_except_batch(x: torch.Tensor) -> torch.Tensor:
@@ -12,19 +17,3 @@ def expand_elements(
         [el.expand(shape) for el in x.split(1)],
         dim=stack_dim,
     )
-
-
-def simple_net_builder(net_spec: list[dict]) -> torch.nn.Sequential:
-
-    # TODO: augment namespace with custom modules to allow user
-    # to request custom layers?
-
-    layers = []
-    for layer_spec in net_spec:
-
-        cls = getattr(torch.nn, layer_spec["class"])
-        args = layer_spec["args"]
-        layer = cls(**args)
-        layers.append(layer)
-
-    return torch.nn.Sequential(*layers)

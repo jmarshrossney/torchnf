@@ -1,0 +1,2 @@
+class InputOutsideDomainError(Exception):
+    pass

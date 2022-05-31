@@ -34,10 +34,6 @@ REALS = (-INF, INF)
 PI = math.pi
 
 
-class InputOutsideDomainError(Exception):
-    pass
-
-
 class Transformer:
     domain: ClassVar[tuple[float, float]]
     codomain: ClassVar[tuple[float, float]]
@@ -50,15 +46,15 @@ class Transformer:
     def identity_params(self) -> list[float]:
         return NotImplemented
 
-    def _identity_fill(self, params: torch.Tensor) -> torch.Tensor:
-        return params.nan_to_num().add(
+    def _nan_to_identity(
+        self, params: torch.Tensor, data_shape: torch.Size
+    ) -> torch.Tensor:
+        return params.nan_to_num(0).add(
             torchnf.utils.expand_elements(
                 torch.Tensor(self.identity_params, device=params.device),
-                shape=params.shape[2:],  # ignore batch dim
+                shape=data_shape,
                 stack_dim=0,
-            ).mul(
-                params.isnan()
-            )  # restore batch dim
+            ).mul(params.isnan())
         )
 
     def _forward(
@@ -75,13 +71,13 @@ class Transformer:
         self, x: torch.Tensor, params: torch.Tensor, context: dict = {}
     ) -> tuple[torch.Tensor, torch.Tensor]:
         self.context = context
-        return self._forward(x, self._identity_fill(params))
+        return self._forward(x, self._nan_to_identity(params, x.shape[1:]))
 
     def inverse(
         self, y: torch.Tensor, params: torch.Tensor, context: dict = {}
     ) -> tuple[torch.Tensor, torch.Tensor]:
         self.context = context
-        return self._inverse(y, self._identity_fill(params))
+        return self._inverse(y, self._nan_to_identity(params, y.shape[1:]))
 
     def __call__(
         self, x: torch.Tensor, params: torch.Tensor, context: dict = {}

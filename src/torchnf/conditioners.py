@@ -14,20 +14,20 @@ class SimpleConditioner(Conditioner):
     def __init__(
         self,
         init_params: Union[torch.Tensor, list[float]],
-        params_dim: int = 1,
     ) -> None:
         super().__init__()
         self.params = torch.nn.Parameter(torch.Tensor(init_params))
-        self.params_dim = params_dim
 
     def forward(
         self, inputs: torch.Tensor, context: dict = {}
     ) -> torch.Tensor:
-        return torchnf.utils.expand_elements(
+        batch_size, *data_shape = inputs.shape
+        params = torchnf.utils.expand_elements(
             self.params,
-            shape=inputs.shape[1:],
-            stack_dim=self.params_dim,
+            shape=data_shape,
+            stack_dim=0,
         )
+        return params.expand([batch_size, -1, *data_shape])
 
 
 class MaskedConditioner(Conditioner):
@@ -36,16 +36,13 @@ class MaskedConditioner(Conditioner):
     def __init__(
         self,
         mask: Optional[torch.BoolTensor] = None,
-        net_spec: Optional[list[dict]] = None,
-        net_builder: Callable[
-            list[dict], torch.nn.Sequential
-        ] = torchnf.utils.simple_net_builder,
+        net: Optional[torch.nn.Sequential] = None,
     ) -> None:
         super().__init__()
         if mask:
             self.register_buffer("_mask", mask)
-        if net_spec:
-            self._net = net_builder(net_spec)
+        if net:
+            self._net = net
 
     def get_mask(self, x: torch.Tensor) -> torch.BoolTensor:
         return self._mask

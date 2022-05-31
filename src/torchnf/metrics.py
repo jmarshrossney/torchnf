@@ -159,3 +159,13 @@ class LogWeightMetrics:
             - self._log_weights.mul(2).logsumexp(dim=0)
         )
         return float(ess.div(len(self._log_weights)))
+
+    def asdict(self) -> dict[str, float]:
+        attrs = [
+            "acceptance",
+            "kl_divergence",
+            "longest_rejection_run",
+            "integrated_autocorrelation",
+            "effective_sample_size",
+        ]
+        return {attr: getattr(self, attr) for attr in attrs}
