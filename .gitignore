@@ -5,3 +5,4 @@ __pycache__/
 .coverage
 .hypothesis
 legacy/
+docs/_build

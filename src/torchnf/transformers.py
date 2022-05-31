@@ -331,12 +331,11 @@ class RQSplineTransform(Transformer):
 
         References
         ----------
-        .. [Gregory and Delbourgo]
-        Gregory, J. A. & Delbourgo, R. C2 Rational Quadratic Spline
-        Interpolation to Monotonic Data, IMA Journal of Numerical Analysis,
-        1983, 3, 141-152
-        """
+        .. [Gregory and Delbourgo] Gregory, J. A. & Delbourgo, R. C2 Rational
+           Quadratic Spline Interpolation to Monotonic Data, IMA Journal of
+           Numerical Analysis, 1983, 3, 141-152
 
+        """
         # Normalise the widths and heights to the interval
         interval_size = self._interval[1] - self._interval[0]
         widths = F.softmax(widths, dim=-1).mul(interval_size)
