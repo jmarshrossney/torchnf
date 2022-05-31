@@ -11,9 +11,9 @@ def sum_except_batch(x: torch.Tensor) -> torch.Tensor:
 
 
 def expand_elements(
-    x: torch.Tensor, shape: torch.Size, stack_dim: int
+    x: torch.Tensor, data_shape: torch.Size, stack_dim: int
 ) -> torch.Tensor:
     return torch.stack(
-        [el.expand(shape) for el in x.split(1)],
+        [el.expand(data_shape) for el in x.split(1)],
         dim=stack_dim,
     )

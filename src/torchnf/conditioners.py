@@ -24,7 +24,7 @@ class SimpleConditioner(Conditioner):
         batch_size, *data_shape = inputs.shape
         params = torchnf.utils.expand_elements(
             self.params,
-            shape=data_shape,
+            data_shape,
             stack_dim=0,
         )
         return params.expand([batch_size, -1, *data_shape])

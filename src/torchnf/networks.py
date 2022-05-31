@@ -1,21 +1,28 @@
 import dataclasses
 import torch
 
+# TODO: convenient way of creating new class with identical parameters
+# except for some user-specified changes
+# E.g. dataclasses.replace
 
-def simple_net_builder(net_spec: list[dict]) -> torch.nn.Sequential:
 
-    # TODO: augment namespace with custom modules to allow user
-    # to request custom layers?
+class SimpleNetBuilder:
+    def __init__(self, net_spec: list[dict]) -> None:
+        self.net_spec = net_spec
 
-    layers = []
-    for layer_spec in net_spec:
+    def __call__(self) -> torch.nn.Sequential:
+        # TODO: augment namespace with custom modules to allow user
+        # to request custom layers?
 
-        cls = getattr(torch.nn, layer_spec["class"])
-        args = layer_spec["args"]
-        layer = cls(**args)
-        layers.append(layer)
+        layers = []
+        for layer_spec in net_spec:
 
-    return torch.nn.Sequential(*layers)
+            cls = getattr(torch.nn, layer_spec["class"])
+            args = layer_spec["args"]
+            layer = cls(**args)
+            layers.append(layer)
+
+        return torch.nn.Sequential(*layers)
 
 
 @dataclasses.dataclass

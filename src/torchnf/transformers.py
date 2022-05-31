@@ -52,7 +52,7 @@ class Transformer:
         return params.nan_to_num(0).add(
             torchnf.utils.expand_elements(
                 torch.Tensor(self.identity_params, device=params.device),
-                shape=data_shape,
+                data_shape,
                 stack_dim=0,
             ).mul(params.isnan())
         )

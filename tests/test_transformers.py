@@ -25,7 +25,7 @@ def _test_call(transformer, x, params):
 def _test_identity(transformer, x):
     params = expand_elements(
         torch.Tensor(transformer.identity_params),
-        shape=x.shape,
+        x.shape,
         stack_dim=1,
     )
     y, ldj = transformer(x, params)
@@ -39,7 +39,7 @@ def _test_identity(transformer, x):
 def _test_nan(transformer, x):
     params = expand_elements(
         torch.full([transformer.n_params], float("nan")),
-        shape=x.shape,
+        x.shape,
         stack_dim=1,
     )
     y, ldj = transformer(x, params)
