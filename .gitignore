@@ -1,3 +1,8 @@
-__pycache__/
 *.pyc
+__pycache__/
+.venv/
 .tox/
+.coverage
+.hypothesis
+legacy/
+docs/_build
