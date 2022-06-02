@@ -5,7 +5,8 @@ Welcome to torchnf's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   torchnf
+   introduction
+   modules
 
 Indices and tables
 ==================

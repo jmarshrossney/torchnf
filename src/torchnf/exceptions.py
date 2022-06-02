@@ -1,2 +1,6 @@
+"""
+"""
+
+
 class InputOutsideDomainError(Exception):
     pass

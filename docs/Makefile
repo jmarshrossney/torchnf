@@ -21,5 +21,6 @@ help:
 
 clean:
 	rm -r $(BUILDDIR)
-	rm $(SOURCEDIR)/torchnf.rst
 	rm $(SOURCEDIR)/modules.rst
+	rm $(SOURCEDIR)/torchnf.rst
+	rm $(SOURCEDIR)/torchnf.*.rst

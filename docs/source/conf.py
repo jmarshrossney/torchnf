@@ -13,6 +13,8 @@
 import os
 import sys
 
+import torchnf
+
 sys.path.insert(0, os.path.abspath("../../src"))
 
 html_static_path = ["_static"]
@@ -21,11 +23,12 @@ html_static_path = ["_static"]
 # -- Project information -----------------------------------------------------
 
 project = "torchnf"
-copyright = "2022, Joe"
-author = "Joe"
+copyright = "2022, Joe Marsh Rossney"
+author = "Joe Marsh Rossney"
 
 # The full version, including alpha/beta/rc tags
-release = "0.1.0"
+version = torchnf.__version__
+release = version
 
 
 # -- General configuration ---------------------------------------------------
@@ -33,10 +36,35 @@ release = "0.1.0"
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ["sphinx.ext.napoleon"]
+extensions = [
+    "sphinx.ext.napoleon",
+    "sphinx.ext.extlinks",
+    "sphinx.ext.intersphinx",
+]
 
-napoleon_google_docstring = False
+# Napoleon
+napoleon_google_docstring = True
+napoleon_numpy_docstring = False
 napoleon_attr_annotations = True
+napoleon_include_special_with_doc = True
+# napoleon_use_param = True
+# napoleon_type_aliases = {}
+
+# External links
+# https://www.sphinx-doc.org/en/master/usage/extensions/extlinks.html
+extlinks = {
+    "torchdocs": ("https://pytorch.org/docs/stable/%s.html", "torch.%s"),
+    "arxiv": ("https://arxiv.org/abs/%s", "arvix:%s"),
+}
+
+# Intersphinx
+intersphinx_mapping = {
+    "torch": ("https://pytorch.org/docs/stable", None),
+    "pytorch_lightning": (
+        "https://pytorch-lightning.readthedocs.io/en/stable",
+        None,
+    ),
+}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -44,7 +72,7 @@ templates_path = ["_templates"]
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+exclude_patterns = []
 
 
 # -- Options for HTML output -------------------------------------------------

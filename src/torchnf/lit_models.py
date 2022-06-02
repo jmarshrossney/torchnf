@@ -1,12 +1,19 @@
+"""
+Alternative implementations of the models from :mod:`torchnf.models`, based
+on :py:class:`pytorch_lightning.LightningModule` rather than the standard
+:py:class:`torch.nn.Module`.
+"""
 from typing import Callable
 import torch
-import pytorch_lightning as pl
+
+# import pytorch_lightning as pl
 
 import torchnf
 
 
-class LitBoltzmannGenerator(pl.LightningModule):
+class LitBoltzmannGenerator:  # (pl.LightningModule):
     """Test"""
+
     def __init__(
         self,
         prior: torchnf.Prior,
