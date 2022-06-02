@@ -45,7 +45,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#module-torchnf.conditioners">torchnf.conditioners module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-torchnf.core">torchnf.core module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-torchnf.exceptions">torchnf.exceptions module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#torchnf-lit-models-module">torchnf.lit_models module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-torchnf.lit_models">torchnf.lit_models module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-torchnf.metrics">torchnf.metrics module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-torchnf.models">torchnf.models module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-torchnf.networks">torchnf.networks module</a></li>
@@ -258,8 +258,73 @@ registered hooks while the latter silently ignores them.</p>
 </dd></dl>
 
 </section>
-<section id="torchnf-lit-models-module">
-<h2>torchnf.lit_models module<a class="headerlink" href="#torchnf-lit-models-module" title="Permalink to this heading"></a></h2>
+<section id="module-torchnf.lit_models">
+<span id="torchnf-lit-models-module"></span><h2>torchnf.lit_models module<a class="headerlink" href="#module-torchnf.lit_models" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="torchnf.lit_models.LitBoltzmannGenerator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchnf.lit_models.</span></span><span class="sig-name descname"><span class="pre">LitBoltzmannGenerator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prior</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#torchnf.prior.Prior" title="torchnf.prior.Prior"><span class="pre">Prior</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">Tensor</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tensor</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flow</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#torchnf.core.Flow" title="torchnf.core.Flow"><span class="pre">Flow</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchnf.lit_models.LitBoltzmannGenerator" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">LightningModule</span></code></p>
+<p>Test</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="torchnf.lit_models.LitBoltzmannGenerator.configure_optimizers">
+<span class="sig-name descname"><span class="pre">configure_optimizers</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#torchnf.lit_models.LitBoltzmannGenerator.configure_optimizers" title="Permalink to this definition"></a></dt>
+<dd><p>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchnf.lit_models.LitBoltzmannGenerator.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchnf.lit_models.LitBoltzmannGenerator.forward" title="Permalink to this definition"></a></dt>
+<dd><p>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchnf.lit_models.LitBoltzmannGenerator.sample">
+<span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#torchnf.lit_models.LitBoltzmannGenerator.sample" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchnf.lit_models.LitBoltzmannGenerator.train_dataloader">
+<span class="sig-name descname"><span class="pre">train_dataloader</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#torchnf.lit_models.LitBoltzmannGenerator.train_dataloader" title="Permalink to this definition"></a></dt>
+<dd><p>.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchnf.lit_models.LitBoltzmannGenerator.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#torchnf.lit_models.LitBoltzmannGenerator.training" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchnf.lit_models.LitBoltzmannGenerator.training_step">
+<span class="sig-name descname"><span class="pre">training_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_idx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchnf.lit_models.LitBoltzmannGenerator.training_step" title="Permalink to this definition"></a></dt>
+<dd><p>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchnf.lit_models.LitBoltzmannGenerator.training_step_end">
+<span class="sig-name descname"><span class="pre">training_step_end</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">outputs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchnf.lit_models.LitBoltzmannGenerator.training_step_end" title="Permalink to this definition"></a></dt>
+<dd><p>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchnf.lit_models.LitBoltzmannGenerator.val_dataloader">
+<span class="sig-name descname"><span class="pre">val_dataloader</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#torchnf.lit_models.LitBoltzmannGenerator.val_dataloader" title="Permalink to this definition"></a></dt>
+<dd><p>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchnf.lit_models.LitBoltzmannGenerator.validation_epoch_end">
+<span class="sig-name descname"><span class="pre">validation_epoch_end</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metrics</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchnf.lit_models.LitBoltzmannGenerator.validation_epoch_end" title="Permalink to this definition"></a></dt>
+<dd><p>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchnf.lit_models.LitBoltzmannGenerator.validation_step">
+<span class="sig-name descname"><span class="pre">validation_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_idx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchnf.lit_models.LitBoltzmannGenerator.validation_step" title="Permalink to this definition"></a></dt>
+<dd><p>.</p>
+</dd></dl>
+
+</dd></dl>
+
 </section>
 <section id="module-torchnf.metrics">
 <span id="torchnf-metrics-module"></span><h2>torchnf.metrics module<a class="headerlink" href="#module-torchnf.metrics" title="Permalink to this heading"></a></h2>

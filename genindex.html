@@ -155,8 +155,12 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="torchnf.html#torchnf.core.FlowLayer.conditioner_forward">conditioner_forward() (torchnf.core.FlowLayer method)</a>
 </li>
-      <li><a href="torchnf.html#torchnf.models.Model.configure_optimizers">configure_optimizers() (torchnf.models.Model method)</a>
+      <li><a href="torchnf.html#torchnf.lit_models.LitBoltzmannGenerator.configure_optimizers">configure_optimizers() (torchnf.lit_models.LitBoltzmannGenerator method)</a>
+
+      <ul>
+        <li><a href="torchnf.html#torchnf.models.Model.configure_optimizers">(torchnf.models.Model method)</a>
 </li>
+      </ul></li>
       <li><a href="torchnf.html#torchnf.networks.ConvNet.conv_kwargs">conv_kwargs (torchnf.networks.ConvNet attribute)</a>
 
       <ul>
@@ -225,6 +229,8 @@
         <li><a href="torchnf.html#torchnf.core.Flow.forward">(torchnf.core.Flow method)</a>
 </li>
         <li><a href="torchnf.html#torchnf.core.FlowLayer.forward">(torchnf.core.FlowLayer method)</a>
+</li>
+        <li><a href="torchnf.html#torchnf.lit_models.LitBoltzmannGenerator.forward">(torchnf.lit_models.LitBoltzmannGenerator method)</a>
 </li>
         <li><a href="torchnf.html#torchnf.models.BoltzmannGenerator.forward">(torchnf.models.BoltzmannGenerator method)</a>
 </li>
@@ -327,16 +333,18 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="torchnf.html#torchnf.networks.DenseNet.linear_kwargs">linear_kwargs (torchnf.networks.DenseNet attribute)</a>
 </li>
+      <li><a href="torchnf.html#torchnf.lit_models.LitBoltzmannGenerator">LitBoltzmannGenerator (class in torchnf.lit_models)</a>
+</li>
       <li><a href="torchnf.html#torchnf.models.Model.load_checkpoint">load_checkpoint() (torchnf.models.Model method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="torchnf.html#torchnf.prior.Prior.log_prob">log_prob() (torchnf.prior.Prior method)</a>
 
       <ul>
         <li><a href="torchnf.html#torchnf.prior.SimplePrior.log_prob">(torchnf.prior.SimplePrior method)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="torchnf.html#torchnf.metrics.LogWeightMetrics">LogWeightMetrics (class in torchnf.metrics)</a>
 </li>
       <li><a href="torchnf.html#torchnf.metrics.LogWeightMetrics.longest_rejection_run">longest_rejection_run (torchnf.metrics.LogWeightMetrics property)</a>
@@ -362,6 +370,8 @@
         <li><a href="torchnf.html#module-torchnf.core">torchnf.core</a>
 </li>
         <li><a href="torchnf.html#module-torchnf.exceptions">torchnf.exceptions</a>
+</li>
+        <li><a href="torchnf.html#module-torchnf.lit_models">torchnf.lit_models</a>
 </li>
         <li><a href="torchnf.html#module-torchnf.metrics">torchnf.metrics</a>
 </li>
@@ -446,9 +456,11 @@
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="torchnf.html#torchnf.models.BoltzmannGenerator.sample">sample() (torchnf.models.BoltzmannGenerator method)</a>
+      <li><a href="torchnf.html#torchnf.lit_models.LitBoltzmannGenerator.sample">sample() (torchnf.lit_models.LitBoltzmannGenerator method)</a>
 
       <ul>
+        <li><a href="torchnf.html#torchnf.models.BoltzmannGenerator.sample">(torchnf.models.BoltzmannGenerator method)</a>
+</li>
         <li><a href="torchnf.html#torchnf.prior.Prior.sample">(torchnf.prior.Prior method)</a>
 </li>
         <li><a href="torchnf.html#torchnf.prior.SimplePrior.sample">(torchnf.prior.SimplePrior method)</a>
@@ -511,6 +523,13 @@
 </li>
       </ul></li>
       <li>
+    torchnf.lit_models
+
+      <ul>
+        <li><a href="torchnf.html#module-torchnf.lit_models">module</a>
+</li>
+      </ul></li>
+      <li>
     torchnf.metrics
 
       <ul>
@@ -538,8 +557,6 @@
         <li><a href="torchnf.html#module-torchnf.prior">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     torchnf.transformers
 
@@ -547,6 +564,8 @@
         <li><a href="torchnf.html#module-torchnf.transformers">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     torchnf.utils
 
@@ -554,6 +573,8 @@
         <li><a href="torchnf.html#module-torchnf.utils">module</a>
 </li>
       </ul></li>
+      <li><a href="torchnf.html#torchnf.lit_models.LitBoltzmannGenerator.train_dataloader">train_dataloader() (torchnf.lit_models.LitBoltzmannGenerator method)</a>
+</li>
       <li><a href="torchnf.html#torchnf.conditioners.AutoregressiveConditioner.training">training (torchnf.conditioners.AutoregressiveConditioner attribute)</a>
 
       <ul>
@@ -565,17 +586,23 @@
 </li>
         <li><a href="torchnf.html#torchnf.core.FlowLayer.training">(torchnf.core.FlowLayer attribute)</a>
 </li>
+        <li><a href="torchnf.html#torchnf.lit_models.LitBoltzmannGenerator.training">(torchnf.lit_models.LitBoltzmannGenerator attribute)</a>
+</li>
         <li><a href="torchnf.html#torchnf.models.BoltzmannGenerator.training">(torchnf.models.BoltzmannGenerator attribute)</a>
 </li>
         <li><a href="torchnf.html#torchnf.models.Model.training">(torchnf.models.Model attribute)</a>
 </li>
       </ul></li>
-      <li><a href="torchnf.html#torchnf.models.BoltzmannGenerator.training_step">training_step() (torchnf.models.BoltzmannGenerator method)</a>
+      <li><a href="torchnf.html#torchnf.lit_models.LitBoltzmannGenerator.training_step">training_step() (torchnf.lit_models.LitBoltzmannGenerator method)</a>
 
       <ul>
+        <li><a href="torchnf.html#torchnf.models.BoltzmannGenerator.training_step">(torchnf.models.BoltzmannGenerator method)</a>
+</li>
         <li><a href="torchnf.html#torchnf.models.Model.training_step">(torchnf.models.Model method)</a>
 </li>
       </ul></li>
+      <li><a href="torchnf.html#torchnf.lit_models.LitBoltzmannGenerator.training_step_end">training_step_end() (torchnf.lit_models.LitBoltzmannGenerator method)</a>
+</li>
       <li><a href="torchnf.html#torchnf.transformers.Transformer">Transformer (class in torchnf.transformers)</a>
 </li>
       <li><a href="torchnf.html#torchnf.core.FlowLayer.transformer_forward">transformer_forward() (torchnf.core.FlowLayer method)</a>
@@ -590,13 +617,19 @@
 <h2 id="V">V</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="torchnf.html#torchnf.lit_models.LitBoltzmannGenerator.val_dataloader">val_dataloader() (torchnf.lit_models.LitBoltzmannGenerator method)</a>
+</li>
       <li><a href="torchnf.html#torchnf.models.Model.validate">validate() (torchnf.models.Model method)</a>
+</li>
+      <li><a href="torchnf.html#torchnf.lit_models.LitBoltzmannGenerator.validation_epoch_end">validation_epoch_end() (torchnf.lit_models.LitBoltzmannGenerator method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="torchnf.html#torchnf.models.BoltzmannGenerator.validation_step">validation_step() (torchnf.models.BoltzmannGenerator method)</a>
+      <li><a href="torchnf.html#torchnf.lit_models.LitBoltzmannGenerator.validation_step">validation_step() (torchnf.lit_models.LitBoltzmannGenerator method)</a>
 
       <ul>
+        <li><a href="torchnf.html#torchnf.models.BoltzmannGenerator.validation_step">(torchnf.models.BoltzmannGenerator method)</a>
+</li>
         <li><a href="torchnf.html#torchnf.models.Model.validation_step">(torchnf.models.Model method)</a>
 </li>
       </ul></li>
