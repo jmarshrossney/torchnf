@@ -1,18 +1,15 @@
 import torch
 
 from torchnf.models import BoltzmannGenerator
-from torchnf.prior import Prior
+from torchnf.prior import SimplePrior
 from torchnf.core import Flow, FlowLayer
 from torchnf.transformers import AffineTransform
 from torchnf.conditioners import SimpleConditioner, MaskedConditioner
 from torchnf.networks import DenseNet
 
 data_shape = (6, 6)
-prior = Prior(
-    torch.distributions.Normal(
-        loc=torch.zeros(data_shape), scale=torch.ones(data_shape)
-    ),
-    batch_size=100,
+prior = SimplePrior(
+    torch.distributions.Normal(0, 1), batch_size=100, expand_shape=data_shape
 )
 target = torch.distributions.Normal(
     loc=torch.full(data_shape, 1), scale=torch.full(data_shape, 0.5)

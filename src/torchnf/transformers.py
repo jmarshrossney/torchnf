@@ -1,4 +1,5 @@
 r"""
+
 Module containing parametrised bijective transformations and their inverses.
 
 Transformation functions take an input tensor and one or more tensors that
@@ -6,16 +7,32 @@ parametrise the transformation, and return the transformed inputs along
 with the logarithm of the Jacobian determinant of the transformation. They
 should be called as
 
-    output, log_det_jacob = transform(input, param1, param2, ...)
+.. code-block:: python
+
+    output, log_det_jacob = transform(input, params, context)
 
 In maths, the transformations do
 
 .. math::
 
-    x, \{\lambda\} \longrightarrow f(x ; \{\lambda\}),
-    \log \left\lvert\frac{\partial f(x ; \{\lambda\})}{\partial x} \right\rvert
+    x, \{\lambda\} \longrightarrow y = f(x ; \{\lambda\}),
+    \log \left\lvert\frac{\partial y}{\partial x} \right\rvert
 
-Note that the log-det-Jacobian is that of the *forward* transformation.
+The inverse of these transformations are
+
+.. math::
+
+    y, \{\lambda\} \longrightarrow x = f^{-1}(y ; \{\lambda\}),
+    \log \left\lvert\frac{\partial x}{\partial y} \right\rvert
+
+Thanks to the inverse function theorem, the log-Jacobian-determinants
+for the forward and inverse transformations are related by
+
+.. math::
+
+    \log \left\lvert \frac{\partial x}{\partial y} \right\rvert
+    = -\log \left\lvert \frac{\partial y}{\partial x} \right\rvert
+
 """
 
 import logging
@@ -35,20 +52,36 @@ PI = math.pi
 
 
 class Transformer:
+    """
+    Base class that should be inherited by all transformers.
+
+    Derived classes should override the following methods
+    and properties:
+    - :code:`n_params()`
+    - :code:`identity_params()`
+    - :code:`_forward()`
+    - :code:`_inverse()`
+
+    .. attention:: Do **not** override :meth:`forward()` or :meth:`inverse()`!
+    """
+
     domain: ClassVar[tuple[float, float]]
     codomain: ClassVar[tuple[float, float]]
 
     @property
     def n_params(self) -> int:
+        """Number of parameters per element being transformed."""
         return NotImplemented
 
     @property
     def identity_params(self) -> list[float]:
+        """The parameters which result in an identity transformation."""
         return NotImplemented
 
     def _nan_to_identity(
         self, params: torch.Tensor, data_shape: torch.Size
     ) -> torch.Tensor:
+        """"""
         return params.nan_to_num(0).add(
             torchnf.utils.expand_elements(
                 torch.Tensor(self.identity_params, device=params.device),
@@ -60,54 +93,88 @@ class Transformer:
     def _forward(
         self, x: torch.Tensor, params: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor]:
+        """
+        Forward pass of the transformer.
+
+        Args:
+            x
+                The input tensor, shape `(batch_size, *data_shape)`
+            params
+                Parameters upon which the transformation is conditioned,
+                shape `(batch_size, n_params, *data_shape)`
+
+        Returns:
+            Tuple of tensors containing (1) the transformed inputs, and
+            (2) the logarithm of the Jacobian determinant
+
+        :meta public:
+        """
         raise NotImplementedError
 
     def _inverse(
         self, y: torch.Tensor, params: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor]:
+        """
+        Inverse of :meth:`_forward`.
+
+        :meta public:
+        """
         raise NotImplementedError
 
     def forward(
         self, x: torch.Tensor, params: torch.Tensor, context: dict = {}
     ) -> tuple[torch.Tensor, torch.Tensor]:
+        """
+        Wrapper around the forward pass of the transformer.
+
+        This does the following:
+
+        .. code-block::
+
+            self.context = context
+            params = self._nan_to_identity(params, x.shape[1:])
+            return self._forward(x, params)
+
+        """
         self.context = context
         return self._forward(x, self._nan_to_identity(params, x.shape[1:]))
 
     def inverse(
         self, y: torch.Tensor, params: torch.Tensor, context: dict = {}
     ) -> tuple[torch.Tensor, torch.Tensor]:
+        """
+        Inverse of :meth:`forward`.
+        """
         self.context = context
         return self._inverse(y, self._nan_to_identity(params, y.shape[1:]))
 
     def __call__(
         self, x: torch.Tensor, params: torch.Tensor, context: dict = {}
     ) -> tuple[torch.Tensor, torch.Tensor]:
+        """
+        Alias for :meth:`forward`.
+        """
         return self.forward(x, params, context)
 
 
 class Translation(Transformer):
     r"""Performs a pointwise translation of the input tensor.
 
-    .. math::
-
-        x \mapsto y = x + t
-
-        \log \left\lvert \frac{\partial y}{\partial x} \right\rvert = 0
+    The forward and inverse transformations are, respectively
 
     .. math::
 
-        y \mapsto x = y - t
+        x \mapsto y = x + t \, ,
 
-        \log \left\lvert \frac{\partial x}{\partial y} \right\rvert = 0
+        y \mapsto x = y - t \, .
 
+    There is no change in the volume element, i.e.
 
-    Parameters
-    ----------
-    x
-        Tensor to be transformed
-    shift
-        The translation, :math:`t`
+    .. math::
 
+        \log \left\lvert \frac{\partial y}{\partial x} \right\rvert
+        \log \left\lvert \frac{\partial x}{\partial y} \right\rvert
+        = 0
     """
     domain = REALS
     codomain = REALS
@@ -117,17 +184,12 @@ class Translation(Transformer):
         return 1
 
     @property
-    def params_dim(self) -> int:
-        return 1  # it doesn't matter
-
-    @property
     def identity_params(self) -> list[float]:
         return [0]
 
     def _forward(
         self, x: torch.Tensor, params: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        """Performs a pointwise translation of the input tensor."""
         shift = params.view_as(x)
         y = x.add(shift)
         ldj = torch.zeros(x.shape[0], device=y.device)
@@ -146,27 +208,22 @@ class Translation(Transformer):
 class Rescaling(Transformer):
     r"""Performs a pointwise rescaling of the input tensor.
 
-    .. math::
-
-        x \mapsto y = x \odot e^{-s}
-
-    Parameters
-    ----------
-    x
-        Tensor to be transformed
-    log_scale
-        The scaling factor, :math:`s`
-
-    See Also
-    --------
-    :py:func:`torchlft.functional.inv_rescaling`
-
-    Performs a pointwise rescaling of the input tensor.
+    The forward and inverse transformations are, respectively,
 
     .. math::
 
-        y \mapsto x = y \odot e^{s}
+        x \mapsto y = x \odot e^{-s} \, ,
 
+        y \mapsto x = y \odot e^{s} \, .
+
+    The logarithm of the Jacobian determinant is
+
+    .. math::
+
+        \log \left\lvert \frac{\partial y}{\partial x} \right\rvert
+        = \sum_i -s_i
+
+    where :math:`i` runs over the degrees of freedom being transformed.
     """
     domain = REALS
     codomain = REALS
@@ -199,27 +256,29 @@ class Rescaling(Transformer):
 class AffineTransform(Transformer):
     r"""Performs a pointwise affine transformation of the input tensor.
 
+    The forward and inverse transformations are, respectively,
+
     .. math::
 
         x \mapsto y = x \odot e^{-s} + t
 
-        \log \left\lvert \frac{\partial y}{\partial x} \right\rvert = -s
+        y \mapsto x = (y - t) \odot e^{s}
 
     .. math::
 
-        y \mapsto x = (y - t) \odot e^{s}
+        \log \left\lvert \frac{\partial y}{\partial x} \right\rvert
+        = \sum_i -s_i
 
-        \log \left\lvert \frac{\partial x}{\partial y} \right\rvert = s
+    where :math:`i` runs over the degrees of freedom being transformed.
 
-    Parameters
-    ----------
-    x
-        Tensor to be transformed
-    log_scale
-        The scaling factor, :math:`s`
-    shift
-        The translation, :math:`t`
+    The :code:`params` argument to :meth:`forward` and :meth:`inverse`
+    should be a tensor with :math:`s` and :math:`t` stacked, in that
+    order, on the `1` dimension. The parameters will be split as
 
+    .. code-block:: python
+
+        s = params[:, 0]
+        t = parmas[:, 1]
     """
     domain = REALS
     codomain = REALS
@@ -250,6 +309,9 @@ class AffineTransform(Transformer):
 
 
 class RQSplineTransform(Transformer):
+    r"""
+    Pointwise rational quadratic spline transformation.
+    """
     domain = REALS
     codomain = REALS
 
@@ -287,6 +349,19 @@ class RQSplineTransform(Transformer):
     def handle_inputs_outside_interval(
         self, outside_interval_mask: torch.BoolTensor
     ) -> None:
+        """
+        Handle inputs falling outside the spline interval.
+
+        Unless overridden, this method submits a :code:`log.debug` logging
+        event if more than 1/1000 inputs fall outside the spline interval.
+
+        Args:
+            outside_interval_mask
+                BoolTensor of the same shape as the layer input where the
+                :code:`True` elements correspond to inputs which fell outside
+                the spline interval.
+
+        """
         if outside_interval_mask.sum() > outside_interval_mask.numel() / 1000:
             log.debug(
                 "More than 1/1000 inputs fell outside the spline interval"
@@ -302,38 +377,30 @@ class RQSplineTransform(Transformer):
         heights: torch.Tensor,
         derivs: torch.Tensor,
     ) -> tuple[torch.Tensor]:
-        r"""Builds a rational quadratic spline function.
+        """Builds a rational quadratic spline function.
 
-        This uses the parametrisation introduced by [Gregory and Delbourgo]_
+        This uses the parametrisation introduced by Gregory and Delbourgo
+        (1983)
 
-        Parameters
-        ----------
-        widths
-            Un-normalised segment sizes in the domain
-        heights
-            Un-normalised segment sizes in the codomain
-        derivs
-            Unconstrained derivatives at the knots
+        Args:
+            widths
+                Un-normalised segment sizes in the domain
+            heights
+                Un-normalised segment sizes in the codomain
+            derivs
+                Unconstrained derivatives at the knots
 
-        Returns
-        -------
-        widths
-            Normalised segment sizes in the domain
-        heights
-            Normalised segment sizes in the codomain
-        derivs
-            Constrained derivatives at the knots
-        knots_xcoords
-            Coordinates of the knots in the domain
-        knots_ycoords
-            Coordinates of the knots in the codomain
+        Returns:
+            Tuple of tensors containing (1) Normalised segment sizes in
+            the domain, (2) Normalised segment sizes in the codomain, (3)
+            Constrained derivatives at the knots, (4) Coordinates of the
+            knots in the domain, (5) Coordinates of the knots in the codomain
 
 
-        References
-        ----------
-        .. [Gregory and Delbourgo] Gregory, J. A. & Delbourgo, R. C2 Rational
-           Quadratic Spline Interpolation to Monotonic Data, IMA Journal of
-           Numerical Analysis, 1983, 3, 141-152
+        References:
+            Gregory, J. A. & Delbourgo, R. C2 Rational \
+Quadratic Spline Interpolation to Monotonic Data, IMA Journal of \
+Numerical Analysis, 1983, 3, 141-152
 
         """
         # Normalise the widths and heights to the interval
