@@ -1,0 +1,7 @@
+torchnf.prior
+=============
+
+.. automodule:: torchnf.prior
+   :members:
+   :undoc-members:
+   :show-inheritance:

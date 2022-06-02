@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchnf.metrics &mdash; torchnf 0.1.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="torchnf.models" href="torchnf.models.html" />
+    <link rel="prev" title="torchnf.lit_models" href="torchnf.lit_models.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> torchnf
+          </a>
+              <div class="version">
+                0.1.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">torchnf</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="torchnf.html">torchnf</a></li>
+<li class="toctree-l2"><a class="reference internal" href="torchnf.conditioners.html">torchnf.conditioners</a></li>
+<li class="toctree-l2"><a class="reference internal" href="torchnf.core.html">torchnf.core</a></li>
+<li class="toctree-l2"><a class="reference internal" href="torchnf.exceptions.html">torchnf.exceptions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="torchnf.lit_models.html">torchnf.lit_models</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">torchnf.metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="torchnf.models.html">torchnf.models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="torchnf.networks.html">torchnf.networks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="torchnf.prior.html">torchnf.prior</a></li>
+<li class="toctree-l2"><a class="reference internal" href="torchnf.transformers.html">torchnf.transformers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="torchnf.utils.html">torchnf.utils</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">torchnf</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="modules.html">torchnf</a> &raquo;</li>
+          <li><a href="torchnf.html">torchnf</a> &raquo;</li>
+      <li>torchnf.metrics</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/torchnf.metrics.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-torchnf.metrics">
+<span id="torchnf-metrics"></span><h1>torchnf.metrics<a class="headerlink" href="#module-torchnf.metrics" title="Permalink to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="torchnf.metrics.LogWeightMetrics">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchnf.metrics.</span></span><span class="sig-name descname"><span class="pre">LogWeightMetrics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log_weights</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchnf.metrics.LogWeightMetrics" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Lightweight metrics computed using the log-weights of a model output.</p>
+<p>‘Log-weight’ refers to the logarithm of the statistical weight of a
+generated data element, <span class="math notranslate nohighlight">\(y\)</span> (e.g. the output of a Normalizing
+Flow). The log weight is defined as</p>
+<div class="math notranslate nohighlight">
+\[\log w(y) = \log p(y) - \log q(y)\]</div>
+<p>where <span class="math notranslate nohighlight">\(p(y)\)</span> and <span class="math notranslate nohighlight">\(q(y)\)</span> are the target and model
+probability densities, respectively.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>log_weights</strong> – One-dimensional tensor of log-weights, defined above.</p>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="torchnf.metrics.LogWeightMetrics.acceptance">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">acceptance</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#torchnf.metrics.LogWeightMetrics.acceptance" title="Permalink to this definition"></a></dt>
+<dd><p>Fraction of proposals accepted during Metropolis-Hastings.</p>
+<p>Given target probability density <span class="math notranslate nohighlight">\(p(y)\)</span>, data elements
+generated by the model, <span class="math notranslate nohighlight">\(\{ y \sim \tilde{p}(y) \}\)</span>, are
+accepted with a probability</p>
+<div class="math notranslate nohighlight">
+\[A(y \to y^\prime) = \min \left( 1,
+\frac{q(y)}{p(y)} \frac{p(y^\prime)}{q(y^\prime)} \right) \, .\]</div>
+<p>Generally speaking, the acceptance rate will be larger if the overlap
+between the model and the target densities is larger.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchnf.metrics.LogWeightMetrics.asdict">
+<span class="sig-name descname"><span class="pre">asdict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#torchnf.metrics.LogWeightMetrics.asdict" title="Permalink to this definition"></a></dt>
+<dd><p>Returns the computed metrics as a dictionary.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchnf.metrics.LogWeightMetrics.effective_sample_size">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">effective_sample_size</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#torchnf.metrics.LogWeightMetrics.effective_sample_size" title="Permalink to this definition"></a></dt>
+<dd><p>Effective sample size normalised by the size of the sample.</p>
+<div class="math notranslate nohighlight">
+\[N_{eff} = \frac{
+    \left[ \frac{1}{N} \sum_{\{y\}} w(y) \right]^2
+    }{
+    \frac{1}{N} \sum_{\{y\}} w(y)^2
+}\]</div>
+<p class="rubric">References</p>
+<p><a class="reference external" href="https://arxiv.org/abs/2101.08176">arvix:2101.08176</a></p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchnf.metrics.LogWeightMetrics.integrated_autocorrelation">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">integrated_autocorrelation</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#torchnf.metrics.LogWeightMetrics.integrated_autocorrelation" title="Permalink to this definition"></a></dt>
+<dd><p>Integrated autocorrelation derived from the accept/reject history.</p>
+<p>In the limit <span class="math notranslate nohighlight">\(t \to \infty\)</span> the autocorrelation function can be
+re-interpreted as the probability of failing to transition over a given
+number of Markov chain steps.</p>
+<div class="math notranslate nohighlight">
+\[\frac{\Gamma(t)}{\Gamma(0)} =
+\Pr(t \text{ consecutive rejections} )\]</div>
+<p>An estimate of this probability is obtained by simply summing the
+number of occurrences of a <span class="math notranslate nohighlight">\(t\)</span> consecutive rejections, and
+normalizing by the largest number of occurrences that are possible;
+that is, by <span class="math notranslate nohighlight">\(T - t + 1\)</span> where <span class="math notranslate nohighlight">\(T\)</span> is the total number
+of Markov chain steps.</p>
+<p class="rubric">References</p>
+<p><a class="reference external" href="https://arxiv.org/abs/1904.12072">arvix:1904.12072</a></p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchnf.metrics.LogWeightMetrics.kl_divergence">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">kl_divergence</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#torchnf.metrics.LogWeightMetrics.kl_divergence" title="Permalink to this definition"></a></dt>
+<dd><p>Kullbach-Leibler divergence of the sample.</p>
+<div class="math notranslate nohighlight">
+\[D_{KL} = \frac{1}{N} \sum_{\{y\}} - \log w(y)\]</div>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchnf.metrics.LogWeightMetrics.longest_rejection_run">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">longest_rejection_run</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#torchnf.metrics.LogWeightMetrics.longest_rejection_run" title="Permalink to this definition"></a></dt>
+<dd><p>Largest number of consecutive rejections in the sampling phase.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="torchnf.lit_models.html" class="btn btn-neutral float-left" title="torchnf.lit_models" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="torchnf.models.html" class="btn btn-neutral float-right" title="torchnf.models" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Joe Marsh Rossney.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
