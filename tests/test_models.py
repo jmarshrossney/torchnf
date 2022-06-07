@@ -29,7 +29,7 @@ def test_shifted_gaussian_target():
     )
     model.fit(1000)
     final_metrics = model.validate()
-    assert final_metrics["acceptance"] > 0.99
+    assert final_metrics["acceptance"] > 0.98
 
 
 def test_shifted_rescaled_gaussian_target():
@@ -63,7 +63,7 @@ def _test_correlated_gaussian_target():
     )
     model.fit(1000)
     final_metrics = model.validate()
-    assert final_metrics["acceptance"] > 0.99
+    assert final_metrics["acceptance"] > 0.98
 
 
 def test_coupling_densenet():

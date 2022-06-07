@@ -53,8 +53,8 @@ def _test_nan(transformer, x):
 def _test_roundtrip(transformer, x, params):
     y, ldj_fwd = transformer(x, params)
     z, ldj_inv = transformer.inverse(y, params)
-    assert torch.allclose(x, z, atol=1e-5)
-    assert torch.allclose(ldj_fwd, ldj_inv.neg(), atol=1e-5)
+    assert torch.allclose(x, z, atol=1e-4)
+    assert torch.allclose(ldj_fwd, ldj_inv.neg(), atol=1e-4)
 
 
 @given(x_shape=_shapes)
