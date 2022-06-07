@@ -155,7 +155,6 @@ class MaskedConditioner(Conditioner):
             params = self.apply_mask_to_outputs(params)
             return params
         """
-
         self.context = context
         return self.apply_mask_to_output(
             self._forward(self.apply_mask_to_input(x))

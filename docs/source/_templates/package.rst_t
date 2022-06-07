@@ -29,4 +29,3 @@
 {%- if subpackages %}
 {{ toctree(subpackages) }}
 {% endif %}
-

@@ -177,7 +177,6 @@ class Model(torch.nn.Module):
             pbar_interval
                 Number of steps between updates of the progress bar
 
-
         Notes:
             The conditions for running validation and saving a checkpoint are
             based on the global step, not the step number within the current
