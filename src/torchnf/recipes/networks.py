@@ -14,33 +14,20 @@ import dataclasses
 import torch
 
 
-class SimpleNetBuilder:
+class NetBuilder:
     """
-    General-purpose network builder.
-
-    Work in progress.
+    Base class for neural network builders. Simply defines a __call__ method.
     """
 
-    def __init__(self, net_spec: list[dict]) -> None:
-        self.net_spec = net_spec
+    # NOTE: Should i have a @property for network_preserves_structure for
+    # input/output? Would help decide which conditioner to use automatically
 
     def __call__(self) -> torch.nn.Sequential:
-        # TODO: augment namespace with custom modules to allow user
-        # to request custom layers?
-
-        layers = []
-        for layer_spec in self.net_spec:
-
-            cls = getattr(torch.nn, layer_spec["class"])
-            args = layer_spec["args"]
-            layer = cls(**args)
-            layers.append(layer)
-
-        return torch.nn.Sequential(*layers)
+        raise NotImplementedError
 
 
 @dataclasses.dataclass
-class DenseNet:
+class DenseNet(NetBuilder):
     """
     Fully-connected feed-forward neural network.
 
@@ -59,6 +46,11 @@ class DenseNet:
         return getattr(torch.nn, self.activation)(**self.activation_kwargs)
 
     def __call__(self) -> torch.nn.Sequential:
+        # Maybe: (allows other recipes to set values, e.g. out_features)
+        # def __call__(self, replacements: dict):
+        #     self.__dict__.update(replacements)
+        # -- or, for frozen instance --
+        #     config = dataclasses.asdict(self).update(replacements)
         net_shape = [self.in_features, *self.hidden_shape, self.out_features]
         activations = [self._activation() for _ in self.hidden_shape] + [
             torch.nn.Identity()
@@ -76,7 +68,7 @@ class DenseNet:
 
 
 @dataclasses.dataclass
-class ConvNet:
+class ConvNet(NetBuilder):
     """
     Convolutional neural network.
 
@@ -131,3 +123,28 @@ class ConvNetCircular(ConvNet):
             padding=self.kernel_size // 2,
             padding_mode="circular",
         )
+
+
+class GenericNetBuilder(NetBuilder):
+    """
+    General-purpose network builder.
+
+    Work in progress.
+    """
+
+    def __init__(self, spec: list[dict]) -> None:
+        self.spec = spec
+
+    def __call__(self) -> torch.nn.Sequential:
+        # TODO: augment namespace with custom modules to allow user
+        # to request custom layers?
+
+        layers = []
+        for layer_spec in self.spec:
+
+            cls = getattr(torch.nn, layer_spec["class"])
+            args = layer_spec["args"]
+            layer = cls(**args)
+            layers.append(layer)
+
+        return torch.nn.Sequential(*layers)

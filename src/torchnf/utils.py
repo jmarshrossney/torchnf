@@ -4,6 +4,16 @@ import datetime
 import torch
 
 
+def prod(elements: list[float]) -> float:
+    """
+    Returns the product of list elements.
+    """
+    res = 1
+    for el in elements:
+        res *= el
+    return res
+
+
 def timestamp(fmt: str = "%y%m%dT%H%M%S") -> str:
     """
     Returns a string representation of the current datetime.

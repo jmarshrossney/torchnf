@@ -1,5 +1,3 @@
-"""
-"""
 from typing import Callable, NamedTuple, Optional, Union
 import torch
 
@@ -130,7 +128,7 @@ class Flow(torch.nn.Sequential):
     Class representing a Normalizing Flow.
 
     This is a subclass of :py:class:`torch.nn.Sequential` which composes
-    several :class:`torchnf.core.FlowLayer`'s and aggregates their
+    several :class:`torchnf.flow.FlowLayer`'s and aggregates their
     log Jacobian determinants.
     """
 
@@ -143,11 +141,11 @@ class Flow(torch.nn.Sequential):
         """
         Forward pass of the Normalizing Flow.
         """
-        log_det_jacob = torch.zeros(x.shape[0]).type_as(x)
+        log_det_jacob = torch.zeros(x.shape[0], device=x.device)
         y = x
         for layer in self:
             y, ldj = layer(y, context)
-            log_det_jacob.add_(ldj)
+            log_det_jacob = log_det_jacob.add(ldj)
         return y, log_det_jacob
 
     def inverse(
@@ -156,11 +154,11 @@ class Flow(torch.nn.Sequential):
         """
         Inverse of :meth:`forward`.
         """
-        log_det_jacob = torch.zeros(y.shape[0]).type_as(y)
+        log_det_jacob = torch.zeros(y.shape[0], device=y.device)
         x = y
         for layer in reversed(self):
             x, ldj = layer.inverse(x, context)
-            log_det_jacob.add_(ldj)
+            log_det_jacob = log_det_jacob.add(ldj)
         return x, log_det_jacob
 
     def step_forward(self, x: torch.Tensor, context: dict = {}):

@@ -11,8 +11,10 @@ from typing import Callable, Optional, Union
 import torch
 import logging
 import os
+from tqdm.auto import trange
 
-import torchnf
+import torchnf.flow
+import torchnf.prior
 import torchnf.utils
 import torchnf.metrics
 
@@ -146,6 +148,7 @@ class Model(torch.nn.Module):
         n_steps: int,
         val_interval: Optional[int] = None,
         ckpt_interval: Optional[int] = None,
+        pbar_interval: int = 25.0,
     ) -> None:
         """
         Runs the training loop.
@@ -171,7 +174,8 @@ class Model(torch.nn.Module):
                 Number of steps between validation runs
             ckpt_interval
                 Number of steps between saving checkpoints
-
+            pbar_interval
+                Number of steps between updates of the progress bar
 
         Notes:
             The conditions for running validation and saving a checkpoint are
@@ -184,7 +188,8 @@ class Model(torch.nn.Module):
         self.train()
         torch.set_grad_enabled(True)
 
-        for step in range(n_steps):
+        pbar = trange(n_steps, desc="Training")
+        for step in pbar:
             self._global_step += 1
 
             loss = self.training_step()
@@ -193,6 +198,9 @@ class Model(torch.nn.Module):
             loss.backward()
             self.optimizer.step()
             self.scheduler.step()
+
+            if self._global_step % pbar_interval == 0:
+                pbar.set_postfix({"loss": f"{loss:.3e}"})
 
             if val_interval:
                 if self._global_step % val_interval == 0:
@@ -240,9 +248,10 @@ class BoltzmannGenerator(Model):
 
     def __init__(
         self,
-        prior: torchnf.Prior,
+        *,
+        prior: torchnf.prior.Prior,
         target: Callable[torch.Tensor, torch.Tensor],
-        flow: torchnf.Flow,
+        flow: torchnf.flow.Flow,
     ) -> None:
         super().__init__()
         self.prior = prior
@@ -257,15 +266,15 @@ class BoltzmannGenerator(Model):
 
         .. code::
 
-            x, log_prob_prior = self.prior()
-            y, log_det_jacob = self.flow(x)
-            log_prob_target = self.target(y)
+            x, log_prob_prior = self.prior.forward()
+            y, log_det_jacob = self.flow.forward(x)
+            log_prob_target = self.target.log_prob(y)
             log_weights = log_prob_target - log_prob_prior + log_det_jacob
             return y, log_weights
         """
         x, log_prob_prior = self.prior.forward()
-        y, log_det_jacob = self.flow(x)
-        log_prob_target = self.target(y)
+        y, log_det_jacob = self.flow.forward(x)
+        log_prob_target = self.target.log_prob(y)
         log_weights = log_prob_target - log_prob_prior + log_det_jacob
         return y, log_weights
 
