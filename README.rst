@@ -1,13 +1,19 @@
-# torchnf
+=======
+torchnf
+=======
 
 A PyTorch library for building Normalizing Flows.
 
-Documentation can be found at [marshrossney.github.io/torchnf](https://marshrossney.github.io/torchnf).
+Documentation can be found at `marshrossney.github.io/torchnf <https://marshrossney.github.io/torchnf>`_.
 
-## Installation
+------------
+Installation
+------------
 
-To do.
+To do.  
 
-## Example usage
+-------------
+Example usage
+-------------
 
 To do.
