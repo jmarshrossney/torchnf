@@ -1,22 +1,21 @@
-
-
-.. automodule:: torchnf
-   :members:
-   :undoc-members:
-   :show-inheritance:
+torchnf
+=======
 
 
 .. toctree::
    :maxdepth: 4
 
    torchnf.conditioners
-   torchnf.core
    torchnf.exceptions
+   torchnf.flow
    torchnf.lit_models
    torchnf.metrics
    torchnf.models
-   torchnf.networks
    torchnf.prior
    torchnf.transformers
    torchnf.utils
 
+.. toctree::
+   :maxdepth: 4
+
+   torchnf.recipes

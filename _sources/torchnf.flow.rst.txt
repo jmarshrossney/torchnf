@@ -1,7 +1,7 @@
-torchnf.core
+torchnf.flow
 ============
 
-.. automodule:: torchnf.core
+.. automodule:: torchnf.flow
    :members:
    :undoc-members:
    :show-inheritance:

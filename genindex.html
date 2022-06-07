@@ -41,7 +41,7 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules.html">torchnf</a></li>
+<li class="toctree-l1"><a class="reference internal" href="torchnf.html">torchnf</a></li>
 </ul>
 
         </div>
@@ -137,26 +137,42 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="torchnf.metrics.html#torchnf.metrics.LogWeightMetrics.acceptance">acceptance (torchnf.metrics.LogWeightMetrics property)</a>
 </li>
-      <li><a href="torchnf.networks.html#torchnf.networks.ConvNet.activation">activation (torchnf.networks.ConvNet attribute)</a>
+      <li><a href="torchnf.recipes.networks.html#torchnf.recipes.networks.ConvNet.activation">activation (torchnf.recipes.networks.ConvNet attribute)</a>
 
       <ul>
-        <li><a href="torchnf.networks.html#torchnf.networks.ConvNetCircular.activation">(torchnf.networks.ConvNetCircular attribute)</a>
+        <li><a href="torchnf.recipes.networks.html#torchnf.recipes.networks.ConvNetCircular.activation">(torchnf.recipes.networks.ConvNetCircular attribute)</a>
 </li>
-        <li><a href="torchnf.networks.html#torchnf.networks.DenseNet.activation">(torchnf.networks.DenseNet attribute)</a>
+        <li><a href="torchnf.recipes.networks.html#torchnf.recipes.networks.DenseNet.activation">(torchnf.recipes.networks.DenseNet attribute)</a>
 </li>
       </ul></li>
-      <li><a href="torchnf.networks.html#torchnf.networks.ConvNet.activation_kwargs">activation_kwargs (torchnf.networks.ConvNet attribute)</a>
+      <li><a href="torchnf.recipes.networks.html#torchnf.recipes.networks.ConvNet.activation_kwargs">activation_kwargs (torchnf.recipes.networks.ConvNet attribute)</a>
 
       <ul>
-        <li><a href="torchnf.networks.html#torchnf.networks.ConvNetCircular.activation_kwargs">(torchnf.networks.ConvNetCircular attribute)</a>
+        <li><a href="torchnf.recipes.networks.html#torchnf.recipes.networks.ConvNetCircular.activation_kwargs">(torchnf.recipes.networks.ConvNetCircular attribute)</a>
 </li>
-        <li><a href="torchnf.networks.html#torchnf.networks.DenseNet.activation_kwargs">(torchnf.networks.DenseNet attribute)</a>
+        <li><a href="torchnf.recipes.networks.html#torchnf.recipes.networks.DenseNet.activation_kwargs">(torchnf.recipes.networks.DenseNet attribute)</a>
 </li>
       </ul></li>
+      <li><a href="torchnf.recipes.layers.html#torchnf.recipes.layers.AdditiveCouplingLayer">AdditiveCouplingLayer (class in torchnf.recipes.layers)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="torchnf.recipes.layers.html#torchnf.recipes.layers.AffineCouplingLayer">AffineCouplingLayer (class in torchnf.recipes.layers)</a>
+</li>
       <li><a href="torchnf.transformers.html#torchnf.transformers.AffineTransform">AffineTransform (class in torchnf.transformers)</a>
 </li>
+      <li><a href="torchnf.conditioners.html#torchnf.conditioners.MaskedConditioner.apply_mask_to_input">apply_mask_to_input() (torchnf.conditioners.MaskedConditioner method)</a>
+
+      <ul>
+        <li><a href="torchnf.conditioners.html#torchnf.conditioners.MaskedConditionerStructurePreserving.apply_mask_to_input">(torchnf.conditioners.MaskedConditionerStructurePreserving method)</a>
+</li>
+      </ul></li>
+      <li><a href="torchnf.conditioners.html#torchnf.conditioners.MaskedConditioner.apply_mask_to_output">apply_mask_to_output() (torchnf.conditioners.MaskedConditioner method)</a>
+
+      <ul>
+        <li><a href="torchnf.conditioners.html#torchnf.conditioners.MaskedConditionerStructurePreserving.apply_mask_to_output">(torchnf.conditioners.MaskedConditionerStructurePreserving method)</a>
+</li>
+      </ul></li>
       <li><a href="torchnf.metrics.html#torchnf.metrics.LogWeightMetrics.asdict">asdict() (torchnf.metrics.LogWeightMetrics method)</a>
 </li>
       <li><a href="torchnf.conditioners.html#torchnf.conditioners.AutoregressiveConditioner">AutoregressiveConditioner (class in torchnf.conditioners)</a>
@@ -195,25 +211,31 @@
       </ul></li>
       <li><a href="torchnf.conditioners.html#torchnf.conditioners.Conditioner">Conditioner (class in torchnf.conditioners)</a>
 </li>
+      <li><a href="torchnf.recipes.layers.html#torchnf.recipes.layers.CouplingLayer.conditioner">conditioner (torchnf.recipes.layers.CouplingLayer property)</a>
+</li>
+      <li><a href="torchnf.flow.html#torchnf.flow.FlowLayer.conditioner_forward">conditioner_forward() (torchnf.flow.FlowLayer method)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="torchnf.core.html#torchnf.core.FlowLayer.conditioner_forward">conditioner_forward() (torchnf.core.FlowLayer method)</a>
-</li>
       <li><a href="torchnf.lit_models.html#torchnf.lit_models.LitBoltzmannGenerator.configure_optimizers">configure_optimizers() (torchnf.lit_models.LitBoltzmannGenerator method)</a>
 
       <ul>
         <li><a href="torchnf.models.html#torchnf.models.Model.configure_optimizers">(torchnf.models.Model method)</a>
 </li>
+        <li><a href="torchnf.recipes.models.html#torchnf.recipes.models.MultivariateGaussianSampler.configure_optimizers">(torchnf.recipes.models.MultivariateGaussianSampler method)</a>
+</li>
       </ul></li>
-      <li><a href="torchnf.networks.html#torchnf.networks.ConvNet.conv_kwargs">conv_kwargs (torchnf.networks.ConvNet attribute)</a>
+      <li><a href="torchnf.recipes.networks.html#torchnf.recipes.networks.ConvNet.conv_kwargs">conv_kwargs (torchnf.recipes.networks.ConvNet attribute)</a>
 
       <ul>
-        <li><a href="torchnf.networks.html#torchnf.networks.ConvNetCircular.conv_kwargs">(torchnf.networks.ConvNetCircular attribute)</a>
+        <li><a href="torchnf.recipes.networks.html#torchnf.recipes.networks.ConvNetCircular.conv_kwargs">(torchnf.recipes.networks.ConvNetCircular attribute)</a>
 </li>
       </ul></li>
-      <li><a href="torchnf.networks.html#torchnf.networks.ConvNet">ConvNet (class in torchnf.networks)</a>
+      <li><a href="torchnf.recipes.networks.html#torchnf.recipes.networks.ConvNet">ConvNet (class in torchnf.recipes.networks)</a>
 </li>
-      <li><a href="torchnf.networks.html#torchnf.networks.ConvNetCircular">ConvNetCircular (class in torchnf.networks)</a>
+      <li><a href="torchnf.recipes.networks.html#torchnf.recipes.networks.ConvNetCircular">ConvNetCircular (class in torchnf.recipes.networks)</a>
+</li>
+      <li><a href="torchnf.recipes.layers.html#torchnf.recipes.layers.CouplingLayer">CouplingLayer (class in torchnf.recipes.layers)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -221,17 +243,19 @@
 <h2 id="D">D</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="torchnf.networks.html#torchnf.networks.DenseNet">DenseNet (class in torchnf.networks)</a>
+      <li><a href="torchnf.recipes.networks.html#torchnf.recipes.networks.DenseNet">DenseNet (class in torchnf.recipes.networks)</a>
 </li>
-      <li><a href="torchnf.networks.html#torchnf.networks.ConvNet.dim">dim (torchnf.networks.ConvNet attribute)</a>
+      <li><a href="torchnf.recipes.networks.html#torchnf.recipes.networks.ConvNet.dim">dim (torchnf.recipes.networks.ConvNet attribute)</a>
 
       <ul>
-        <li><a href="torchnf.networks.html#torchnf.networks.ConvNetCircular.dim">(torchnf.networks.ConvNetCircular attribute)</a>
+        <li><a href="torchnf.recipes.networks.html#torchnf.recipes.networks.ConvNetCircular.dim">(torchnf.recipes.networks.ConvNetCircular attribute)</a>
 </li>
       </ul></li>
-      <li><a href="torchnf.transformers.html#torchnf.transformers.AffineTransform.domain">domain (torchnf.transformers.AffineTransform attribute)</a>
+      <li><a href="torchnf.recipes.layers.html#torchnf.recipes.layers.RQSplineCouplingLayer.domain">domain (torchnf.recipes.layers.RQSplineCouplingLayer attribute)</a>
 
       <ul>
+        <li><a href="torchnf.transformers.html#torchnf.transformers.AffineTransform.domain">(torchnf.transformers.AffineTransform attribute)</a>
+</li>
         <li><a href="torchnf.transformers.html#torchnf.transformers.Rescaling.domain">(torchnf.transformers.Rescaling attribute)</a>
 </li>
         <li><a href="torchnf.transformers.html#torchnf.transformers.RQSplineTransform.domain">(torchnf.transformers.RQSplineTransform attribute)</a>
@@ -261,18 +285,20 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="torchnf.models.html#torchnf.models.Model.fit">fit() (torchnf.models.Model method)</a>
 </li>
-      <li><a href="torchnf.core.html#torchnf.core.Flow">Flow (class in torchnf.core)</a>
+      <li><a href="torchnf.flow.html#torchnf.flow.Flow">Flow (class in torchnf.flow)</a>
 </li>
-      <li><a href="torchnf.core.html#torchnf.core.FlowLayer">FlowLayer (class in torchnf.core)</a>
+      <li><a href="torchnf.flow.html#torchnf.flow.FlowLayer">FlowLayer (class in torchnf.flow)</a>
 </li>
-      <li><a href="torchnf.conditioners.html#torchnf.conditioners.MaskedConditioner.forward">forward() (torchnf.conditioners.MaskedConditioner method)</a>
+      <li><a href="torchnf.conditioners.html#torchnf.conditioners.Conditioner.forward">forward() (torchnf.conditioners.Conditioner method)</a>
 
       <ul>
+        <li><a href="torchnf.conditioners.html#torchnf.conditioners.MaskedConditioner.forward">(torchnf.conditioners.MaskedConditioner method)</a>
+</li>
         <li><a href="torchnf.conditioners.html#torchnf.conditioners.SimpleConditioner.forward">(torchnf.conditioners.SimpleConditioner method)</a>
 </li>
-        <li><a href="torchnf.core.html#torchnf.core.Flow.forward">(torchnf.core.Flow method)</a>
+        <li><a href="torchnf.flow.html#torchnf.flow.Flow.forward">(torchnf.flow.Flow method)</a>
 </li>
-        <li><a href="torchnf.core.html#torchnf.core.FlowLayer.forward">(torchnf.core.FlowLayer method)</a>
+        <li><a href="torchnf.flow.html#torchnf.flow.FlowLayer.forward">(torchnf.flow.FlowLayer method)</a>
 </li>
         <li><a href="torchnf.lit_models.html#torchnf.lit_models.LitBoltzmannGenerator.forward">(torchnf.lit_models.LitBoltzmannGenerator method)</a>
 </li>
@@ -285,7 +311,7 @@
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="torchnf.core.html#torchnf.core.FlowLayer.freeze">freeze() (torchnf.core.FlowLayer method)</a>
+      <li><a href="torchnf.flow.html#torchnf.flow.FlowLayer.freeze">freeze() (torchnf.flow.FlowLayer method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -293,7 +319,7 @@
 <h2 id="G">G</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="torchnf.conditioners.html#torchnf.conditioners.MaskedConditioner.get_mask">get_mask() (torchnf.conditioners.MaskedConditioner method)</a>
+      <li><a href="torchnf.recipes.networks.html#torchnf.recipes.networks.GenericNetBuilder">GenericNetBuilder (class in torchnf.recipes.networks)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -307,12 +333,12 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="torchnf.transformers.html#torchnf.transformers.RQSplineTransform.handle_inputs_outside_interval">handle_inputs_outside_interval() (torchnf.transformers.RQSplineTransform method)</a>
 </li>
-      <li><a href="torchnf.networks.html#torchnf.networks.ConvNet.hidden_shape">hidden_shape (torchnf.networks.ConvNet attribute)</a>
+      <li><a href="torchnf.recipes.networks.html#torchnf.recipes.networks.ConvNet.hidden_shape">hidden_shape (torchnf.recipes.networks.ConvNet attribute)</a>
 
       <ul>
-        <li><a href="torchnf.networks.html#torchnf.networks.ConvNetCircular.hidden_shape">(torchnf.networks.ConvNetCircular attribute)</a>
+        <li><a href="torchnf.recipes.networks.html#torchnf.recipes.networks.ConvNetCircular.hidden_shape">(torchnf.recipes.networks.ConvNetCircular attribute)</a>
 </li>
-        <li><a href="torchnf.networks.html#torchnf.networks.DenseNet.hidden_shape">(torchnf.networks.DenseNet attribute)</a>
+        <li><a href="torchnf.recipes.networks.html#torchnf.recipes.networks.DenseNet.hidden_shape">(torchnf.recipes.networks.DenseNet attribute)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -333,24 +359,26 @@
         <li><a href="torchnf.transformers.html#torchnf.transformers.Translation.identity_params">(torchnf.transformers.Translation property)</a>
 </li>
       </ul></li>
-      <li><a href="torchnf.networks.html#torchnf.networks.ConvNet.in_channels">in_channels (torchnf.networks.ConvNet attribute)</a>
+      <li><a href="torchnf.recipes.networks.html#torchnf.recipes.networks.ConvNet.in_channels">in_channels (torchnf.recipes.networks.ConvNet attribute)</a>
 
       <ul>
-        <li><a href="torchnf.networks.html#torchnf.networks.ConvNetCircular.in_channels">(torchnf.networks.ConvNetCircular attribute)</a>
+        <li><a href="torchnf.recipes.networks.html#torchnf.recipes.networks.ConvNetCircular.in_channels">(torchnf.recipes.networks.ConvNetCircular attribute)</a>
 </li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="torchnf.networks.html#torchnf.networks.DenseNet.in_features">in_features (torchnf.networks.DenseNet attribute)</a>
+      <li><a href="torchnf.recipes.networks.html#torchnf.recipes.networks.DenseNet.in_features">in_features (torchnf.recipes.networks.DenseNet attribute)</a>
 </li>
       <li><a href="torchnf.exceptions.html#torchnf.exceptions.InputOutsideDomainError">InputOutsideDomainError</a>
 </li>
       <li><a href="torchnf.metrics.html#torchnf.metrics.LogWeightMetrics.integrated_autocorrelation">integrated_autocorrelation (torchnf.metrics.LogWeightMetrics property)</a>
 </li>
-      <li><a href="torchnf.core.html#torchnf.core.Flow.inverse">inverse() (torchnf.core.Flow method)</a>
+      <li><a href="torchnf.recipes.layers.html#torchnf.recipes.layers.RQSplineCouplingLayer.interval">interval (torchnf.recipes.layers.RQSplineCouplingLayer attribute)</a>
+</li>
+      <li><a href="torchnf.flow.html#torchnf.flow.Flow.inverse">inverse() (torchnf.flow.Flow method)</a>
 
       <ul>
-        <li><a href="torchnf.core.html#torchnf.core.FlowLayer.inverse">(torchnf.core.FlowLayer method)</a>
+        <li><a href="torchnf.flow.html#torchnf.flow.FlowLayer.inverse">(torchnf.flow.FlowLayer method)</a>
 </li>
         <li><a href="torchnf.models.html#torchnf.models.BoltzmannGenerator.inverse">(torchnf.models.BoltzmannGenerator method)</a>
 </li>
@@ -363,10 +391,10 @@
 <h2 id="K">K</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="torchnf.networks.html#torchnf.networks.ConvNet.kernel_size">kernel_size (torchnf.networks.ConvNet attribute)</a>
+      <li><a href="torchnf.recipes.networks.html#torchnf.recipes.networks.ConvNet.kernel_size">kernel_size (torchnf.recipes.networks.ConvNet attribute)</a>
 
       <ul>
-        <li><a href="torchnf.networks.html#torchnf.networks.ConvNetCircular.kernel_size">(torchnf.networks.ConvNetCircular attribute)</a>
+        <li><a href="torchnf.recipes.networks.html#torchnf.recipes.networks.ConvNetCircular.kernel_size">(torchnf.recipes.networks.ConvNetCircular attribute)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -379,7 +407,7 @@
 <h2 id="L">L</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="torchnf.networks.html#torchnf.networks.DenseNet.linear_kwargs">linear_kwargs (torchnf.networks.DenseNet attribute)</a>
+      <li><a href="torchnf.recipes.networks.html#torchnf.recipes.networks.DenseNet.linear_kwargs">linear_kwargs (torchnf.recipes.networks.DenseNet attribute)</a>
 </li>
       <li><a href="torchnf.lit_models.html#torchnf.lit_models.LitBoltzmannGenerator">LitBoltzmannGenerator (class in torchnf.lit_models)</a>
 </li>
@@ -403,7 +431,23 @@
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="torchnf.conditioners.html#torchnf.conditioners.MaskedConditioner.mask">mask (torchnf.conditioners.MaskedConditioner property)</a>
+
+      <ul>
+        <li><a href="torchnf.recipes.flows.html#torchnf.recipes.flows.NICE.mask">(torchnf.recipes.flows.NICE attribute)</a>
+</li>
+        <li><a href="torchnf.recipes.layers.html#torchnf.recipes.layers.AdditiveCouplingLayer.mask">(torchnf.recipes.layers.AdditiveCouplingLayer attribute)</a>
+</li>
+        <li><a href="torchnf.recipes.layers.html#torchnf.recipes.layers.AffineCouplingLayer.mask">(torchnf.recipes.layers.AffineCouplingLayer attribute)</a>
+</li>
+        <li><a href="torchnf.recipes.layers.html#torchnf.recipes.layers.CouplingLayer.mask">(torchnf.recipes.layers.CouplingLayer attribute)</a>
+</li>
+        <li><a href="torchnf.recipes.layers.html#torchnf.recipes.layers.MultiplicativeCouplingLayer.mask">(torchnf.recipes.layers.MultiplicativeCouplingLayer attribute)</a>
+</li>
+      </ul></li>
       <li><a href="torchnf.conditioners.html#torchnf.conditioners.MaskedConditioner">MaskedConditioner (class in torchnf.conditioners)</a>
+</li>
+      <li><a href="torchnf.conditioners.html#torchnf.conditioners.MaskedConditionerStructurePreserving">MaskedConditionerStructurePreserving (class in torchnf.conditioners)</a>
 </li>
       <li><a href="torchnf.models.html#torchnf.models.Model">Model (class in torchnf.models)</a>
 </li>
@@ -411,13 +455,11 @@
     module
 
       <ul>
-        <li><a href="torchnf.html#module-torchnf">torchnf</a>
-</li>
         <li><a href="torchnf.conditioners.html#module-torchnf.conditioners">torchnf.conditioners</a>
 </li>
-        <li><a href="torchnf.core.html#module-torchnf.core">torchnf.core</a>
-</li>
         <li><a href="torchnf.exceptions.html#module-torchnf.exceptions">torchnf.exceptions</a>
+</li>
+        <li><a href="torchnf.flow.html#module-torchnf.flow">torchnf.flow</a>
 </li>
         <li><a href="torchnf.lit_models.html#module-torchnf.lit_models">torchnf.lit_models</a>
 </li>
@@ -425,9 +467,15 @@
 </li>
         <li><a href="torchnf.models.html#module-torchnf.models">torchnf.models</a>
 </li>
-        <li><a href="torchnf.networks.html#module-torchnf.networks">torchnf.networks</a>
-</li>
         <li><a href="torchnf.prior.html#module-torchnf.prior">torchnf.prior</a>
+</li>
+        <li><a href="torchnf.recipes.flows.html#module-torchnf.recipes.flows">torchnf.recipes.flows</a>
+</li>
+        <li><a href="torchnf.recipes.layers.html#module-torchnf.recipes.layers">torchnf.recipes.layers</a>
+</li>
+        <li><a href="torchnf.recipes.models.html#module-torchnf.recipes.models">torchnf.recipes.models</a>
+</li>
+        <li><a href="torchnf.recipes.networks.html#module-torchnf.recipes.networks">torchnf.recipes.networks</a>
 </li>
         <li><a href="torchnf.transformers.html#module-torchnf.transformers">torchnf.transformers</a>
 </li>
@@ -435,11 +483,21 @@
 </li>
       </ul></li>
   </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="torchnf.recipes.layers.html#torchnf.recipes.layers.MultiplicativeCouplingLayer">MultiplicativeCouplingLayer (class in torchnf.recipes.layers)</a>
+</li>
+      <li><a href="torchnf.recipes.models.html#torchnf.recipes.models.MultivariateGaussianSampler">MultivariateGaussianSampler (class in torchnf.recipes.models)</a>
+</li>
+  </ul></td>
 </tr></table>
 
 <h2 id="N">N</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="torchnf.recipes.flows.html#torchnf.recipes.flows.NICE.n_blocks">n_blocks (torchnf.recipes.flows.NICE attribute)</a>
+</li>
+      <li><a href="torchnf.recipes.flows.html#torchnf.recipes.flows.RealNVP.n_layers">n_layers (torchnf.recipes.flows.RealNVP attribute)</a>
+</li>
       <li><a href="torchnf.transformers.html#torchnf.transformers.AffineTransform.n_params">n_params (torchnf.transformers.AffineTransform property)</a>
 
       <ul>
@@ -453,20 +511,40 @@
 </li>
       </ul></li>
   </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="torchnf.recipes.layers.html#torchnf.recipes.layers.RQSplineCouplingLayer.n_segments">n_segments (torchnf.recipes.layers.RQSplineCouplingLayer attribute)</a>
+</li>
+      <li><a href="torchnf.recipes.flows.html#torchnf.recipes.flows.NICE.net">net (torchnf.recipes.flows.NICE attribute)</a>
+
+      <ul>
+        <li><a href="torchnf.recipes.layers.html#torchnf.recipes.layers.AdditiveCouplingLayer.net">(torchnf.recipes.layers.AdditiveCouplingLayer attribute)</a>
+</li>
+        <li><a href="torchnf.recipes.layers.html#torchnf.recipes.layers.AffineCouplingLayer.net">(torchnf.recipes.layers.AffineCouplingLayer attribute)</a>
+</li>
+        <li><a href="torchnf.recipes.layers.html#torchnf.recipes.layers.CouplingLayer.net">(torchnf.recipes.layers.CouplingLayer attribute)</a>
+</li>
+        <li><a href="torchnf.recipes.layers.html#torchnf.recipes.layers.MultiplicativeCouplingLayer.net">(torchnf.recipes.layers.MultiplicativeCouplingLayer attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="torchnf.recipes.networks.html#torchnf.recipes.networks.NetBuilder">NetBuilder (class in torchnf.recipes.networks)</a>
+</li>
+      <li><a href="torchnf.recipes.flows.html#torchnf.recipes.flows.NICE">NICE (class in torchnf.recipes.flows)</a>
+</li>
+  </ul></td>
 </tr></table>
 
 <h2 id="O">O</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="torchnf.networks.html#torchnf.networks.ConvNet.out_channels">out_channels (torchnf.networks.ConvNet attribute)</a>
+      <li><a href="torchnf.recipes.networks.html#torchnf.recipes.networks.ConvNet.out_channels">out_channels (torchnf.recipes.networks.ConvNet attribute)</a>
 
       <ul>
-        <li><a href="torchnf.networks.html#torchnf.networks.ConvNetCircular.out_channels">(torchnf.networks.ConvNetCircular attribute)</a>
+        <li><a href="torchnf.recipes.networks.html#torchnf.recipes.networks.ConvNetCircular.out_channels">(torchnf.recipes.networks.ConvNetCircular attribute)</a>
 </li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="torchnf.networks.html#torchnf.networks.DenseNet.out_features">out_features (torchnf.networks.DenseNet attribute)</a>
+      <li><a href="torchnf.recipes.networks.html#torchnf.recipes.networks.DenseNet.out_features">out_features (torchnf.recipes.networks.DenseNet attribute)</a>
 </li>
       <li><a href="torchnf.models.html#torchnf.models.Model.output_dir">output_dir (torchnf.models.Model property)</a>
 </li>
@@ -479,20 +557,28 @@
       <li><a href="torchnf.prior.html#torchnf.prior.Prior">Prior (class in torchnf.prior)</a>
 </li>
   </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="torchnf.utils.html#torchnf.utils.prod">prod() (in module torchnf.utils)</a>
+</li>
+  </ul></td>
 </tr></table>
 
 <h2 id="R">R</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="torchnf.recipes.flows.html#torchnf.recipes.flows.RealNVP">RealNVP (class in torchnf.recipes.flows)</a>
+</li>
       <li><a href="torchnf.transformers.html#torchnf.transformers.Rescaling">Rescaling (class in torchnf.transformers)</a>
 </li>
-      <li><a href="torchnf.transformers.html#torchnf.transformers.RQSplineTransform">RQSplineTransform (class in torchnf.transformers)</a>
+      <li><a href="torchnf.recipes.layers.html#torchnf.recipes.layers.RQSplineCouplingLayer">RQSplineCouplingLayer (class in torchnf.recipes.layers)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="torchnf.transformers.html#torchnf.transformers.RQSplineTransformCircular">RQSplineTransformCircular (class in torchnf.transformers)</a>
+      <li><a href="torchnf.transformers.html#torchnf.transformers.RQSplineTransform">RQSplineTransform (class in torchnf.transformers)</a>
 </li>
-      <li><a href="torchnf.transformers.html#torchnf.transformers.RQSplineTransformClosedInterval">RQSplineTransformClosedInterval (class in torchnf.transformers)</a>
+      <li><a href="torchnf.transformers.html#torchnf.transformers.RQSplineTransformCircularDomain">RQSplineTransformCircularDomain (class in torchnf.transformers)</a>
+</li>
+      <li><a href="torchnf.transformers.html#torchnf.transformers.RQSplineTransformIntervalDomain">RQSplineTransformIntervalDomain (class in torchnf.transformers)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -512,21 +598,19 @@
       </ul></li>
       <li><a href="torchnf.models.html#torchnf.models.Model.save_checkpoint">save_checkpoint() (torchnf.models.Model method)</a>
 </li>
-      <li><a href="torchnf.conditioners.html#torchnf.conditioners.SimpleConditioner">SimpleConditioner (class in torchnf.conditioners)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="torchnf.networks.html#torchnf.networks.SimpleNetBuilder">SimpleNetBuilder (class in torchnf.networks)</a>
+      <li><a href="torchnf.conditioners.html#torchnf.conditioners.SimpleConditioner">SimpleConditioner (class in torchnf.conditioners)</a>
 </li>
       <li><a href="torchnf.prior.html#torchnf.prior.SimplePrior">SimplePrior (class in torchnf.prior)</a>
 </li>
-      <li><a href="torchnf.networks.html#torchnf.networks.ConvNet.skip_final_activation">skip_final_activation (torchnf.networks.ConvNet attribute)</a>
+      <li><a href="torchnf.recipes.networks.html#torchnf.recipes.networks.ConvNet.skip_final_activation">skip_final_activation (torchnf.recipes.networks.ConvNet attribute)</a>
 
       <ul>
-        <li><a href="torchnf.networks.html#torchnf.networks.DenseNet.skip_final_activation">(torchnf.networks.DenseNet attribute)</a>
+        <li><a href="torchnf.recipes.networks.html#torchnf.recipes.networks.DenseNet.skip_final_activation">(torchnf.recipes.networks.DenseNet attribute)</a>
 </li>
       </ul></li>
-      <li><a href="torchnf.core.html#torchnf.core.Flow.step_forward">step_forward() (torchnf.core.Flow method)</a>
+      <li><a href="torchnf.flow.html#torchnf.flow.Flow.step_forward">step_forward() (torchnf.flow.Flow method)</a>
 </li>
       <li><a href="torchnf.utils.html#torchnf.utils.sum_except_batch">sum_except_batch() (in module torchnf.utils)</a>
 </li>
@@ -539,13 +623,6 @@
       <li><a href="torchnf.utils.html#torchnf.utils.timestamp">timestamp() (in module torchnf.utils)</a>
 </li>
       <li>
-    torchnf
-
-      <ul>
-        <li><a href="torchnf.html#module-torchnf">module</a>
-</li>
-      </ul></li>
-      <li>
     torchnf.conditioners
 
       <ul>
@@ -553,17 +630,17 @@
 </li>
       </ul></li>
       <li>
-    torchnf.core
-
-      <ul>
-        <li><a href="torchnf.core.html#module-torchnf.core">module</a>
-</li>
-      </ul></li>
-      <li>
     torchnf.exceptions
 
       <ul>
         <li><a href="torchnf.exceptions.html#module-torchnf.exceptions">module</a>
+</li>
+      </ul></li>
+      <li>
+    torchnf.flow
+
+      <ul>
+        <li><a href="torchnf.flow.html#module-torchnf.flow">module</a>
 </li>
       </ul></li>
       <li>
@@ -588,17 +665,38 @@
 </li>
       </ul></li>
       <li>
-    torchnf.networks
-
-      <ul>
-        <li><a href="torchnf.networks.html#module-torchnf.networks">module</a>
-</li>
-      </ul></li>
-      <li>
     torchnf.prior
 
       <ul>
         <li><a href="torchnf.prior.html#module-torchnf.prior">module</a>
+</li>
+      </ul></li>
+      <li>
+    torchnf.recipes.flows
+
+      <ul>
+        <li><a href="torchnf.recipes.flows.html#module-torchnf.recipes.flows">module</a>
+</li>
+      </ul></li>
+      <li>
+    torchnf.recipes.layers
+
+      <ul>
+        <li><a href="torchnf.recipes.layers.html#module-torchnf.recipes.layers">module</a>
+</li>
+      </ul></li>
+      <li>
+    torchnf.recipes.models
+
+      <ul>
+        <li><a href="torchnf.recipes.models.html#module-torchnf.recipes.models">module</a>
+</li>
+      </ul></li>
+      <li>
+    torchnf.recipes.networks
+
+      <ul>
+        <li><a href="torchnf.recipes.networks.html#module-torchnf.recipes.networks">module</a>
 </li>
       </ul></li>
       <li>
@@ -608,8 +706,6 @@
         <li><a href="torchnf.transformers.html#module-torchnf.transformers">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     torchnf.utils
 
@@ -617,6 +713,8 @@
         <li><a href="torchnf.utils.html#module-torchnf.utils">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="torchnf.lit_models.html#torchnf.lit_models.LitBoltzmannGenerator.train_dataloader">train_dataloader() (torchnf.lit_models.LitBoltzmannGenerator method)</a>
 </li>
       <li><a href="torchnf.conditioners.html#torchnf.conditioners.AutoregressiveConditioner.training">training (torchnf.conditioners.AutoregressiveConditioner attribute)</a>
@@ -626,13 +724,19 @@
 </li>
         <li><a href="torchnf.conditioners.html#torchnf.conditioners.MaskedConditioner.training">(torchnf.conditioners.MaskedConditioner attribute)</a>
 </li>
+        <li><a href="torchnf.conditioners.html#torchnf.conditioners.MaskedConditionerStructurePreserving.training">(torchnf.conditioners.MaskedConditionerStructurePreserving attribute)</a>
+</li>
         <li><a href="torchnf.conditioners.html#torchnf.conditioners.SimpleConditioner.training">(torchnf.conditioners.SimpleConditioner attribute)</a>
 </li>
-        <li><a href="torchnf.core.html#torchnf.core.FlowLayer.training">(torchnf.core.FlowLayer attribute)</a>
+        <li><a href="torchnf.flow.html#torchnf.flow.FlowLayer.training">(torchnf.flow.FlowLayer attribute)</a>
 </li>
         <li><a href="torchnf.models.html#torchnf.models.BoltzmannGenerator.training">(torchnf.models.BoltzmannGenerator attribute)</a>
 </li>
         <li><a href="torchnf.models.html#torchnf.models.Model.training">(torchnf.models.Model attribute)</a>
+</li>
+        <li><a href="torchnf.recipes.models.html#torchnf.recipes.models.MultivariateGaussianSampler.training">(torchnf.recipes.models.MultivariateGaussianSampler attribute)</a>
+</li>
+        <li><a href="torchnf.recipes.models.html#torchnf.recipes.models.VonMisesSampler.training">(torchnf.recipes.models.VonMisesSampler attribute)</a>
 </li>
       </ul></li>
       <li><a href="torchnf.lit_models.html#torchnf.lit_models.LitBoltzmannGenerator.training_step">training_step() (torchnf.lit_models.LitBoltzmannGenerator method)</a>
@@ -651,9 +755,21 @@
 </li>
       <li><a href="torchnf.transformers.html#torchnf.transformers.Transformer">Transformer (class in torchnf.transformers)</a>
 </li>
-      <li><a href="torchnf.core.html#torchnf.core.FlowLayer.transformer_forward">transformer_forward() (torchnf.core.FlowLayer method)</a>
+      <li><a href="torchnf.recipes.layers.html#torchnf.recipes.layers.AdditiveCouplingLayer.transformer">transformer (torchnf.recipes.layers.AdditiveCouplingLayer property)</a>
+
+      <ul>
+        <li><a href="torchnf.recipes.layers.html#torchnf.recipes.layers.AffineCouplingLayer.transformer">(torchnf.recipes.layers.AffineCouplingLayer property)</a>
 </li>
-      <li><a href="torchnf.core.html#torchnf.core.FlowLayer.transformer_inverse">transformer_inverse() (torchnf.core.FlowLayer method)</a>
+        <li><a href="torchnf.recipes.layers.html#torchnf.recipes.layers.CouplingLayer.transformer">(torchnf.recipes.layers.CouplingLayer property)</a>
+</li>
+        <li><a href="torchnf.recipes.layers.html#torchnf.recipes.layers.MultiplicativeCouplingLayer.transformer">(torchnf.recipes.layers.MultiplicativeCouplingLayer property)</a>
+</li>
+        <li><a href="torchnf.recipes.layers.html#torchnf.recipes.layers.RQSplineCouplingLayer.transformer">(torchnf.recipes.layers.RQSplineCouplingLayer property)</a>
+</li>
+      </ul></li>
+      <li><a href="torchnf.flow.html#torchnf.flow.FlowLayer.transformer_forward">transformer_forward() (torchnf.flow.FlowLayer method)</a>
+</li>
+      <li><a href="torchnf.flow.html#torchnf.flow.FlowLayer.transformer_inverse">transformer_inverse() (torchnf.flow.FlowLayer method)</a>
 </li>
       <li><a href="torchnf.transformers.html#torchnf.transformers.Translation">Translation (class in torchnf.transformers)</a>
 </li>
@@ -663,7 +779,7 @@
 <h2 id="U">U</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="torchnf.core.html#torchnf.core.FlowLayer.unfreeze">unfreeze() (torchnf.core.FlowLayer method)</a>
+      <li><a href="torchnf.flow.html#torchnf.flow.FlowLayer.unfreeze">unfreeze() (torchnf.flow.FlowLayer method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -687,6 +803,8 @@
         <li><a href="torchnf.models.html#torchnf.models.Model.validation_step">(torchnf.models.Model method)</a>
 </li>
       </ul></li>
+      <li><a href="torchnf.recipes.models.html#torchnf.recipes.models.VonMisesSampler">VonMisesSampler (class in torchnf.recipes.models)</a>
+</li>
   </ul></td>
 </tr></table>
 

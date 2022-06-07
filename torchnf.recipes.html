@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>torchnf &mdash; torchnf 0.1.0 documentation</title>
+  <title>torchnf.recipes &mdash; torchnf 0.1.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -19,8 +19,8 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="torchnf" href="torchnf.html" />
-    <link rel="prev" title="Introduction" href="introduction.html" /> 
+    <link rel="next" title="torchnf.recipes.flows" href="torchnf.recipes.flows.html" />
+    <link rel="prev" title="torchnf.utils" href="torchnf.utils.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -44,18 +44,23 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">torchnf</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="torchnf.html">torchnf</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="torchnf.html">torchnf</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="torchnf.conditioners.html">torchnf.conditioners</a></li>
-<li class="toctree-l2"><a class="reference internal" href="torchnf.core.html">torchnf.core</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.exceptions.html">torchnf.exceptions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="torchnf.flow.html">torchnf.flow</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.lit_models.html">torchnf.lit_models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.metrics.html">torchnf.metrics</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.models.html">torchnf.models</a></li>
-<li class="toctree-l2"><a class="reference internal" href="torchnf.networks.html">torchnf.networks</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.prior.html">torchnf.prior</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.transformers.html">torchnf.transformers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.utils.html">torchnf.utils</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">torchnf.recipes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="torchnf.recipes.flows.html">torchnf.recipes.flows</a></li>
+<li class="toctree-l3"><a class="reference internal" href="torchnf.recipes.layers.html">torchnf.recipes.layers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="torchnf.recipes.models.html">torchnf.recipes.models</a></li>
+<li class="toctree-l3"><a class="reference internal" href="torchnf.recipes.networks.html">torchnf.recipes.networks</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -74,9 +79,10 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>torchnf</li>
+          <li><a href="torchnf.html">torchnf</a> &raquo;</li>
+      <li>torchnf.recipes</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="_sources/modules.rst.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/torchnf.recipes.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -84,21 +90,14 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="torchnf">
-<h1>torchnf<a class="headerlink" href="#torchnf" title="Permalink to this heading"></a></h1>
+  <section id="torchnf-recipes">
+<h1>torchnf.recipes<a class="headerlink" href="#torchnf-recipes" title="Permalink to this heading"></a></h1>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="torchnf.html">torchnf</a></li>
-<li class="toctree-l1"><a class="reference internal" href="torchnf.conditioners.html">torchnf.conditioners</a></li>
-<li class="toctree-l1"><a class="reference internal" href="torchnf.core.html">torchnf.core</a></li>
-<li class="toctree-l1"><a class="reference internal" href="torchnf.exceptions.html">torchnf.exceptions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="torchnf.lit_models.html">torchnf.lit_models</a></li>
-<li class="toctree-l1"><a class="reference internal" href="torchnf.metrics.html">torchnf.metrics</a></li>
-<li class="toctree-l1"><a class="reference internal" href="torchnf.models.html">torchnf.models</a></li>
-<li class="toctree-l1"><a class="reference internal" href="torchnf.networks.html">torchnf.networks</a></li>
-<li class="toctree-l1"><a class="reference internal" href="torchnf.prior.html">torchnf.prior</a></li>
-<li class="toctree-l1"><a class="reference internal" href="torchnf.transformers.html">torchnf.transformers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="torchnf.utils.html">torchnf.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="torchnf.recipes.flows.html">torchnf.recipes.flows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="torchnf.recipes.layers.html">torchnf.recipes.layers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="torchnf.recipes.models.html">torchnf.recipes.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="torchnf.recipes.networks.html">torchnf.recipes.networks</a></li>
 </ul>
 </div>
 </section>
@@ -107,8 +106,8 @@
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="introduction.html" class="btn btn-neutral float-left" title="Introduction" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="torchnf.html" class="btn btn-neutral float-right" title="torchnf" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="torchnf.utils.html" class="btn btn-neutral float-left" title="torchnf.utils" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="torchnf.recipes.flows.html" class="btn btn-neutral float-right" title="torchnf.recipes.flows" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

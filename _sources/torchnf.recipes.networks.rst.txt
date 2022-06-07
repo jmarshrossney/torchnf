@@ -1,0 +1,7 @@
+torchnf.recipes.networks
+========================
+
+.. automodule:: torchnf.recipes.networks
+   :members:
+   :undoc-members:
+   :show-inheritance:

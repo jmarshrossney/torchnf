@@ -1,0 +1,7 @@
+torchnf.recipes.flows
+=====================
+
+.. automodule:: torchnf.recipes.flows
+   :members:
+   :undoc-members:
+   :show-inheritance:

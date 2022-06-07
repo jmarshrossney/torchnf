@@ -1,0 +1,11 @@
+torchnf.recipes
+===============
+
+
+.. toctree::
+   :maxdepth: 4
+
+   torchnf.recipes.flows
+   torchnf.recipes.layers
+   torchnf.recipes.models
+   torchnf.recipes.networks
