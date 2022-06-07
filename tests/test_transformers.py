@@ -8,8 +8,8 @@ from torchnf.transformers import (
     Rescaling,
     AffineTransform,
     RQSplineTransform,
-    RQSplineTransformClosedInterval,
-    RQSplineTransformCircular,
+    RQSplineTransformIntervalDomain,
+    RQSplineTransformCircularDomain,
 )
 from torchnf.utils import expand_elements
 

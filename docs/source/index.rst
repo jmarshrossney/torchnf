@@ -6,7 +6,7 @@ Welcome to torchnf's documentation!
    :caption: Contents:
 
    introduction
-   modules
+   torchnf
 
 Indices and tables
 ==================

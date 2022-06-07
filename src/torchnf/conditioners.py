@@ -13,7 +13,13 @@ class Conditioner(torch.nn.Module):
     Alias of :py:class:`torch.nn.Module`, to be inherited by all conditioners.
     """
 
-    pass
+    def forward(
+        self, inputs: torch.Tensor, context: dict = {}
+    ) -> torch.Tensor:
+        """
+        Returns a set of parameters, optionally conditioned on the inputs.
+        """
+        raise NotImplementedError
 
 
 class SimpleConditioner(Conditioner):
@@ -43,11 +49,14 @@ class SimpleConditioner(Conditioner):
         Returns the parameters, expanded to the correct shape.
         """
         batch_size, *data_shape = inputs.shape
-        params = torchnf.utils.expand_elements(
-            self.params,
-            data_shape,
-            stack_dim=0,
-        )
+        if self.params.dim() == 1:
+            params = torchnf.utils.expand_elements(
+                self.params,
+                data_shape,
+                stack_dim=0,
+            )
+        else:
+            params = self.params
         return params.expand([batch_size, -1, *data_shape])
 
 
@@ -78,20 +87,45 @@ class MaskedConditioner(Conditioner):
 
     def __init__(
         self,
-        mask: Optional[torch.BoolTensor] = None,
         net: Optional[torch.nn.Sequential] = None,
+        mask: Optional[torch.BoolTensor] = None,
+        create_channel_dim: bool = False,
     ) -> None:
         super().__init__()
-        if mask:
+        if mask is not None:
             self.register_buffer("_mask", mask)
-        if net:
+        if net is not None:
             self._net = net
+        self.create_channel_dim = create_channel_dim
 
-    def get_mask(self, x: torch.Tensor) -> torch.BoolTensor:
+    @property
+    def mask(self) -> torch.BoolTensor:
         """
-        Returns the mask that multiplies the input tensor.
+        Returns the mask that delineates the partitions of the coupling layer.
         """
+        # NOTE: for variable shaped inputs, use self.context to get shape
         return self._mask
+
+    def apply_mask_to_input(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Applies mask to the input tensor.
+        """
+        return x[:, self.mask]
+
+    def apply_mask_to_output(self, params: torch.Tensor) -> torch.Tensor:
+        """
+        Applies mask to the output parameters.
+        """
+        params_shape = torch.Size(
+            [
+                params.shape[0],
+                params[0].numel() // int(self.mask.logical_not().sum()),
+                *self.mask.shape,
+            ]
+        )
+        return torch.full(params_shape, float("nan")).masked_scatter(
+            ~self.mask, params
+        )
 
     def _forward(self, x_masked: torch.Tensor) -> torch.Tensor:
         """
@@ -100,6 +134,8 @@ class MaskedConditioner(Conditioner):
         Unless overridden, this simply called the :code:`forward`
         method of the :code:`net` argument to the constructor.
         """
+        if self.create_channel_dim:
+            x_masked.unsqueeze_(1)
         return self._net(x_masked)
 
     def forward(self, x: torch.Tensor, context: dict = {}) -> torch.Tensor:
@@ -108,27 +144,36 @@ class MaskedConditioner(Conditioner):
 
         Masked elements are NaN's.
 
-        Effectively this does the following:
+        This does the following:
 
         .. code-block:: python
           :linenos:
 
             self.context = context
-            mask = self.get_mask(x)
-            x = x.mul(mask)
-            params = self._forward(x)
-            params = params.mul(~mask)  # ~ denotes logical negation
-            params = params.add(
-                torch.full_like(params, float('nan')).mul(mask)
-            )
+            x_masked = self.apply_mask_to_inputs(x)
+            params = self._forward(x_masked)
+            params = self.apply_mask_to_outputs(params)
             return params
         """
+
         self.context = context
-        mask = self.get_mask(x)
-        params = self._forward(x.mul(mask))
-        return params.mul(~mask).add(
-            torch.full_like(params, fill_value=float("nan")).mul(mask)
+        return self.apply_mask_to_output(
+            self._forward(self.apply_mask_to_input(x))
         )
+
+
+class MaskedConditionerStructurePreserving(MaskedConditioner):
+    def apply_mask_to_input(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Applies mask to the input tensor.
+        """
+        return x.mul(self.mask)
+
+    def apply_mask_to_output(self, params: torch.Tensor) -> torch.Tensor:
+        """
+        Applies mask to the output parameters.
+        """
+        return params.masked_fill(self.mask, float("nan"))
 
 
 class AutoregressiveConditioner(Conditioner):

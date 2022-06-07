@@ -571,14 +571,13 @@ Numerical Analysis, 1983, 3, 141-152
         return x, ldj
 
 
-class RQSplineTransformClosedInterval(RQSplineTransform):
+class RQSplineTransformIntervalDomain(RQSplineTransform):
     def __init__(
         self,
         n_segments: int,
         interval: tuple[float],
-        params_dim: int = 1,
     ):
-        super().__init__(n_segments, interval, params_dim)
+        super().__init__(n_segments, interval)
         self.domain = interval
         self.codomain = interval
 
@@ -591,14 +590,13 @@ class RQSplineTransformClosedInterval(RQSplineTransform):
         return derivs
 
 
-class RQSplineTransformCircular(RQSplineTransform):
+class RQSplineTransformCircularDomain(RQSplineTransform):
     def __init__(
         self,
         n_segments: int,
         interval: tuple[float],
-        params_dim: int = 1,
     ):
-        super().__init__(n_segments, interval, params_dim)
+        super().__init__(n_segments, interval)
         assert math.isclose(interval[1] - interval[0], 2 * PI)
         self.domain = interval
         self.codomain = interval

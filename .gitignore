@@ -6,3 +6,5 @@ __pycache__/
 .hypothesis
 legacy/
 docs/_build
+docs/source/torchnf.*
+docs/source/_templates/apidoc_orig

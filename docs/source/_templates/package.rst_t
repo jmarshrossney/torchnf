@@ -13,7 +13,7 @@
 {%- endfor %}
 {%- endmacro %}
 
-{{ automodule(pkgname, automodule_options) }}
+{{- pkgname | e | heading }}
 
 {% if separatemodules %}
 {{ toctree(submodules) }}
@@ -25,4 +25,8 @@
 {{ automodule(submodule, automodule_options) }}
 {% endfor %}
 {%- endif %}
+
+{%- if subpackages %}
+{{ toctree(subpackages) }}
+{% endif %}
 
