@@ -34,10 +34,12 @@ exclude = '''
 (
   /(
       \.git
-    | \.mypy_cache
-    | \.nox
+    | \.github
+    | \.pytest_cache
     | \.tox
     | \.venv
+    | \.hypothesis
+    | docs
     | __pycache__
   )/
 )

@@ -8,7 +8,7 @@ import torch
 
 # import pytorch_lightning as pl
 
-import torchnf.prior
+import torchnf.distributions
 import torchnf.flow
 
 
@@ -17,7 +17,7 @@ class LitBoltzmannGenerator:  # (pl.LightningModule):
 
     def __init__(
         self,
-        prior: torchnf.prior.Prior,
+        prior: torchnf.distributions.Prior,
         target: Callable[torch.Tensor, torch.Tensor],
         flow: torchnf.flow.Flow,
     ) -> None:

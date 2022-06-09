@@ -8,7 +8,9 @@ exclude =
     poetry.lock
     .git
     .venv
-    .nox
     .tox
     __pycache__
-    legacy/
+    .github
+    .pytest_cache
+    .hypothesis
+    docs

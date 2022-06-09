@@ -1,7 +1,7 @@
 import torch
 
 from torchnf.models import BoltzmannGenerator
-from torchnf.prior import SimplePrior
+from torchnf.distributions import SimplePrior
 from torchnf.flow import Flow, FlowLayer
 from torchnf.transformers import AffineTransform, Translation
 from torchnf.conditioners import (
@@ -19,6 +19,28 @@ from torchnf.recipes.layers import AffineCouplingLayer
 # torch.use_deterministic_algorithms(True)
 
 
+def test_sampling():
+    model = MultivariateGaussianSampler(
+        flow=Flow(FlowLayer(Translation(), SimpleConditioner([0]))),
+        loc=torch.full([36], 1),
+        covariance_matrix=torch.eye(36),
+        batch_size=100,
+    )
+    model.fit(1000, val_interval=1001, ckpt_interval=1001)
+
+    sample, log_weights = model.sample()
+    markov_chain = model.mcmc_sample()
+    assert len(sample) == 100
+    assert len(log_weights) == 100
+    assert len(markov_chain) == 99
+
+    sample, log_weights = model.sample(2)
+    markov_chain = model.mcmc_sample(2)
+    assert len(sample) == 200
+    assert len(log_weights) == 200
+    assert len(markov_chain) == 199
+
+
 def test_shifted_gaussian_target():
     torch.manual_seed(123456789)
     model = MultivariateGaussianSampler(
@@ -27,7 +49,7 @@ def test_shifted_gaussian_target():
         covariance_matrix=torch.eye(36),
         batch_size=100,
     )
-    model.fit(1000)
+    model.fit(1000, val_interval=1001, ckpt_interval=1001)
     final_metrics = model.validate()
     assert final_metrics["acceptance"] > 0.98
 
@@ -40,7 +62,7 @@ def test_shifted_rescaled_gaussian_target():
         covariance_matrix=torch.eye(36).mul(0.5),
         batch_size=500,
     )
-    model.fit(1000)
+    model.fit(1000, val_interval=1001, ckpt_interval=1001)
     final_metrics = model.validate()
     assert final_metrics["acceptance"] > 0.98
 
@@ -61,7 +83,7 @@ def _test_correlated_gaussian_target():
         covariance_matrix=torch.mm(scale_tril, scale_tril.T),
         batch_size=500,
     )
-    model.fit(1000)
+    model.fit(1000, val_interval=1001, ckpt_interval=1001)
     final_metrics = model.validate()
     assert final_metrics["acceptance"] > 0.98
 
@@ -85,7 +107,7 @@ def test_coupling_densenet():
         covariance_matrix=torch.eye(36),
         batch_size=500,
     )
-    model.fit(1000)
+    model.fit(1000, val_interval=1001, ckpt_interval=1001)
     final_metrics = model.validate()
     assert final_metrics["acceptance"] > 0.92
 
@@ -122,6 +144,6 @@ def test_coupling_convnet():
         covariance_matrix=torch.eye(36),
         batch_size=500,
     )
-    model.fit(1000)
+    model.fit(1000, val_interval=1001, ckpt_interval=1001)
     final_metrics = model.validate()
     assert final_metrics["acceptance"] > 0.92

@@ -14,7 +14,7 @@ import os
 from tqdm.auto import trange
 
 import torchnf.flow
-import torchnf.prior
+import torchnf.distributions
 import torchnf.utils
 import torchnf.metrics
 
@@ -74,23 +74,26 @@ class Model(torch.nn.Module):
         """
         return self._global_step
 
-    def configure_optimizers(self) -> None:
+    def configure_optimizers(
+        self,
+    ) -> tuple[torch.optim.Optimizer, torch.optim.lr_scheduler._LRScheduler]:
         """
-        Assigns an optimizer and learning rate scheduler.
+        Returns an optimizer and learning rate scheduler.
 
         .. attention:: This method should be overidden by the user!
 
         Example:
             .. code-block:: python
 
-                self.optimizer = torch.optim.Adam(
+                optimizer = torch.optim.Adam(
                     self.flow.parameters(),
                     lr=0.001,
                 )
-                self.scheduler = torch.optim.lr_schedulers.CosineAnnealingLR(
+                scheduler = torch.optim.lr_schedulers.CosineAnnealingLR(
                     self.optimizer,
                     T_max=10000,
                 )
+                return optimizer, scheduler
         """
         raise NotImplementedError
 
@@ -111,7 +114,7 @@ class Model(torch.nn.Module):
             "optimizer_state_dict": self.optimizer.state_dict(),
             "scheduler_state_dict": self.scheduler.state_dict(),
         }
-        ckpt_path = self._output_dir / "checkpoints"
+        ckpt_path = self.output_dir / "checkpoints"
         ckpt_path.mkdirs(exists_ok=True, parents=True)
         torch.save(
             ckpt,
@@ -127,10 +130,11 @@ class Model(torch.nn.Module):
         See Also:
             :meth:`save_checkpoint`
         """
+        # Have to instantiate the optimizers before we can load state dict
         if self._global_step == 0:
-            self.configure_optimizers()
+            self.optimizer, self.scheduler = self.configure_optimizers()
 
-        ckpt_path = self._output_dir / "checkpoints"
+        ckpt_path = self.output_dir / "checkpoints"
         step = step or self._most_recent_checkpoint
         ckpt = torch.load(ckpt_path / "ckpt_{step}.pt")
 
@@ -146,9 +150,9 @@ class Model(torch.nn.Module):
     def fit(
         self,
         n_steps: int,
-        val_interval: Optional[int] = None,
-        ckpt_interval: Optional[int] = None,
-        pbar_interval: int = 25.0,
+        val_interval: int = -1,
+        ckpt_interval: int = -1,
+        pbar_interval: int = 25,
     ) -> None:
         """
         Runs the training loop.
@@ -171,9 +175,11 @@ class Model(torch.nn.Module):
             n_steps
                 Number of training steps to run
             val_interval
-                Number of steps between validation runs
+                Number of steps between validation runs. Set to -1 to
+                run validation on final step
             ckpt_interval
-                Number of steps between saving checkpoints
+                Number of steps between saving checkpoints. Set to -1
+                to save checkpoint after final step
             pbar_interval
                 Number of steps between updates of the progress bar
 
@@ -182,8 +188,14 @@ class Model(torch.nn.Module):
             based on the global step, not the step number within the current
             call to :code:`fit`.
         """
+        # TODO: validate interval args. Use jsonargparse.PositiveInt?
+        if val_interval == -1:
+            val_interval = self._global_step + n_steps
+        if ckpt_interval == -1:
+            ckpt_interval = self._global_step + n_steps
+
         if self._global_step == 0:
-            self.configure_optimizers()
+            self.optimizer, self.scheduler = self.configure_optimizers()
 
         self.train()
         torch.set_grad_enabled(True)
@@ -202,12 +214,14 @@ class Model(torch.nn.Module):
             if self._global_step % pbar_interval == 0:
                 pbar.set_postfix({"loss": f"{loss:.3e}"})
 
-            if val_interval:
-                if self._global_step % val_interval == 0:
+            if self._global_step % val_interval == 0:
+                with torch.no_grad(), torchnf.utils.eval_mode(self):
                     _ = self.validation_step()
-            if ckpt_interval:
-                if self._global_step % ckpt_interval == 0:
-                    self.save_checkpoint()
+
+            if self._global_step % ckpt_interval == 0:
+                self.save_checkpoint()
+
+        self.eval()
 
     def validate(self) -> dict:
         """
@@ -249,11 +263,12 @@ class BoltzmannGenerator(Model):
     def __init__(
         self,
         *,
-        prior: torchnf.prior.Prior,
-        target: Callable[torch.Tensor, torch.Tensor],
+        prior: torchnf.distributions.Prior,
+        target: torchnf.distributions.Target,
         flow: torchnf.flow.Flow,
+        output_dir: Optional[Union[str, os.PathLike]] = None,
     ) -> None:
-        super().__init__()
+        super().__init__(output_dir)
         self.prior = prior
         self.target = target
         self.flow = flow
@@ -329,11 +344,83 @@ class BoltzmannGenerator(Model):
         return metrics.asdict()
 
     @torch.no_grad()
-    def sample(self) -> tuple[torch.Tensor, torch.Tensor]:
+    def sample(self, n_batches: int = 1) -> torch.Tensor:
         """
-        Sample from the model.
+        Generate a sample from the model, along with statistical weights.
 
         This simply called the :meth:`forward` method with gradients
         disabled.
+
+        This results in a biased sample from the target distribution, but
+        the statistical weights allow unbiased expectation values to be
+        calculated.
+
+        Args:
+            n_batches
+                Number of batches in the sample. The user may set
+                :attr:`batch_size` as desired.
+
+        Returns:
+            Tuple containing (1) the sample and (2) the logarithm of
+            statistical weights.
         """
-        return self.forward()
+        y, logw = self.forward()
+        for _ in range(1, n_batches):
+            y_, logw_ = self.forward()
+            y = torch.cat((y, y_), dim=0)
+            logw = torch.cat((logw, logw_), dim=0)
+        return y, logw
+
+    @torch.no_grad()
+    def mcmc_sample(
+        self,
+        n_batches: int = 1,
+        init_state: Optional[tuple[torch.Tensor, torch.Tensor]] = None,
+    ) -> torch.Tensor:
+        r"""
+        Generate an unbiased sample from the target distribution.
+
+        The Boltzmann Generator is used as the proposal distribution in
+        the Metropolis-Hastings algorithm. An asymptotically unbiased
+        sample is generated by accepting or rejecting data drawn from
+        the model using the Metropolis test:
+
+        .. math::
+
+            A(y \to y^\prime) = \min \left( 1,
+           \frac{q(y)}{p(y)} \frac{p(y^\prime)}{q(y^\prime)} \right) \, .
+
+        Args:
+            n_batches
+                Number of batches in the sample. The user may set
+                :attr:`batch_size` as desired.
+            init_state
+                Tuple :code:`(state, log_weight)` containing the initial
+                state of the Markov Chain and its log-weight. If not
+                provided, the Markov Chain is initialised with the first
+                state drawn from the model.
+
+        .. seealso:: :py:func:`torchnf.utils.metropolis_test`
+        """
+        # TODO: init_state. Save current state of chain by default?
+        y, logw = self.forward()
+        indices = torchnf.utils.metropolis_test(logw)
+        y = y[indices]  # can't see advantage to using index_select..
+
+        curr_y = y[-1].unsqueeze(0)
+        curr_logw = logw[indices[-1]].unsqueeze(0)
+
+        for _ in range(1, n_batches):
+            y_, logw_ = self.forward()
+            y_ = torch.cat((curr_y, y_))
+            logw_ = torch.cat((curr_logw, logw_))
+
+            indices = torchnf.utils.metropolis_test(logw_)
+
+            y_ = y_[indices]
+            y = torch.cat((y, y_))
+
+            curr_y = y[-1].unsqueeze(0)
+            curr_logw = logw_[indices[-1]].unsqueeze(0)
+
+        return y

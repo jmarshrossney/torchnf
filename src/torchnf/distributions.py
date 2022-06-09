@@ -1,5 +1,6 @@
 """
 """
+import abc
 import torch
 
 
@@ -99,3 +100,27 @@ class SimplePrior(Prior):
 
     def log_prob(self, sample: torch.Tensor) -> torch.Tensor:
         return self.distribution.log_prob(sample)
+
+
+class Target(abc.ABC):
+    """
+    Abstract base class for target distributions.
+
+    All target distributions must implement :code:`log_prob`
+
+    .. code:: python
+
+        def log_prob(self, sample: torch.Tensor) -> torch.Tensor:
+        ...
+
+    """
+
+    @classmethod
+    def __subclasshook__(cls, C):
+        if hasattr(C, "log_prob"):
+            return True
+        return False
+
+    @abc.abstractmethod
+    def log_prob(self, sample: torch.Tensor) -> torch.Tensor:
+        ...
