@@ -5,21 +5,32 @@ import torch
 
 
 class Prior:
-    """
+    r"""
     Base class for prior distributions.
+
+    The two essential requirements for a prior distribution are (a)
+    that it can be (efficiently) sampled from, and (b) that the log-
+    probability of a sample can be computed up to an unimportant
+    normalisation. Hence, derived classes should override :meth:`sample`
+    and :meth:`log_prob`.
+
+    Objects derived from this class can also be iterated over:
+
+    .. code-block:: python
+
+        prior = Prior(...)
+        prior = iter(prior)  # constructs a generator
+        sample, log_prob = next(prior)
+
+    This behaviour is similar to that of an
+    :py:class:`torch.utils.data.IterableDataset`, which means they can
+    be used in place of a ``DataLoader`` in PyTorch Lightning.
 
     Args:
         batch_size
-            Number of independent and identically distributed data
-            points to draw when sampling. This can be modified after
-            instantiation.
-
-    Derived classes should override
-        - :meth:`sample`
-        - :meth:`log_prob`
-
-    TODO: discuss requirements for sample
-    TODO: discuss requirements for log_prob
+            The default batch size, i.e. number of independent and
+            identically distributed data points to draw when sampling.
+            Used where prior is called as in ``next(iter(self))``.
     """
 
     def __init__(self, batch_size: int = 1) -> None:
@@ -30,9 +41,9 @@ class Prior:
 
     def __next__(self) -> tuple[torch.Tensor]:
         """
-        Alias for :meth:`forward`.
+        Alias for ``self.forward(self.batch_size)``.
         """
-        return self.forward()
+        return self.forward(self._batch_size)
 
     def __call__(self, sample: torch.Tensor) -> torch.Tensor:
         """
@@ -43,16 +54,16 @@ class Prior:
     @property
     def batch_size(self) -> int:
         """
-        The batch size returned by :meth:`sample`.
+        The default batch size used when calling ``next(self)``.
         """
         return self._batch_size
 
     @batch_size.setter
     def batch_size(self, new: int) -> None:
-        assert type(new) is int and new > 0
+        assert isinstance(new, int) and new > 0
         self._batch_size = new
 
-    def forward(self) -> tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, batch_size: int) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Returns a new sample and its log probability density.
 
@@ -60,13 +71,13 @@ class Prior:
 
         .. code-block:: python
 
-            sample = self.sample()
+            sample = self.sample(batch_size)
             return sample, self.log_prob(sample)
         """
-        sample = self.sample()
+        sample = self.sample(batch_size)
         return sample, self.log_prob(sample)
 
-    def sample(self) -> torch.Tensor:
+    def sample(self, batch_size: int) -> torch.Tensor:
         """
         Returns a new sample.
         """
@@ -95,8 +106,8 @@ class SimplePrior(Prior):
         )
         self.distribution = distribution
 
-    def sample(self) -> torch.Tensor:
-        return self.distribution.sample([self.batch_size])
+    def sample(self, batch_size: int) -> torch.Tensor:
+        return self.distribution.sample([batch_size])
 
     def log_prob(self, sample: torch.Tensor) -> torch.Tensor:
         return self.distribution.log_prob(sample)
@@ -106,7 +117,7 @@ class Target(abc.ABC):
     """
     Abstract base class for target distributions.
 
-    All target distributions must implement :code:`log_prob`
+    All target distributions must implement ``log_prob``
 
     .. code:: python
 

@@ -17,7 +17,7 @@ class MultivariateGaussianSampler(torchnf.models.BoltzmannGenerator):
         loc: torch.Tensor,
         covariance_matrix: Optional[torch.Tensor] = None,
         precision_matrix: Optional[torch.Tensor] = None,
-        batch_size: int = 100,
+        optimizer_spec: Optional[torchnf.models.OptimizerSpec] = None,
         output_dir: Optional[Union[str, os.PathLike]] = None,
     ):
         target = torch.distributions.MultivariateNormal(
@@ -27,23 +27,21 @@ class MultivariateGaussianSampler(torchnf.models.BoltzmannGenerator):
         )
         prior = torchnf.distributions.SimplePrior(
             torch.distributions.Normal(0, 1),
-            batch_size=batch_size,
             expand_shape=target.event_shape,
         )
         super().__init__(
-            prior=prior, target=target, flow=flow, output_dir=output_dir
+            prior=prior,
+            target=target,
+            flow=flow,
+            optimizer_spec=optimizer_spec,
+            output_dir=output_dir,
         )
-
-    def configure_optimizers(self) -> None:
-        optimizer = torch.optim.Adam(self.flow.parameters(), lr=0.1)
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-            optimizer,
-            T_max=1000,
-            eta_min=1e-6,
-        )
-        return optimizer, scheduler
 
 
 class VonMisesSampler(torchnf.models.BoltzmannGenerator):
+    """
+    .. attention:: Not yet implemented
+    """
+
     def __init__(self, flow: torchnf.flow.Flow, batch_size: int) -> None:
         pass

@@ -40,7 +40,11 @@ class LogWeightMetrics:
             self._indices[i + 1] != self._indices[i]
             for i in range(len(self._indices) - 1)
         ]
-        assert len(set(self._indices)) == sum(self._history)
+
+        # Sanity check that num transitions (acceptances) agree
+        transitions = set(self._indices)
+        transitions.discard(0)  # there was no transition *to* 0th state
+        assert len(transitions) == sum(self._history)
 
     @property
     def kl_divergence(self) -> float:
@@ -70,7 +74,7 @@ class LogWeightMetrics:
         Generally speaking, the acceptance rate will be larger if the overlap
         between the model and the target densities is larger.
         """
-        return len(set(self._indices)) / len(self._indices)
+        return sum(self._history) / len(self._history)
 
     @property
     def longest_rejection_run(self) -> int:
