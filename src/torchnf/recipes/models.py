@@ -17,7 +17,6 @@ class MultivariateGaussianSampler(torchnf.models.BoltzmannGenerator):
         loc: torch.Tensor,
         covariance_matrix: Optional[torch.Tensor] = None,
         precision_matrix: Optional[torch.Tensor] = None,
-        optimizer_spec: Optional[torchnf.models.OptimizerSpec] = None,
         output_dir: Optional[Union[str, os.PathLike]] = None,
     ):
         target = torch.distributions.MultivariateNormal(
@@ -33,7 +32,6 @@ class MultivariateGaussianSampler(torchnf.models.BoltzmannGenerator):
             prior=prior,
             target=target,
             flow=flow,
-            optimizer_spec=optimizer_spec,
             output_dir=output_dir,
         )
 

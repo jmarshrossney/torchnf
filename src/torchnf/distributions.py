@@ -91,7 +91,9 @@ class Prior:
 
 
 class SimplePrior(Prior):
-    """Wraps around torch.distributions.Distribution to make it iterable."""
+    """
+    Wraps around torch.distributions.Distribution to make it iterable.
+    """
 
     def __init__(
         self,

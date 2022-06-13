@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from torchnf.models import BoltzmannGenerator, OptimizerSpec
+from torchnf.models import BoltzmannGenerator
 from torchnf.distributions import SimplePrior
 from torchnf.flow import Flow, FlowLayer
 from torchnf.transformers import AffineTransform, Translation
@@ -22,7 +22,7 @@ from torchnf.recipes.layers import AffineCouplingLayer
 
 @pytest.fixture
 def optimizer_spec():
-    return OptimizerSpec(
+    return dict(
         optimizer="Adam",
         optimizer_kwargs={"lr": 0.1},
         scheduler="CosineAnnealingLR",
@@ -36,8 +36,8 @@ def test_sampling(optimizer_spec):
         flow=Flow(FlowLayer(Translation(), SimpleConditioner([0]))),
         loc=torch.full([36], 1),
         covariance_matrix=torch.eye(36),
-        optimizer_spec=optimizer_spec,
     )
+    model.add_optimizer(**optimizer_spec)
     model.fit(1000, 100, val_interval=None, ckpt_interval=None)
 
     sample, log_weights = model.weighted_sample(1000)
@@ -59,8 +59,8 @@ def test_shifted_gaussian_target(optimizer_spec):
         flow=Flow(FlowLayer(Translation(), SimpleConditioner([0]))),
         loc=torch.full([36], 1),
         covariance_matrix=torch.eye(36),
-        optimizer_spec=optimizer_spec,
     )
+    model.add_optimizer(**optimizer_spec)
     model.fit(1000, 100, val_interval=None, ckpt_interval=None)
     (final_metrics,) = model.validate(1000)
     assert final_metrics["acceptance"] > 0.98
@@ -72,8 +72,8 @@ def test_shifted_rescaled_gaussian_target(optimizer_spec):
         flow=Flow(FlowLayer(AffineTransform(), SimpleConditioner([0, 0]))),
         loc=torch.full([36], 1),
         covariance_matrix=torch.eye(36).mul(0.5),
-        optimizer_spec=optimizer_spec,
     )
+    model.add_optimizer(**optimizer_spec)
     model.fit(1000, 500, val_interval=None, ckpt_interval=None)
     (final_metrics,) = model.validate(1000)
     assert final_metrics["acceptance"] > 0.98
@@ -93,7 +93,6 @@ def _test_correlated_gaussian_target(optimizer_spec):
         ),
         loc=torch.empty([36]).uniform_().sub(0.5),
         covariance_matrix=torch.mm(scale_tril, scale_tril.T),
-        optimizer_spec=optimizer_spec,
     )
     model.fit(1000, 500, val_interval=None, ckpt_interval=None)
     (final_metrics,) = model.validate(1000)
@@ -117,8 +116,8 @@ def test_coupling_densenet(optimizer_spec):
         flow=flow,
         loc=torch.ones(36),
         covariance_matrix=torch.eye(36),
-        optimizer_spec=optimizer_spec,
     )
+    model.add_optimizer(**optimizer_spec)
     model.fit(1000, 500, val_interval=None, ckpt_interval=None)
     (final_metrics,) = model.validate(1000)
     assert final_metrics["acceptance"] > 0.92
@@ -154,8 +153,8 @@ def test_coupling_convnet(optimizer_spec):
         flow=flow,
         loc=torch.ones(36),
         covariance_matrix=torch.eye(36),
-        optimizer_spec=optimizer_spec,
     )
+    model.add_optimizer(**optimizer_spec)
     model.fit(1000, 500, val_interval=None, ckpt_interval=None)
     (final_metrics,) = model.validate(1000)
     assert final_metrics["acceptance"] > 0.92

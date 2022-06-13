@@ -22,45 +22,6 @@ import torchnf.metrics
 log = logging.getLogger(__name__)
 
 
-@dataclasses.dataclass
-class OptimizerSpec:
-    """
-    Dataclass defining an optimizer and learning rate scheduler.
-    """
-
-    optimizer: str
-    optimizer_kwargs: dict
-    scheduler: str
-    scheduler_kwargs: dict
-    submodule: Optional[str] = None
-
-    def __call__(
-        self, model: torch.nn.Module
-    ) -> tuple[torch.optim.Optimizer, torch.optim.lr_scheduler._LRScheduler]:
-        """
-        Instantiates an optimizer and scheduler, returning them as a tuple.
-
-        The parameters passed to the optimizer are obtained by calling
-        ``module.parameters()``, where ``module`` is either (a) the
-        ``model`` argument, or (b) a submodule of ``model`` specified
-        by ``self.submodule``.
-
-        Args:
-            model
-                The :class:`torch.nn.Module` instance containing parameters
-                to be optimized (or containing a submodule whose parameters
-                are to be optimized).
-        """
-        module = getattr(model, self.submodule) if self.submodule else model
-        optimizer = getattr(torch.optim, self.optimizer)(
-            module.parameters(), **self.optimizer_kwargs
-        )
-        scheduler = getattr(torch.optim.lr_scheduler, self.scheduler)(
-            optimizer, **self.scheduler_kwargs
-        )
-        return optimizer, scheduler
-
-
 class Model(torch.nn.Module):
     """
     Base class for models.
@@ -71,12 +32,7 @@ class Model(torch.nn.Module):
     can be saved and loaded.
 
     Args:
-        optimizer_spec:
-            An instance, or list of instances of, :class:`OptimizerSpec`,
-            specifying the optimizer and scheduler used for training. If
-            not provided, :meth:`self.configure_optimizers` should be
-            overridden.
-        output_dir:
+        output_dir
             A dedicated directory for the model, where checkpoints, metrics,
             logs, outputs etc. will be saved to and loaded from. If not
             provided, the fallback is to call :meth:`generate_output_dir`.
@@ -84,16 +40,8 @@ class Model(torch.nn.Module):
     .. attention:: Currently multiple optimizers are not supported.
     """
 
-    def __init__(
-        self,
-        optimizer_spec: Optional[
-            Union[OptimizerSpec, list[OptimizerSpec]]
-        ] = None,
-        output_dir: Optional[Union[str, os.PathLike]] = None,
-    ):
+    def __init__(self, output_dir: Optional[Union[str, os.PathLike]] = None):
         super().__init__()
-        self._optimizer_spec = optimizer_spec
-
         output_dir = output_dir or self.generate_output_dir()
         self._output_dir = pathlib.Path(str(output_dir)).resolve()
 
@@ -123,36 +71,42 @@ class Model(torch.nn.Module):
         """
         return self._global_step
 
-    def configure_optimizers(
+    def add_optimizer(
         self,
-    ) -> tuple[torch.optim.Optimizer, torch.optim.lr_scheduler._LRScheduler]:
+        optimizer: str,
+        optimizer_kwargs: dict,
+        scheduler: str,
+        scheduler_kwargs: dict,
+        submodule: Optional[str] = None,
+    ) -> None:
         """
-        Returns an optimizer and learning rate scheduler.
+        Add an optimizer and learning rate scheduler.
 
-        Unless overridden, this method does the following:
-
-        .. code-block:: python
-
-            return self._optimizer_spec(self)
-
-        This requires that `optimizer_spec` was provided when the model
-        was instantiated. However, more flexibility can be acheived by
-        overriding this method, e.g.
-
-        Example:
-            .. code-block:: python
-
-                optimizer = torch.optim.Adam(
-                    self.flow.parameters(),
-                    lr=0.001,
-                )
-                scheduler = torch.optim.lr_schedulers.CosineAnnealingLR(
-                    self.optimizer,
-                    T_max=10000,
-                )
-                return optimizer, scheduler
+        Args:
+            optimizer
+                String denoting an optimizer defined in ``torch.optim``
+            optimizer_kwargs
+                Keyword arguments for the optimizer
+            scheduler
+                String denoting a learning rate scheduler defined in
+                ``torch.optim.lr_schedulers``
+            scheduler_kwargs
+                Keyword arguments for the scheduler
+            submodule
+                Submodule of ``self`` that contains the parameters
+                to be optimized
         """
-        return self._optimizer_spec(self)
+        if hasattr(self, "optimizer"):
+            raise Exception("Currently only one optimizer is supported")
+
+        module = getattr(self, submodule) if submodule else self
+        optimizer = getattr(torch.optim, optimizer)(
+            module.parameters(), **optimizer_kwargs
+        )
+        scheduler = getattr(torch.optim.lr_scheduler, scheduler)(
+            optimizer, **scheduler_kwargs
+        )
+        self.optimizer, self.scheduler = optimizer, scheduler
 
     def save_checkpoint(self) -> None:
         """
@@ -188,8 +142,8 @@ class Model(torch.nn.Module):
             :meth:`save_checkpoint`
         """
         # Have to instantiate the optimizers before we can load state dict
-        if self._global_step == 0:
-            self.optimizer, self.scheduler = self.configure_optimizers()
+        if not hasattr(self, "optimizer") or not hasattr(self, "scheduler"):
+            raise Exception("Optimizers have not yet been configured.")
 
         ckpt_path = self.output_dir / "checkpoints"
         step = step or self._most_recent_checkpoint
@@ -264,8 +218,11 @@ class Model(torch.nn.Module):
         Notes:
             The conditions for running validation and saving a checkpoint are
             based on the global step, not the step number within the current
-            call to :code:`fit`.
+            call to ``fit``.
         """
+        if not hasattr(self, "optimizer") or not hasattr(self, "scheduler"):
+            raise Exception("Optimizers have not yet been configured.")
+
         final_step = self._global_step + steps
 
         # unchanged if +ve, final_step if -ve, final_step + 1 if falsey
@@ -286,9 +243,6 @@ class Model(torch.nn.Module):
             else range(steps)
         )
         pbar_interval = pbar_interval or final_step + 1
-
-        if self._global_step == 0:
-            self.optimizer, self.scheduler = self.configure_optimizers()
 
         self.train()
         torch.set_grad_enabled(True)
@@ -364,12 +318,9 @@ class BoltzmannGenerator(Model):
         prior: torchnf.distributions.Prior,
         target: torchnf.distributions.Target,
         flow: torchnf.flow.Flow,
-        optimizer_spec: Optional[
-            Union[OptimizerSpec, list[OptimizerSpec]]
-        ] = None,
         output_dir: Optional[Union[str, os.PathLike]] = None,
     ) -> None:
-        super().__init__(optimizer_spec, output_dir)
+        super().__init__(output_dir)
         self.prior = prior
         self.target = target
         self.flow = flow

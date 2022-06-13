@@ -1,6 +1,1 @@
-"""
-"""
-
-
-class InputOutsideDomainError(Exception):
-    pass
+pass
