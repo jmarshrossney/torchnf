@@ -34,6 +34,7 @@ def training_spec():
         val_interval=None,
         ckpt_interval=None,
         pbar_interval=None,
+        logging_interval=None,
     )
 
 

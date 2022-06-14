@@ -5,14 +5,13 @@ Normalizing Flows.
 See :mod:`torchnf.lit_models` for equivalent versions based on
 :py:class:`pytorch_lightning.LightningModule`.
 """
-import dataclasses
-from functools import cached_property
 import pathlib
 from typing import Any, Callable, Optional, Union
 import torch
 import logging
 import os
 import tqdm.auto
+import torch.utils.tensorboard as tensorboard
 
 import torchnf.flow
 import torchnf.distributions
@@ -20,26 +19,6 @@ import torchnf.utils
 import torchnf.metrics
 
 log = logging.getLogger(__name__)
-
-
-class OptimizerSpec:
-    optimizer: str
-    optimizer_kwargs: dict
-    scheduler: str
-    scheduler_kwargs: dict
-    submodule: Optional[str] = None
-
-    def __call__(
-        self, module: torch.nn.Module
-    ) -> tuple[torch.optim.Optimizer, torch.optim.lr_scheduler._LRScheduler]:
-        module = getattr(module, self.submodule) if self.submodule else module
-        optimizer = getattr(torch.optim, self.optimizer)(
-            module.parameters(), **self.optimizer_kwargs
-        )
-        scheduler = getattr(torch.optim.lr_scheduler, self.scheduler)(
-            optimizer, **self.scheduler_kwargs
-        )
-        return optimizer, scheduler
 
 
 class Model(torch.nn.Module):
@@ -85,6 +64,17 @@ class Model(torch.nn.Module):
         return self._output_dir
 
     @property
+    def logger(self) -> tensorboard.SummaryWriter:
+        """
+        Handles logging to Tensorboard.
+        """
+        if not hasattr(self, "_logger"):
+            self._logger = tensorboard.SummaryWriter(
+                self._output_dir.joinpath("logs")
+            )
+        return self._logger
+
+    @property
     def global_step(self) -> int:
         """
         Total number of training steps since initialisation.
@@ -104,6 +94,7 @@ class Model(torch.nn.Module):
         val_interval: Union[int, None] = -1,
         ckpt_interval: Union[int, None] = -1,
         pbar_interval: Union[int, None] = 25,
+        logging_interval: Union[int, None] = 25,
     ) -> None:
         """
         Set up the model for training.
@@ -140,6 +131,8 @@ class Model(torch.nn.Module):
             pbar_interval
                 Number of steps between updates of the progress bar.
                 Set to `None` to disable progress bar.
+            logging_interval
+                Number of steps between calls to :meth:`self.log_training`.
         """
         self.train_steps = train_steps
         self.train_batch_size = train_batch_size
@@ -154,6 +147,7 @@ class Model(torch.nn.Module):
         self.val_interval = val_interval
         self.ckpt_interval = ckpt_interval
         self.pbar_interval = pbar_interval
+        self.logging_interval = logging_interval
 
     def save_checkpoint(self) -> None:
         """
@@ -269,6 +263,8 @@ class Model(torch.nn.Module):
         )
         pbar_interval = self.pbar_interval or self.train_steps + 1
 
+        logging_interval = self.logging_interval or self.train_steps + 1
+
         self.train()
         torch.set_grad_enabled(True)
 
@@ -281,13 +277,19 @@ class Model(torch.nn.Module):
             if self._global_step % pbar_interval == 0:
                 pbar.set_postfix({"loss": f"{loss:.3e}"})
 
+            if self._global_step % logging_interval == 0:
+                self.log_training(loss)
+
             if self._global_step % val_interval == 0:
+                pbar.set_description("Validating")
                 with torch.no_grad(), torchnf.utils.eval_mode(self):
-                    # TODO, actually log metrics
-                    _ = self.validate()
+                    self.log_validation(self.validate())
+                pbar.set_description("Training")
 
             if self._global_step % ckpt_interval == 0:
                 self.save_checkpoint()
+
+        # NOTE: close logger here?
 
         self.eval()
 
@@ -302,6 +304,28 @@ class Model(torch.nn.Module):
         for _ in range(self.val_steps):
             out.append(self.validation_step())
         return out
+
+    def log_training(self, loss: torch.Tensor) -> None:
+        """
+        Log information during training.
+        """
+        self.logger.add_scalar("Training/loss", loss, self.global_step)
+        self.logger.add_scalar(
+            "Training/lr",
+            torch.Tensor([self.scheduler.get_last_lr()]),
+            self.global_step,
+        )
+
+    def log_validation(self, val_outputs: dict[str, torch.Tensor]) -> None:
+        """
+        Logs the outputs of :meth:`self.validate`.
+
+        By default, this logs each element of `val_outputs` as a scalar.
+        """
+        for metric, tensor in val_outputs.items():
+            self.logger.add_scalar(
+                f"Validation/{metric}", tensor, self.global_step
+            )
 
     def training_step(self) -> torch.Tensor:
         """
@@ -413,7 +437,10 @@ class BoltzmannGenerator(Model):
         metrics = torchnf.metrics.LogWeightMetrics(log_weights)
         return metrics
 
-    def validate(self) -> dict[torch.Tensor]:
+    def validate(self) -> dict[str, torch.Tensor]:
+        """
+        Returns a dict of tensors containing validation metrics.
+        """
         return torchnf.metrics.LogWeightMetrics.combine(super().validate())
 
     @staticmethod
