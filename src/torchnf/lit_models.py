@@ -2,13 +2,15 @@
 Alternative implementations of the models from :mod:`torchnf.models`, based
 on :py:class:`pytorch_lightning.LightningModule` rather than the standard
 :py:class:`torch.nn.Module`.
+
+.. attention:: This is a work in progress. Do not use.
 """
 from typing import Callable
 import torch
 
 # import pytorch_lightning as pl
 
-import torchnf.prior
+import torchnf.distributions
 import torchnf.flow
 
 
@@ -17,7 +19,7 @@ class LitBoltzmannGenerator:  # (pl.LightningModule):
 
     def __init__(
         self,
-        prior: torchnf.prior.Prior,
+        prior: torchnf.distributions.Prior,
         target: Callable[torch.Tensor, torch.Tensor],
         flow: torchnf.flow.Flow,
     ) -> None:

@@ -5,20 +5,41 @@ Normalizing Flows.
 See :mod:`torchnf.lit_models` for equivalent versions based on
 :py:class:`pytorch_lightning.LightningModule`.
 """
+import dataclasses
 from functools import cached_property
 import pathlib
-from typing import Callable, Optional, Union
+from typing import Any, Callable, Optional, Union
 import torch
 import logging
 import os
-from tqdm.auto import trange
+import tqdm.auto
 
 import torchnf.flow
-import torchnf.prior
+import torchnf.distributions
 import torchnf.utils
 import torchnf.metrics
 
 log = logging.getLogger(__name__)
+
+
+class OptimizerSpec:
+    optimizer: str
+    optimizer_kwargs: dict
+    scheduler: str
+    scheduler_kwargs: dict
+    submodule: Optional[str] = None
+
+    def __call__(
+        self, module: torch.nn.Module
+    ) -> tuple[torch.optim.Optimizer, torch.optim.lr_scheduler._LRScheduler]:
+        module = getattr(module, self.submodule) if self.submodule else module
+        optimizer = getattr(torch.optim, self.optimizer)(
+            module.parameters(), **self.optimizer_kwargs
+        )
+        scheduler = getattr(torch.optim.lr_scheduler, self.scheduler)(
+            optimizer, **self.scheduler_kwargs
+        )
+        return optimizer, scheduler
 
 
 class Model(torch.nn.Module):
@@ -31,41 +52,37 @@ class Model(torch.nn.Module):
     can be saved and loaded.
 
     Args:
-        output_dir:
+        output_dir
             A dedicated directory for the model, where checkpoints, metrics,
             logs, outputs etc. will be saved to and loaded from. If not
-            provided, resorts to the default of `<class_name>_<timestamp>`
-            in the current working directory.
+            provided, the fallback is to call :meth:`generate_output_dir`.
+
+    .. attention:: Currently multiple optimizers are not supported.
     """
 
     def __init__(self, output_dir: Optional[Union[str, os.PathLike]] = None):
         super().__init__()
-        if output_dir is not None:
-            self._output_dir = pathlib.Path(str(output_dir)).resolve()
+        output_dir = output_dir or self.generate_output_dir()
+        self._output_dir = pathlib.Path(str(output_dir)).resolve()
 
         self._global_step = 0
         self._most_recent_checkpoint = 0
 
-    def _default_output_dir(self) -> pathlib.Path:
+    def generate_output_dir(self) -> Union[str, os.PathLike]:
+        """
+        Generates a unique path to a dedicated output directory for the model.
+        """
         ts = torchnf.utils.timestamp()
         name = self.__class__.__name__
         output_dir = pathlib.Path(f"{name}_{ts}").resolve()
-        assert (
-            not output_dir.exists()
-        ), "Default output dir '{output_dir}' already exists!"
+        return output_dir
 
     @property
     def output_dir(self) -> pathlib.Path:
         """
         Path to dedicated directory for this model.
         """
-        try:
-            return self._output_dir
-        except AttributeError:
-            output_dir = self._default_output_dir()
-            log.info("Using output directory: %s" % output_dir)
-            self._output_dir = output_dir
-            return output_dir
+        return self._output_dir
 
     @property
     def global_step(self) -> int:
@@ -74,25 +91,69 @@ class Model(torch.nn.Module):
         """
         return self._global_step
 
-    def configure_optimizers(self) -> None:
+    def configure_training(
+        self,
+        train_steps: int,
+        train_batch_size: int,
+        val_steps: int,
+        val_batch_size: int,
+        optimizer: str,
+        optimizer_kwargs: dict,
+        scheduler: str,
+        scheduler_kwargs: dict,
+        val_interval: Union[int, None] = -1,
+        ckpt_interval: Union[int, None] = -1,
+        pbar_interval: Union[int, None] = 25,
+    ) -> None:
         """
-        Assigns an optimizer and learning rate scheduler.
+        Set up the model for training.
 
-        .. attention:: This method should be overidden by the user!
+        This method must be executed before running :meth:`fit`.
 
-        Example:
-            .. code-block:: python
-
-                self.optimizer = torch.optim.Adam(
-                    self.flow.parameters(),
-                    lr=0.001,
-                )
-                self.scheduler = torch.optim.lr_schedulers.CosineAnnealingLR(
-                    self.optimizer,
-                    T_max=10000,
-                )
+        Args:
+            train_steps
+                Number of training steps to run
+            train_batch_size
+                Size of each training batch
+            val_steps
+                Number of validation steps to run, each time validation
+                occurs
+            val_batch_size
+                Size of each validation batch
+            optimizer
+                String denoting an optimizer defined in ``torch.optim``
+            optimizer_kwargs
+                Keyword arguments for the optimizer
+            scheduler
+                String denoting a learning rate scheduler defined in
+                ``torch.optim.lr_schedulers``
+            scheduler_kwargs
+                Keyword arguments for the scheduler
+            val_interval
+                Number of steps between validation runs. Set to `-1` to
+                run validation on final step. Set to falsey to never
+                run validation.
+            ckpt_interval
+                Number of steps between saving checkpoints. Set to `-1`
+                to save checkpoint after final step. Set to `falsey` to
+                never save checkpoints,
+            pbar_interval
+                Number of steps between updates of the progress bar.
+                Set to `None` to disable progress bar.
         """
-        raise NotImplementedError
+        self.train_steps = train_steps
+        self.train_batch_size = train_batch_size
+        self.val_steps = val_steps
+        self.val_batch_size = val_batch_size
+        self.optimizer = getattr(torch.optim, optimizer)(
+            self.parameters(), **optimizer_kwargs
+        )
+        self.scheduler = getattr(torch.optim.lr_scheduler, scheduler)(
+            self.optimizer, **scheduler_kwargs
+        )
+        self.val_interval = val_interval
+        self.ckpt_interval = ckpt_interval
+        self.pbar_interval = pbar_interval
 
     def save_checkpoint(self) -> None:
         """
@@ -111,8 +172,8 @@ class Model(torch.nn.Module):
             "optimizer_state_dict": self.optimizer.state_dict(),
             "scheduler_state_dict": self.scheduler.state_dict(),
         }
-        ckpt_path = self._output_dir / "checkpoints"
-        ckpt_path.mkdirs(exists_ok=True, parents=True)
+        ckpt_path = self.output_dir / "checkpoints"
+        ckpt_path.mkdir(exists_ok=True, parents=True)
         torch.save(
             ckpt,
             ckpt_path / "ckpt_{self._global_step}.pt",
@@ -127,10 +188,11 @@ class Model(torch.nn.Module):
         See Also:
             :meth:`save_checkpoint`
         """
-        if self._global_step == 0:
-            self.configure_optimizers()
+        # Have to instantiate the optimizers before we can load state dict
+        if not hasattr(self, "optimizer") or not hasattr(self, "scheduler"):
+            raise Exception("Optimizers have not yet been configured.")
 
-        ckpt_path = self._output_dir / "checkpoints"
+        ckpt_path = self.output_dir / "checkpoints"
         step = step or self._most_recent_checkpoint
         ckpt = torch.load(ckpt_path / "ckpt_{step}.pt")
 
@@ -143,13 +205,26 @@ class Model(torch.nn.Module):
 
         log.info("Loaded checkpoint from step: {step}")
 
-    def fit(
-        self,
-        n_steps: int,
-        val_interval: Optional[int] = None,
-        ckpt_interval: Optional[int] = None,
-        pbar_interval: int = 25.0,
-    ) -> None:
+    def optimization_step(self, loss: torch.Tensor) -> None:
+        """
+        Performs a single optimization step.
+
+        Unless overridden, this simply does the following:
+
+        .. code-block:: python
+
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
+            self.scheduler.step()
+        """
+        # TODO multiple optimizers, ReduceLROnPlateau
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+        self.scheduler.step()
+
+    def fit(self) -> None:
         """
         Runs the training loop.
 
@@ -157,66 +232,76 @@ class Model(torch.nn.Module):
 
         .. code-block::
 
-            for step in range(n_steps):
-                self.global_step += 1
+            for _ in range(steps):
+                loss = self.training_step(batch_size)
+                self.optimizer_step(loss)
 
-                loss = self.training_step()
-
-                self.optimizer.zero_grad()
-                loss.backward()
-                self.optimizer.step()
-                self.scheduler.step()
-
-        Args:
-            n_steps
-                Number of training steps to run
-            val_interval
-                Number of steps between validation runs
-            ckpt_interval
-                Number of steps between saving checkpoints
-            pbar_interval
-                Number of steps between updates of the progress bar
+        along with incrementing :attr:`global_step` and, optionally,
+        validating and saving checkpoints.
 
         Notes:
             The conditions for running validation and saving a checkpoint are
             based on the global step, not the step number within the current
-            call to :code:`fit`.
+            call to ``fit``.
         """
-        if self._global_step == 0:
-            self.configure_optimizers()
+        # unchanged if +ve, final_step if -ve, final_step + 1 if falsey
+        val_interval = (
+            (self.val_interval if self.val_interval > 0 else self.train_steps)
+            if self.val_interval
+            else self.train_steps + 1
+        )
+        ckpt_interval = (
+            (
+                self.ckpt_interval
+                if self.ckpt_interval > 0
+                else self.train_steps
+            )
+            if self.ckpt_interval
+            else self.train_steps + 1
+        )
+
+        pbar = (
+            tqdm.auto.trange(
+                self._global_step, self.train_steps, desc="Training"
+            )
+            if self.pbar_interval
+            else range(self._global_step, self.train_steps)
+        )
+        pbar_interval = self.pbar_interval or self.train_steps + 1
 
         self.train()
         torch.set_grad_enabled(True)
 
-        pbar = trange(n_steps, desc="Training")
         for step in pbar:
             self._global_step += 1
 
             loss = self.training_step()
-
-            self.optimizer.zero_grad()
-            loss.backward()
-            self.optimizer.step()
-            self.scheduler.step()
+            self.optimization_step(loss)
 
             if self._global_step % pbar_interval == 0:
                 pbar.set_postfix({"loss": f"{loss:.3e}"})
 
-            if val_interval:
-                if self._global_step % val_interval == 0:
-                    _ = self.validation_step()
-            if ckpt_interval:
-                if self._global_step % ckpt_interval == 0:
-                    self.save_checkpoint()
+            if self._global_step % val_interval == 0:
+                with torch.no_grad(), torchnf.utils.eval_mode(self):
+                    # TODO, actually log metrics
+                    _ = self.validate()
 
-    def validate(self) -> dict:
+            if self._global_step % ckpt_interval == 0:
+                self.save_checkpoint()
+
+        self.eval()
+
+    def validate(self) -> list[Any]:
         """
         Runs the validation loop.
-
         Unless overidden, this will just call :meth:`validation_step`
-        once and return the result.
+        :code:`self.val_steps` times and return a list containing the
+        returned values.
         """
-        return self.validation_step()
+        out = []
+        for _ in range(self.val_steps):
+            out.append(self.validation_step())
+        return out
 
     def training_step(self) -> torch.Tensor:
         """
@@ -248,17 +333,17 @@ class BoltzmannGenerator(Model):
 
     def __init__(
         self,
-        *,
-        prior: torchnf.prior.Prior,
-        target: Callable[torch.Tensor, torch.Tensor],
+        prior: torchnf.distributions.Prior,
+        target: torchnf.distributions.Target,
         flow: torchnf.flow.Flow,
+        output_dir: Optional[Union[str, os.PathLike]] = None,
     ) -> None:
-        super().__init__()
+        super().__init__(output_dir)
         self.prior = prior
         self.target = target
         self.flow = flow
 
-    def forward(self) -> tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, batch_size: int) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Samples from the model and evaluates the statistical weights.
 
@@ -266,13 +351,13 @@ class BoltzmannGenerator(Model):
 
         .. code::
 
-            x, log_prob_prior = self.prior.forward()
+            x, log_prob_prior = self.prior.forward(batch_size)
             y, log_det_jacob = self.flow.forward(x)
             log_prob_target = self.target.log_prob(y)
             log_weights = log_prob_target - log_prob_prior + log_det_jacob
             return y, log_weights
         """
-        x, log_prob_prior = self.prior.forward()
+        x, log_prob_prior = self.prior.forward(batch_size)
         y, log_det_jacob = self.flow.forward(x)
         log_prob_target = self.target.log_prob(y)
         log_weights = log_prob_target - log_prob_prior + log_det_jacob
@@ -299,11 +384,11 @@ class BoltzmannGenerator(Model):
 
         .. code-block:: python
 
-            _, log_weights = self.forward()
+            _, log_weights = self.forward(self.train_batch_size)
             loss = log_weights.mean().neg()
             return loss
         """
-        _, log_weights = self.forward()
+        _, log_weights = self.forward(self.train_batch_size)
         loss = log_weights.mean().neg()
         return loss
 
@@ -320,20 +405,134 @@ class BoltzmannGenerator(Model):
         """
         return self.training_step_rev_kl()
 
-    def validation_step(self) -> dict:
+    def validation_step(self) -> torchnf.metrics.LogWeightMetrics:
         """
         Performs a single validation step, returning some metrics.
         """
-        _, log_weights = self.forward()
+        _, log_weights = self.forward(self.val_batch_size)
         metrics = torchnf.metrics.LogWeightMetrics(log_weights)
-        return metrics.asdict()
+        return metrics
+
+    def validate(self) -> dict[torch.Tensor]:
+        return torchnf.metrics.LogWeightMetrics.combine(super().validate())
+
+    @staticmethod
+    def _concat_samples(
+        *samples: tuple[torch.Tensor, torch.Tensor],
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """
+        Helper function to concatenate samples and their log weights.
+        """
+        data, weights = list(map(list, zip(*samples)))
+        return torch.cat(data, dim=0), torch.cat(weights, dim=0)
 
     @torch.no_grad()
-    def sample(self) -> tuple[torch.Tensor, torch.Tensor]:
+    def weighted_sample(
+        self, batch_size: int, batches: int = 1
+    ) -> torch.Tensor:
         """
-        Sample from the model.
+        Generate a weighted sample from the model.
 
-        This simply called the :meth:`forward` method with gradients
-        disabled.
+        This simply called the :meth:`forward` method multiple times
+        (with gradients disabled), and concatenates the result.
+
+        Sampling from the model results in a biased sample with respect
+        to the target distribution. However, the statistical weights
+        allow unbiased expectation values to be calculated.
+
+        Args:
+            batch_size:
+                Size of each batch
+            batches
+                Number of batches in the sample
+
+        Returns:
+            Tuple containing (1) the sample and (2) the logarithm of
+            statistical weights.
         """
-        return self.forward()
+        out = []
+        for _ in range(batches):
+            out.append(self.forward(batch_size))
+        return self._concat_samples(*out)
+
+    @property
+    def mcmc_current_state(
+        self,
+    ) -> Union[tuple[torch.Tensor, torch.Tensor], None]:
+        """
+        Current state of the Markov chain, and it's log statistical weight.
+
+        This is used by :meth:`mcmc_sample` to initialise the Markov chain.
+
+        Usually, there is no need for the user to set this explicitly;
+        it will be updated automatically at the end of an MCMC sampling
+        phase.
+        """
+        try:
+            return self._mcmc_current_state
+        except AttributeError:
+            return None
+
+    @mcmc_current_state.setter
+    def mcmc_current_state(
+        self, state: tuple[torch.Tensor, torch.Tensor]
+    ) -> None:
+        self._mcmc_current_state = state
+
+    @mcmc_current_state.deleter
+    def mcmc_current_state(self) -> None:
+        del self._mcmc_current_state
+
+    @torch.no_grad()
+    def mcmc_sample(
+        self,
+        batch_size: int,
+        batches: int = 1,
+    ) -> torch.Tensor:
+        r"""
+        Generate an unbiased sample from the target distribution.
+
+        The Boltzmann Generator is used as the proposal distribution in
+        the Metropolis-Hastings algorithm. An asymptotically unbiased
+        sample is generated by accepting or rejecting data drawn from
+        the model using the Metropolis test:
+
+        .. math::
+
+            A(y \to y^\prime) = \min \left( 1,
+           \frac{q(y)}{p(y)} \frac{p(y^\prime)}{q(y^\prime)} \right) \, .
+
+        Args:
+            batch_size:
+                Size of each batch
+            batches
+                Number of batches in the sample
+
+        Notes:
+            If :attr:`mcmc_current_state` is not :code:`None`, the
+            Markov chain will be initialised using this state. Oherwise,
+            an initial state will be drawn from the **prior** distribution.
+
+        .. seealso:: :py:func:`torchnf.utils.metropolis_test`
+        """
+        # Initialise with a random state drawn from the prior
+        if self.mcmc_current_state is None:
+            self.mcmc_current_state = self.prior.forward(1)
+
+        out = []
+
+        for _ in range(batches):
+            y, logw = self._concat_samples(
+                self.mcmc_current_state, self.forward(batch_size)
+            )
+            indices = torchnf.utils.metropolis_test(logw)
+
+            out.append(y[indices])
+
+            curr_idx = indices[-1]
+            self.mcmc_current_state = (
+                y[curr_idx].unsqueeze(0),
+                logw[curr_idx].unsqueeze(0),
+            )
+
+        return torch.cat(out, dim=0)

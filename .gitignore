@@ -2,9 +2,9 @@
 __pycache__/
 .venv/
 .tox/
+.pytest_cache/
 .coverage
 .hypothesis
-legacy/
 docs/_build
 docs/source/torchnf.*
 docs/source/_templates/apidoc_orig

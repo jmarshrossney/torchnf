@@ -1,7 +1,8 @@
+import pytest
 import torch
 
 from torchnf.models import BoltzmannGenerator
-from torchnf.prior import SimplePrior
+from torchnf.distributions import SimplePrior
 from torchnf.flow import Flow, FlowLayer
 from torchnf.transformers import AffineTransform, Translation
 from torchnf.conditioners import (
@@ -19,33 +20,91 @@ from torchnf.recipes.layers import AffineCouplingLayer
 # torch.use_deterministic_algorithms(True)
 
 
-def test_shifted_gaussian_target():
+@pytest.fixture
+def training_spec():
+    return dict(
+        train_steps=1000,
+        train_batch_size=100,
+        val_steps=1,
+        val_batch_size=1000,
+        optimizer="Adam",
+        optimizer_kwargs={"lr": 0.1},
+        scheduler="CosineAnnealingLR",
+        scheduler_kwargs={"T_max": 1000},
+        val_interval=None,
+        ckpt_interval=None,
+        pbar_interval=None,
+    )
+
+
+def test_sampling(training_spec):
+    model = MultivariateGaussianSampler(
+        flow=Flow(FlowLayer(Translation(), SimpleConditioner([0]))),
+        loc=torch.full([4], 1),
+        covariance_matrix=torch.eye(4),
+    )
+    model.configure_training(**training_spec)
+    model.fit()
+
+    sample, log_weights = model.weighted_sample(1000)
+    markov_chain = model.mcmc_sample(1000)
+    assert len(sample) == 1000
+    assert len(log_weights) == 1000
+    assert len(markov_chain) == 1000
+
+    sample, log_weights = model.weighted_sample(1000, 2)
+    markov_chain = model.mcmc_sample(1000, 2)
+    assert len(sample) == 2000
+    assert len(log_weights) == 2000
+    assert len(markov_chain) == 2000
+
+
+def test_combine_metrics(training_spec):
+    # TODO: this test belongs in test_metrics
+    model = MultivariateGaussianSampler(
+        flow=Flow(FlowLayer(Translation(), SimpleConditioner([0]))),
+        loc=torch.full([4], 1),
+        covariance_matrix=torch.eye(4),
+    )
+    training_spec.update(val_steps=10)
+    model.configure_training(**training_spec)
+    model.fit()
+    final_metrics = model.validate()
+    assert all(
+        [isinstance(metric, torch.Tensor) for metric in final_metrics.values()]
+    )
+    assert all(
+        [metric.shape == torch.Size([10]) for metric in final_metrics.values()]
+    )
+
+
+def test_shifted_gaussian_target(training_spec):
     torch.manual_seed(123456789)
     model = MultivariateGaussianSampler(
         flow=Flow(FlowLayer(Translation(), SimpleConditioner([0]))),
         loc=torch.full([36], 1),
         covariance_matrix=torch.eye(36),
-        batch_size=100,
     )
-    model.fit(1000)
+    model.configure_training(**training_spec)
+    model.fit()
     final_metrics = model.validate()
     assert final_metrics["acceptance"] > 0.98
 
 
-def test_shifted_rescaled_gaussian_target():
+def test_shifted_rescaled_gaussian_target(training_spec):
     torch.manual_seed(123456789)
     model = MultivariateGaussianSampler(
         flow=Flow(FlowLayer(AffineTransform(), SimpleConditioner([0, 0]))),
         loc=torch.full([36], 1),
         covariance_matrix=torch.eye(36).mul(0.5),
-        batch_size=500,
     )
-    model.fit(1000)
+    model.configure_training(**training_spec)
+    model.fit()
     final_metrics = model.validate()
-    assert final_metrics["acceptance"] > 0.98
+    assert final_metrics["acceptance"] > 0.97
 
 
-def _test_correlated_gaussian_target():
+def _test_correlated_gaussian_target(training_spec):
     # NOTE: simple conditioner + affine transform not enough to model
     # correlated target
     # It's vector-vector product when we need a matrix-vector product
@@ -59,14 +118,14 @@ def _test_correlated_gaussian_target():
         ),
         loc=torch.empty([36]).uniform_().sub(0.5),
         covariance_matrix=torch.mm(scale_tril, scale_tril.T),
-        batch_size=500,
     )
-    model.fit(1000)
+    model.configure_training(**training_spec)
+    model.fit()
     final_metrics = model.validate()
     assert final_metrics["acceptance"] > 0.98
 
 
-def test_coupling_densenet():
+def test_coupling_densenet(training_spec):
     mask = torch.zeros(36).bool()
     mask[::2] = True
     net = DenseNet(
@@ -83,14 +142,14 @@ def test_coupling_densenet():
         flow=flow,
         loc=torch.ones(36),
         covariance_matrix=torch.eye(36),
-        batch_size=500,
     )
-    model.fit(1000)
+    model.configure_training(**training_spec)
+    model.fit()
     final_metrics = model.validate()
-    assert final_metrics["acceptance"] > 0.92
+    assert final_metrics["acceptance"] > 0.9
 
 
-def test_coupling_convnet():
+def test_coupling_convnet(training_spec):
     mask = torch.zeros(36).bool()
     mask[::2] = True
     net = ConvNetCircular(
@@ -120,8 +179,8 @@ def test_coupling_convnet():
         flow=flow,
         loc=torch.ones(36),
         covariance_matrix=torch.eye(36),
-        batch_size=500,
     )
-    model.fit(1000)
+    model.configure_training(**training_spec)
+    model.fit()
     final_metrics = model.validate()
-    assert final_metrics["acceptance"] > 0.92
+    assert final_metrics["acceptance"] > 0.9

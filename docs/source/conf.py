@@ -40,6 +40,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
+    #"sphinx_rtd_dark_mode",
 ]
 
 # Napoleon
@@ -54,7 +55,7 @@ napoleon_include_special_with_doc = True
 # https://www.sphinx-doc.org/en/master/usage/extensions/extlinks.html
 extlinks = {
     "torchdocs": ("https://pytorch.org/docs/stable/%s.html", "torch.%s"),
-    "arxiv": ("https://arxiv.org/abs/%s", "arvix:%s"),
+    "arxiv": ("https://arxiv.org/abs/%s", "arxiv:%s"),
 }
 
 # Intersphinx
