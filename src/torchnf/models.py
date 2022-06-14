@@ -8,7 +8,7 @@ See :mod:`torchnf.lit_models` for equivalent versions based on
 import dataclasses
 from functools import cached_property
 import pathlib
-from typing import Callable, Optional, Union
+from typing import Any, Callable, Optional, Union
 import torch
 import logging
 import os
@@ -20,6 +20,26 @@ import torchnf.utils
 import torchnf.metrics
 
 log = logging.getLogger(__name__)
+
+
+class OptimizerSpec:
+    optimizer: str
+    optimizer_kwargs: dict
+    scheduler: str
+    scheduler_kwargs: dict
+    submodule: Optional[str] = None
+
+    def __call__(
+        self, module: torch.nn.Module
+    ) -> tuple[torch.optim.Optimizer, torch.optim.lr_scheduler._LRScheduler]:
+        module = getattr(module, self.submodule) if self.submodule else module
+        optimizer = getattr(torch.optim, self.optimizer)(
+            module.parameters(), **self.optimizer_kwargs
+        )
+        scheduler = getattr(torch.optim.lr_scheduler, self.scheduler)(
+            optimizer, **self.scheduler_kwargs
+        )
+        return optimizer, scheduler
 
 
 class Model(torch.nn.Module):
@@ -71,18 +91,35 @@ class Model(torch.nn.Module):
         """
         return self._global_step
 
-    def add_optimizer(
+    def configure_training(
         self,
+        train_steps: int,
+        train_batch_size: int,
+        val_steps: int,
+        val_batch_size: int,
         optimizer: str,
         optimizer_kwargs: dict,
         scheduler: str,
         scheduler_kwargs: dict,
-        submodule: Optional[str] = None,
+        val_interval: Union[int, None] = -1,
+        ckpt_interval: Union[int, None] = -1,
+        pbar_interval: Union[int, None] = 25,
     ) -> None:
         """
-        Add an optimizer and learning rate scheduler.
+        Set up the model for training.
+
+        This method must be executed before running :meth:`fit`.
 
         Args:
+            train_steps
+                Number of training steps to run
+            train_batch_size
+                Size of each training batch
+            val_steps
+                Number of validation steps to run, each time validation
+                occurs
+            val_batch_size
+                Size of each validation batch
             optimizer
                 String denoting an optimizer defined in ``torch.optim``
             optimizer_kwargs
@@ -92,21 +129,31 @@ class Model(torch.nn.Module):
                 ``torch.optim.lr_schedulers``
             scheduler_kwargs
                 Keyword arguments for the scheduler
-            submodule
-                Submodule of ``self`` that contains the parameters
-                to be optimized
+            val_interval
+                Number of steps between validation runs. Set to `-1` to
+                run validation on final step. Set to falsey to never
+                run validation.
+            ckpt_interval
+                Number of steps between saving checkpoints. Set to `-1`
+                to save checkpoint after final step. Set to `falsey` to
+                never save checkpoints,
+            pbar_interval
+                Number of steps between updates of the progress bar.
+                Set to `None` to disable progress bar.
         """
-        if hasattr(self, "optimizer"):
-            raise Exception("Currently only one optimizer is supported")
-
-        module = getattr(self, submodule) if submodule else self
-        optimizer = getattr(torch.optim, optimizer)(
-            module.parameters(), **optimizer_kwargs
+        self.train_steps = train_steps
+        self.train_batch_size = train_batch_size
+        self.val_steps = val_steps
+        self.val_batch_size = val_batch_size
+        self.optimizer = getattr(torch.optim, optimizer)(
+            self.parameters(), **optimizer_kwargs
         )
-        scheduler = getattr(torch.optim.lr_scheduler, scheduler)(
-            optimizer, **scheduler_kwargs
+        self.scheduler = getattr(torch.optim.lr_scheduler, scheduler)(
+            self.optimizer, **scheduler_kwargs
         )
-        self.optimizer, self.scheduler = optimizer, scheduler
+        self.val_interval = val_interval
+        self.ckpt_interval = ckpt_interval
+        self.pbar_interval = pbar_interval
 
     def save_checkpoint(self) -> None:
         """
@@ -177,15 +224,7 @@ class Model(torch.nn.Module):
         self.optimizer.step()
         self.scheduler.step()
 
-    def fit(
-        self,
-        steps: int,
-        batch_size: int,
-        *,
-        val_interval: Union[int, None] = -1,
-        ckpt_interval: Union[int, None] = -1,
-        pbar_interval: Union[int, None] = 25,
-    ) -> None:
+    def fit(self) -> None:
         """
         Runs the training loop.
 
@@ -200,49 +239,35 @@ class Model(torch.nn.Module):
         along with incrementing :attr:`global_step` and, optionally,
         validating and saving checkpoints.
 
-        Args:
-            steps
-                Number of training steps to run
-            batch_size
-                Size of each batch
-            val_interval
-                Number of steps between validation runs. Set to `-1` to
-                run validation on final step
-            ckpt_interval
-                Number of steps between saving checkpoints. Set to `-1`
-                to save checkpoint after final step
-            pbar_interval
-                Number of steps between updates of the progress bar.
-                Set to `None` to disable progress bar.
-
         Notes:
             The conditions for running validation and saving a checkpoint are
             based on the global step, not the step number within the current
             call to ``fit``.
         """
-        if not hasattr(self, "optimizer") or not hasattr(self, "scheduler"):
-            raise Exception("Optimizers have not yet been configured.")
-
-        final_step = self._global_step + steps
-
         # unchanged if +ve, final_step if -ve, final_step + 1 if falsey
         val_interval = (
-            (val_interval if val_interval > 0 else final_step)
-            if val_interval
-            else final_step + 1
+            (self.val_interval if self.val_interval > 0 else self.train_steps)
+            if self.val_interval
+            else self.train_steps + 1
         )
         ckpt_interval = (
-            (ckpt_interval if ckpt_interval > 0 else final_step)
-            if ckpt_interval
-            else final_step + 1
+            (
+                self.ckpt_interval
+                if self.ckpt_interval > 0
+                else self.train_steps
+            )
+            if self.ckpt_interval
+            else self.train_steps + 1
         )
 
         pbar = (
-            tqdm.auto.trange(steps, desc="Training")
-            if pbar_interval
-            else range(steps)
+            tqdm.auto.trange(
+                self._global_step, self.train_steps, desc="Training"
+            )
+            if self.pbar_interval
+            else range(self._global_step, self.train_steps)
         )
-        pbar_interval = pbar_interval or final_step + 1
+        pbar_interval = self.pbar_interval or self.train_steps + 1
 
         self.train()
         torch.set_grad_enabled(True)
@@ -250,7 +275,7 @@ class Model(torch.nn.Module):
         for step in pbar:
             self._global_step += 1
 
-            loss = self.training_step(batch_size)
+            loss = self.training_step()
             self.optimization_step(loss)
 
             if self._global_step % pbar_interval == 0:
@@ -259,33 +284,26 @@ class Model(torch.nn.Module):
             if self._global_step % val_interval == 0:
                 with torch.no_grad(), torchnf.utils.eval_mode(self):
                     # TODO, actually log metrics
-                    _ = self.validation_step()
+                    _ = self.validate()
 
             if self._global_step % ckpt_interval == 0:
                 self.save_checkpoint()
 
         self.eval()
 
-    def validate(self, batch_size: int, steps: int = 1) -> list[dict]:
+    def validate(self) -> list[Any]:
         """
         Runs the validation loop.
-
-        Args:
-            batch_size
-                Size of each batch
-            steps
-                Number of validation steps to run
-
         Unless overidden, this will just call :meth:`validation_step`
-        :code:`steps` times and return a list containing the returned
-        values.
+        :code:`self.val_steps` times and return a list containing the
+        returned values.
         """
         out = []
-        for _ in range(steps):
-            out.append(self.validation_step(batch_size))
+        for _ in range(self.val_steps):
+            out.append(self.validation_step())
         return out
 
-    def training_step(self, batch_size: int) -> torch.Tensor:
+    def training_step(self) -> torch.Tensor:
         """
         Performs a single training step, returning the loss.
 
@@ -294,7 +312,7 @@ class Model(torch.nn.Module):
         """
         raise NotImplementedError
 
-    def validation_step(self, batch_size: int) -> dict:
+    def validation_step(self) -> dict:
         """
         Performs a single validation step, returning any metrics.
 
@@ -358,7 +376,7 @@ class BoltzmannGenerator(Model):
         """
         raise NotImplementedError
 
-    def training_step_rev_kl(self, batch_size: int) -> torch.Tensor:
+    def training_step_rev_kl(self) -> torch.Tensor:
         """
         Performs a single 'reverse KL' training step.
 
@@ -366,34 +384,37 @@ class BoltzmannGenerator(Model):
 
         .. code-block:: python
 
-            _, log_weights = self.forward()
+            _, log_weights = self.forward(self.train_batch_size)
             loss = log_weights.mean().neg()
             return loss
         """
-        _, log_weights = self.forward(batch_size)
+        _, log_weights = self.forward(self.train_batch_size)
         loss = log_weights.mean().neg()
         return loss
 
-    def training_step_fwd_kl(self, batch_size: int) -> torch.Tensor:
+    def training_step_fwd_kl(self) -> torch.Tensor:
         """
         Raises:
             NotImplementedError
         """
         raise NotImplementedError
 
-    def training_step(self, batch_size: int) -> torch.Tensor:
+    def training_step(self) -> torch.Tensor:
         """
         Performs a single training step, returning the loss.
         """
-        return self.training_step_rev_kl(batch_size)
+        return self.training_step_rev_kl()
 
-    def validation_step(self, batch_size: int) -> dict:
+    def validation_step(self) -> torchnf.metrics.LogWeightMetrics:
         """
         Performs a single validation step, returning some metrics.
         """
-        _, log_weights = self.forward(batch_size)
+        _, log_weights = self.forward(self.val_batch_size)
         metrics = torchnf.metrics.LogWeightMetrics(log_weights)
-        return metrics.asdict()
+        return metrics
+
+    def validate(self) -> dict[torch.Tensor]:
+        return torchnf.metrics.LogWeightMetrics.combine(super().validate())
 
     @staticmethod
     def _concat_samples(

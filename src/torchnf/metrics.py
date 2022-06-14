@@ -159,7 +159,8 @@ class LogWeightMetrics:
 
     def asdict(self) -> dict[str, float]:
         """
-        Returns the computed metrics as a dictionary."""
+        Returns the computed metrics as a dictionary.
+        """
         attrs = [
             "acceptance",
             "kl_divergence",
@@ -168,3 +169,18 @@ class LogWeightMetrics:
             "effective_sample_size",
         ]
         return {attr: getattr(self, attr) for attr in attrs}
+
+    @staticmethod
+    def combine(inputs: list["LogWeightMetrics"]) -> dict[str, torch.Tensor]:
+        """
+        Combine multiple instances of this class.
+
+        Returns a dict of :class:`torch.Tensor`s, each containing a set
+        of values of a particular metric.
+        """
+        list_of_dicts = [metrics.asdict() for metrics in inputs]
+        dict_of_tensors = {
+            k: torch.Tensor([d[k] for d in list_of_dicts])
+            for k in list_of_dicts[0].keys()
+        }
+        return dict_of_tensors
