@@ -16,6 +16,7 @@
         <script src="_static/underscore.js"></script>
         <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -46,12 +47,12 @@
 <li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="torchnf.html">torchnf</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="torchnf.conditioners.html">torchnf.conditioners</a></li>
+<li class="toctree-l2"><a class="reference internal" href="torchnf.distributions.html">torchnf.distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.exceptions.html">torchnf.exceptions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.flow.html">torchnf.flow</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.lit_models.html">torchnf.lit_models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.metrics.html">torchnf.metrics</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.models.html">torchnf.models</a></li>
-<li class="toctree-l2"><a class="reference internal" href="torchnf.prior.html">torchnf.prior</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.transformers.html">torchnf.transformers</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">torchnf.utils</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.recipes.html">torchnf.recipes</a></li>
@@ -87,6 +88,15 @@
   <section id="module-torchnf.utils">
 <span id="torchnf-utils"></span><h1>torchnf.utils<a class="headerlink" href="#module-torchnf.utils" title="Permalink to this heading"></a></h1>
 <dl class="py function">
+<dt class="sig sig-object py" id="torchnf.utils.eval_mode">
+<span class="sig-prename descclassname"><span class="pre">torchnf.utils.</span></span><span class="sig-name descname"><span class="pre">eval_mode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchnf.utils.eval_mode" title="Permalink to this definition"></a></dt>
+<dd><p>Temporarily switch to evaluation mode.</p>
+<p>Snippet adapted from user Christoph_Heindl, posted on
+<span class="target" id="discuss-pytorch-org-t-opinion-eval-should-be-a-context-manager-18998">discuss.pytorch.org/t/opinion-eval-should-be-a-context-manager/18998</span>
+(MIT license)</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="torchnf.utils.expand_elements">
 <span class="sig-prename descclassname"><span class="pre">torchnf.utils.</span></span><span class="sig-name descname"><span class="pre">expand_elements</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stack_dim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></span><a class="headerlink" href="#torchnf.utils.expand_elements" title="Permalink to this definition"></a></dt>
 <dd><p>Expands and stacks each element of a one-dimensional tensor.</p>
@@ -108,6 +118,36 @@ stacked on</p></li>
 <span class="n">out</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">elements</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">stack_dim</span><span class="p">)</span>
 <span class="k">return</span> <span class="n">out</span>
 </pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="torchnf.utils.metropolis_test">
+<span class="sig-prename descclassname"><span class="pre">torchnf.utils.</span></span><span class="sig-name descname"><span class="pre">metropolis_test</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log_weights</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span></span></span><a class="headerlink" href="#torchnf.utils.metropolis_test" title="Permalink to this definition"></a></dt>
+<dd><p>Subjects a set of log-weights to the Metropolis test.</p>
+<p>The Metropolis-Hastings algorithm generates an asymptotically unbiased
+sample from some ‘target’ distribution <span class="math notranslate nohighlight">\(p(y)\)</span> given a proposal
+distribution <span class="math notranslate nohighlight">\(q(y)\)</span> which can be sampled from exactly.</p>
+<p>For each member of the sample, <span class="math notranslate nohighlight">\(y\)</span>, the log-weight is defined as</p>
+<div class="math notranslate nohighlight">
+\[\log w(y) = \log p(y) - \log q(y)\]</div>
+<p>A Markov chain is constructed by running through the sample sequentially
+and transitioning to a new state with probability</p>
+<div class="math notranslate nohighlight">
+\[A(y \to y^\prime) = \min \left( 1,
+\frac{q(y)}{p(y)} \frac{p(y^\prime)}{q(y^\prime)} \right) \, .\]</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>log_weights</strong> – One-dimensional tensor containing <cite>N</cite> log weights</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A set of <cite>N-1</cite> indices corresponding to the state of the Markov chain
+at each step.</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Note that the Markov chain is initialised using the first element.</p>
 </div>
 </dd></dl>
 

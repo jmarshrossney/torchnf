@@ -6,12 +6,12 @@ torchnf
    :maxdepth: 4
 
    torchnf.conditioners
+   torchnf.distributions
    torchnf.exceptions
    torchnf.flow
    torchnf.lit_models
    torchnf.metrics
    torchnf.models
-   torchnf.prior
    torchnf.transformers
    torchnf.utils
 

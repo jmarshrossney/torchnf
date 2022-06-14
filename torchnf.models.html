@@ -16,10 +16,11 @@
         <script src="_static/underscore.js"></script>
         <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="torchnf.prior" href="torchnf.prior.html" />
+    <link rel="next" title="torchnf.transformers" href="torchnf.transformers.html" />
     <link rel="prev" title="torchnf.metrics" href="torchnf.metrics.html" /> 
 </head>
 
@@ -46,12 +47,12 @@
 <li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="torchnf.html">torchnf</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="torchnf.conditioners.html">torchnf.conditioners</a></li>
+<li class="toctree-l2"><a class="reference internal" href="torchnf.distributions.html">torchnf.distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.exceptions.html">torchnf.exceptions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.flow.html">torchnf.flow</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.lit_models.html">torchnf.lit_models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.metrics.html">torchnf.metrics</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">torchnf.models</a></li>
-<li class="toctree-l2"><a class="reference internal" href="torchnf.prior.html">torchnf.prior</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.transformers.html">torchnf.transformers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.utils.html">torchnf.utils</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.recipes.html">torchnf.recipes</a></li>
@@ -92,18 +93,18 @@ Normalizing Flows.</p>
 <code class="xref py py-class docutils literal notranslate"><span class="pre">pytorch_lightning.LightningModule</span></code>.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="torchnf.models.BoltzmannGenerator">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchnf.models.</span></span><span class="sig-name descname"><span class="pre">BoltzmannGenerator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="torchnf.prior.html#torchnf.prior.Prior" title="torchnf.prior.Prior"><span class="pre">Prior</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flow</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="torchnf.flow.html#torchnf.flow.Flow" title="torchnf.flow.Flow"><span class="pre">Flow</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchnf.models.BoltzmannGenerator" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchnf.models.</span></span><span class="sig-name descname"><span class="pre">BoltzmannGenerator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prior</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="torchnf.distributions.html#torchnf.distributions.Prior" title="torchnf.distributions.Prior"><span class="pre">Prior</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="torchnf.distributions.html#torchnf.distributions.Target" title="torchnf.distributions.Target"><span class="pre">Target</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">flow</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="torchnf.flow.html#torchnf.flow.Flow" title="torchnf.flow.Flow"><span class="pre">Flow</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">PathLike</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchnf.models.BoltzmannGenerator" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#torchnf.models.Model" title="torchnf.models.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a></p>
 <p>Model representing a Boltzmann Generator based on a Normalizing Flow.</p>
 <p class="rubric">References</p>
 <p>The term ‘Boltzmann Generator’ was introduced in
-<a class="reference external" href="https://arxiv.org/abs/1812.01729">arvix:1812.01729</a>.</p>
+<a class="reference external" href="https://arxiv.org/abs/1812.01729">arxiv:1812.01729</a>.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="torchnf.models.BoltzmannGenerator.forward">
-<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#torchnf.models.BoltzmannGenerator.forward" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#torchnf.models.BoltzmannGenerator.forward" title="Permalink to this definition"></a></dt>
 <dd><p>Samples from the model and evaluates the statistical weights.</p>
 <p>What this does is</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">x</span><span class="p">,</span> <span class="n">log_prob_prior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prior</span><span class="o">.</span><span class="n">forward</span><span class="p">()</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">x</span><span class="p">,</span> <span class="n">log_prob_prior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prior</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">batch_size</span><span class="p">)</span>
 <span class="n">y</span><span class="p">,</span> <span class="n">log_det_jacob</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">flow</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 <span class="n">log_prob_target</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
 <span class="n">log_weights</span> <span class="o">=</span> <span class="n">log_prob_target</span> <span class="o">-</span> <span class="n">log_prob_prior</span> <span class="o">+</span> <span class="n">log_det_jacob</span>
@@ -126,12 +127,43 @@ of the outputs under the prior distribution.</p>
 </dl>
 </dd></dl>
 
+<dl class="py property">
+<dt class="sig sig-object py" id="torchnf.models.BoltzmannGenerator.mcmc_current_state">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">mcmc_current_state</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#torchnf.models.BoltzmannGenerator.mcmc_current_state" title="Permalink to this definition"></a></dt>
+<dd><p>Current state of the Markov chain, and it’s log statistical weight.</p>
+<p>This is used by <a class="reference internal" href="#torchnf.models.BoltzmannGenerator.mcmc_sample" title="torchnf.models.BoltzmannGenerator.mcmc_sample"><code class="xref py py-meth docutils literal notranslate"><span class="pre">mcmc_sample()</span></code></a> to initialise the Markov chain.</p>
+<p>Usually, there is no need for the user to set this explicitly;
+it will be updated automatically at the end of an MCMC sampling
+phase.</p>
+</dd></dl>
+
 <dl class="py method">
-<dt class="sig sig-object py" id="torchnf.models.BoltzmannGenerator.sample">
-<span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#torchnf.models.BoltzmannGenerator.sample" title="Permalink to this definition"></a></dt>
-<dd><p>Sample from the model.</p>
-<p>This simply called the <a class="reference internal" href="#torchnf.models.BoltzmannGenerator.forward" title="torchnf.models.BoltzmannGenerator.forward"><code class="xref py py-meth docutils literal notranslate"><span class="pre">forward()</span></code></a> method with gradients
-disabled.</p>
+<dt class="sig sig-object py" id="torchnf.models.BoltzmannGenerator.mcmc_sample">
+<span class="sig-name descname"><span class="pre">mcmc_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batches</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></span><a class="headerlink" href="#torchnf.models.BoltzmannGenerator.mcmc_sample" title="Permalink to this definition"></a></dt>
+<dd><p>Generate an unbiased sample from the target distribution.</p>
+<p>The Boltzmann Generator is used as the proposal distribution in
+the Metropolis-Hastings algorithm. An asymptotically unbiased
+sample is generated by accepting or rejecting data drawn from
+the model using the Metropolis test:</p>
+<div class="math notranslate nohighlight">
+\[ A(y \to y^\prime) = \min \left( 1,
+\frac{q(y)}{p(y)} \frac{p(y^\prime)}{q(y^\prime)} \right) \, .\]</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>batch_size</strong> – Size of each batch</p></li>
+<li><p><strong>batches</strong> – Number of batches in the sample</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>If <a class="reference internal" href="#torchnf.models.BoltzmannGenerator.mcmc_current_state" title="torchnf.models.BoltzmannGenerator.mcmc_current_state"><code class="xref py py-attr docutils literal notranslate"><span class="pre">mcmc_current_state</span></code></a> is not <code class="code docutils literal notranslate"><span class="pre">None</span></code>, the
+Markov chain will be initialised using this state. Oherwise,
+an initial state will be drawn from the <strong>prior</strong> distribution.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="torchnf.utils.html#torchnf.utils.metropolis_test" title="torchnf.utils.metropolis_test"><code class="xref py py-func docutils literal notranslate"><span class="pre">torchnf.utils.metropolis_test()</span></code></a></p>
+</div>
 </dd></dl>
 
 <dl class="py attribute">
@@ -160,7 +192,7 @@ disabled.</p>
 <span class="sig-name descname"><span class="pre">training_step_rev_kl</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></span><a class="headerlink" href="#torchnf.models.BoltzmannGenerator.training_step_rev_kl" title="Permalink to this definition"></a></dt>
 <dd><p>Performs a single ‘reverse KL’ training step.</p>
 <p>This simply does the following:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">_</span><span class="p">,</span> <span class="n">log_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forward</span><span class="p">()</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">_</span><span class="p">,</span> <span class="n">log_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">train_batch_size</span><span class="p">)</span>
 <span class="n">loss</span> <span class="o">=</span> <span class="n">log_weights</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">neg</span><span class="p">()</span>
 <span class="k">return</span> <span class="n">loss</span>
 </pre></div>
@@ -168,9 +200,41 @@ disabled.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="torchnf.models.BoltzmannGenerator.validate">
+<span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#torchnf.models.BoltzmannGenerator.validate" title="Permalink to this definition"></a></dt>
+<dd><p>Runs the validation loop.
+Unless overidden, this will just call <a class="reference internal" href="#torchnf.models.BoltzmannGenerator.validation_step" title="torchnf.models.BoltzmannGenerator.validation_step"><code class="xref py py-meth docutils literal notranslate"><span class="pre">validation_step()</span></code></a>
+<code class="code docutils literal notranslate"><span class="pre">self.val_steps</span></code> times and return a list containing the
+returned values.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="torchnf.models.BoltzmannGenerator.validation_step">
-<span class="sig-name descname"><span class="pre">validation_step</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#torchnf.models.BoltzmannGenerator.validation_step" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">validation_step</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="torchnf.metrics.html#torchnf.metrics.LogWeightMetrics" title="torchnf.metrics.LogWeightMetrics"><span class="pre">LogWeightMetrics</span></a></span></span><a class="headerlink" href="#torchnf.models.BoltzmannGenerator.validation_step" title="Permalink to this definition"></a></dt>
 <dd><p>Performs a single validation step, returning some metrics.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchnf.models.BoltzmannGenerator.weighted_sample">
+<span class="sig-name descname"><span class="pre">weighted_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batches</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></span><a class="headerlink" href="#torchnf.models.BoltzmannGenerator.weighted_sample" title="Permalink to this definition"></a></dt>
+<dd><p>Generate a weighted sample from the model.</p>
+<p>This simply called the <a class="reference internal" href="#torchnf.models.BoltzmannGenerator.forward" title="torchnf.models.BoltzmannGenerator.forward"><code class="xref py py-meth docutils literal notranslate"><span class="pre">forward()</span></code></a> method multiple times
+(with gradients disabled), and concatenates the result.</p>
+<p>Sampling from the model results in a biased sample with respect
+to the target distribution. However, the statistical weights
+allow unbiased expectation values to be calculated.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>batch_size</strong> – Size of each batch</p></li>
+<li><p><strong>batches</strong> – Number of batches in the sample</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Tuple containing (1) the sample and (2) the logarithm of
+statistical weights.</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -188,61 +252,66 @@ can be saved and loaded.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>output_dir</strong> – A dedicated directory for the model, where checkpoints, metrics,
 logs, outputs etc. will be saved to and loaded from. If not
-provided, resorts to the default of <cite>&lt;class_name&gt;_&lt;timestamp&gt;</cite>
-in the current working directory.</p>
+provided, the fallback is to call <a class="reference internal" href="#torchnf.models.Model.generate_output_dir" title="torchnf.models.Model.generate_output_dir"><code class="xref py py-meth docutils literal notranslate"><span class="pre">generate_output_dir()</span></code></a>.</p>
 </dd>
 </dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="torchnf.models.Model.configure_optimizers">
-<span class="sig-name descname"><span class="pre">configure_optimizers</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#torchnf.models.Model.configure_optimizers" title="Permalink to this definition"></a></dt>
-<dd><p>Assigns an optimizer and learning rate scheduler.</p>
 <div class="admonition attention">
 <p class="admonition-title">Attention</p>
-<p>This method should be overidden by the user!</p>
+<p>Currently multiple optimizers are not supported.</p>
 </div>
-<p class="rubric">Example</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">flow</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span>
-    <span class="n">lr</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="bp">self</span><span class="o">.</span><span class="n">scheduler</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">lr_schedulers</span><span class="o">.</span><span class="n">CosineAnnealingLR</span><span class="p">(</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="p">,</span>
-    <span class="n">T_max</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span>
-<span class="p">)</span>
-</pre></div>
-</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="torchnf.models.Model.configure_training">
+<span class="sig-name descname"><span class="pre">configure_training</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_steps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val_steps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val_batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer_kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler_kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val_interval</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-</span> <span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ckpt_interval</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-</span> <span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pbar_interval</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">25</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#torchnf.models.Model.configure_training" title="Permalink to this definition"></a></dt>
+<dd><p>Set up the model for training.</p>
+<p>This method must be executed before running <a class="reference internal" href="#torchnf.models.Model.fit" title="torchnf.models.Model.fit"><code class="xref py py-meth docutils literal notranslate"><span class="pre">fit()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>train_steps</strong> – Number of training steps to run</p></li>
+<li><p><strong>train_batch_size</strong> – Size of each training batch</p></li>
+<li><p><strong>val_steps</strong> – Number of validation steps to run, each time validation
+occurs</p></li>
+<li><p><strong>val_batch_size</strong> – Size of each validation batch</p></li>
+<li><p><strong>optimizer</strong> – String denoting an optimizer defined in <code class="docutils literal notranslate"><span class="pre">torch.optim</span></code></p></li>
+<li><p><strong>optimizer_kwargs</strong> – Keyword arguments for the optimizer</p></li>
+<li><p><strong>scheduler</strong> – String denoting a learning rate scheduler defined in
+<code class="docutils literal notranslate"><span class="pre">torch.optim.lr_schedulers</span></code></p></li>
+<li><p><strong>scheduler_kwargs</strong> – Keyword arguments for the scheduler</p></li>
+<li><p><strong>val_interval</strong> – Number of steps between validation runs. Set to <cite>-1</cite> to
+run validation on final step. Set to falsey to never
+run validation.</p></li>
+<li><p><strong>ckpt_interval</strong> – Number of steps between saving checkpoints. Set to <cite>-1</cite>
+to save checkpoint after final step. Set to <cite>falsey</cite> to
+never save checkpoints,</p></li>
+<li><p><strong>pbar_interval</strong> – Number of steps between updates of the progress bar.
+Set to <cite>None</cite> to disable progress bar.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="torchnf.models.Model.fit">
-<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_steps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val_interval</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ckpt_interval</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pbar_interval</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">25.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#torchnf.models.Model.fit" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#torchnf.models.Model.fit" title="Permalink to this definition"></a></dt>
 <dd><p>Runs the training loop.</p>
 <p>Essentially what this does is the following:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_steps</span><span class="p">):</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">global_step</span> <span class="o">+=</span> <span class="mi">1</span>
-
-    <span class="n">loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_step</span><span class="p">()</span>
-
-    <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
-    <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">scheduler</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">steps</span><span class="p">):</span>
+    <span class="n">loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_step</span><span class="p">(</span><span class="n">batch_size</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">optimizer_step</span><span class="p">(</span><span class="n">loss</span><span class="p">)</span>
 </pre></div>
 </div>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>n_steps</strong> – Number of training steps to run</p></li>
-<li><p><strong>val_interval</strong> – Number of steps between validation runs</p></li>
-<li><p><strong>ckpt_interval</strong> – Number of steps between saving checkpoints</p></li>
-<li><p><strong>pbar_interval</strong> – Number of steps between updates of the progress bar</p></li>
-</ul>
-</dd>
-</dl>
+<p>along with incrementing <a class="reference internal" href="#torchnf.models.Model.global_step" title="torchnf.models.Model.global_step"><code class="xref py py-attr docutils literal notranslate"><span class="pre">global_step</span></code></a> and, optionally,
+validating and saving checkpoints.</p>
 <p class="rubric">Notes</p>
 <p>The conditions for running validation and saving a checkpoint are
 based on the global step, not the step number within the current
-call to <code class="code docutils literal notranslate"><span class="pre">fit</span></code>.</p>
+call to <code class="docutils literal notranslate"><span class="pre">fit</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchnf.models.Model.generate_output_dir">
+<span class="sig-name descname"><span class="pre">generate_output_dir</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">PathLike</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#torchnf.models.Model.generate_output_dir" title="Permalink to this definition"></a></dt>
+<dd><p>Generates a unique path to a dedicated output directory for the model.</p>
 </dd></dl>
 
 <dl class="py property">
@@ -258,6 +327,19 @@ call to <code class="code docutils literal notranslate"><span class="pre">fit</s
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
 <p><a class="reference internal" href="#torchnf.models.Model.save_checkpoint" title="torchnf.models.Model.save_checkpoint"><code class="xref py py-meth docutils literal notranslate"><span class="pre">save_checkpoint()</span></code></a></p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchnf.models.Model.optimization_step">
+<span class="sig-name descname"><span class="pre">optimization_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loss</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#torchnf.models.Model.optimization_step" title="Permalink to this definition"></a></dt>
+<dd><p>Performs a single optimization step.</p>
+<p>Unless overridden, this simply does the following:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+<span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">scheduler</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+</pre></div>
 </div>
 </dd></dl>
 
@@ -298,10 +380,11 @@ scheduler, as well as the global step.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="torchnf.models.Model.validate">
-<span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#torchnf.models.Model.validate" title="Permalink to this definition"></a></dt>
-<dd><p>Runs the validation loop.</p>
-<p>Unless overidden, this will just call <a class="reference internal" href="#torchnf.models.Model.validation_step" title="torchnf.models.Model.validation_step"><code class="xref py py-meth docutils literal notranslate"><span class="pre">validation_step()</span></code></a>
-once and return the result.</p>
+<span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#torchnf.models.Model.validate" title="Permalink to this definition"></a></dt>
+<dd><p>Runs the validation loop.
+Unless overidden, this will just call <a class="reference internal" href="#torchnf.models.Model.validation_step" title="torchnf.models.Model.validation_step"><code class="xref py py-meth docutils literal notranslate"><span class="pre">validation_step()</span></code></a>
+<code class="code docutils literal notranslate"><span class="pre">self.val_steps</span></code> times and return a list containing the
+returned values.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -316,6 +399,37 @@ once and return the result.</p>
 
 </dd></dl>
 
+<dl class="py class">
+<dt class="sig sig-object py" id="torchnf.models.OptimizerSpec">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchnf.models.</span></span><span class="sig-name descname"><span class="pre">OptimizerSpec</span></span><a class="headerlink" href="#torchnf.models.OptimizerSpec" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchnf.models.OptimizerSpec.optimizer">
+<span class="sig-name descname"><span class="pre">optimizer</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#torchnf.models.OptimizerSpec.optimizer" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchnf.models.OptimizerSpec.optimizer_kwargs">
+<span class="sig-name descname"><span class="pre">optimizer_kwargs</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#torchnf.models.OptimizerSpec.optimizer_kwargs" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchnf.models.OptimizerSpec.scheduler">
+<span class="sig-name descname"><span class="pre">scheduler</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#torchnf.models.OptimizerSpec.scheduler" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchnf.models.OptimizerSpec.scheduler_kwargs">
+<span class="sig-name descname"><span class="pre">scheduler_kwargs</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#torchnf.models.OptimizerSpec.scheduler_kwargs" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchnf.models.OptimizerSpec.submodule">
+<span class="sig-name descname"><span class="pre">submodule</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#torchnf.models.OptimizerSpec.submodule" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 </section>
 
 
@@ -323,7 +437,7 @@ once and return the result.</p>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="torchnf.metrics.html" class="btn btn-neutral float-left" title="torchnf.metrics" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="torchnf.prior.html" class="btn btn-neutral float-right" title="torchnf.prior" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="torchnf.transformers.html" class="btn btn-neutral float-right" title="torchnf.transformers" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
