@@ -268,35 +268,20 @@ class IntegratedAutocorrelation(LogStatWeightMetricMCMC):
         """
 
 
-def LogStatWeightMetrics(
-    mcmc: bool = True,
-) -> torchmetrics.MetricCollection:
-    """
-    Collection of metrics based on log statistical weights.
-
-    Args:
-        mcmc
-            If True, applies the Metropolis test to the log-weights,
-            as though they corresponded to a sequence of proposals
-            for a Metropolis-Hastings simulation, and computes
-            additional metrics based on the accept/reject history.
-    """
-    metrics = [ShiftedKLDivergence(), EffectiveSampleSize()]
-    compute_groups = [["ShiftedKLDivergence", "EffectiveSampleSize"]]
-    if mcmc:
-        metrics += [
-            AcceptanceRate(),
-            LongestRejectionRun(),
-            IntegratedAutocorrelation(),
-        ]
-        compute_groups.append(
-            [
-                "AcceptanceRate",
-                "LongestRejectionRun",
-                "IntegratedAutocorrelation",
-            ]
-        )
-
-    return torchmetrics.MetricCollection(
-        metrics=metrics, compute_groups=compute_groups
-    )
+LogStatWeightMetrics = torchmetrics.MetricCollection(
+    metrics=[
+        ShiftedKLDivergence(),
+        EffectiveSampleSize(),
+        AcceptanceRate(),
+        LongestRejectionRun(),
+        IntegratedAutocorrelation(),
+    ],
+    compute_groups=[
+        ["ShiftedKLDivergence", "EffectiveSampleSize"],
+        [
+            "AcceptanceRate",
+            "LongestRejectionRun",
+            "IntegratedAutocorrelation",
+        ],
+    ],
+)

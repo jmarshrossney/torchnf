@@ -24,8 +24,7 @@ logweight_metrics = [
     IntegratedAutocorrelation,
 ]
 metric_collections = [
-    LogStatWeightMetrics(True),
-    LogStatWeightMetrics(False),
+    LogStatWeightMetrics,
 ]
 
 
@@ -79,8 +78,7 @@ def test_collections_forward(metric, log_weights):
 
 
 def test_compute_groups(log_weights):
-    assert len(LogStatWeightMetrics(mcmc=False).compute_groups) == 1
-    assert len(LogStatWeightMetrics(mcmc=True).compute_groups) == 2
+    assert len(LogStatWeightMetrics.compute_groups) == 2
 
 
 @pytest.mark.parametrize("metric", logweight_metrics)

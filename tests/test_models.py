@@ -37,7 +37,7 @@ def training_spec():
 
 @pytest.fixture
 def val_metrics():
-    return torchnf.metrics.LogStatWeightMetrics(mcmc=True)
+    return torchnf.metrics.LogStatWeightMetrics
 
 
 @pytest.fixture
