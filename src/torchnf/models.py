@@ -201,7 +201,7 @@ class Model(torch.nn.Module):
             "scheduler_state_dict": self.scheduler.state_dict(),
         }
         ckpt_path = self.output_dir / "checkpoints"
-        ckpt_path.mkdir(exists_ok=True, parents=True)
+        ckpt_path.mkdir(exist_ok=True, parents=True)
         torch.save(
             ckpt,
             ckpt_path / "ckpt_{self._global_step}.pt",
