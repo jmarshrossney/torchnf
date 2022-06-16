@@ -164,6 +164,9 @@ class AcceptanceRate(LogStatWeightMetricMCMC):
 class LongestRejectionRun(LogStatWeightMetricMCMC):
     """
     Largest number of consecutive rejections in the sampling phase.
+
+    Note that the computed metric is a ``FloatTensor`` so that the
+    mean can be computed without additional casting.
     """
 
     higher_is_better: Optional[bool] = False
@@ -181,7 +184,7 @@ class LongestRejectionRun(LogStatWeightMetricMCMC):
             this.mul_(is_rej)  # mult by 0 for acc
             longest = torch.maximum(longest, this)
 
-        return longest
+        return longest.float()
 
 
 class IntegratedAutocorrelation(LogStatWeightMetricMCMC):
