@@ -5,14 +5,14 @@ Normalizing Flows.
 See :mod:`torchnf.lit_models` for equivalent versions based on
 :py:class:`pytorch_lightning.LightningModule`.
 """
-import dataclasses
-from functools import cached_property
 import pathlib
 from typing import Any, Callable, Optional, Union
 import torch
 import logging
 import os
 import tqdm.auto
+import torch.utils.tensorboard as tensorboard
+import torchmetrics
 
 import torchnf.flow
 import torchnf.distributions
@@ -20,26 +20,6 @@ import torchnf.utils
 import torchnf.metrics
 
 log = logging.getLogger(__name__)
-
-
-class OptimizerSpec:
-    optimizer: str
-    optimizer_kwargs: dict
-    scheduler: str
-    scheduler_kwargs: dict
-    submodule: Optional[str] = None
-
-    def __call__(
-        self, module: torch.nn.Module
-    ) -> tuple[torch.optim.Optimizer, torch.optim.lr_scheduler._LRScheduler]:
-        module = getattr(module, self.submodule) if self.submodule else module
-        optimizer = getattr(torch.optim, self.optimizer)(
-            module.parameters(), **self.optimizer_kwargs
-        )
-        scheduler = getattr(torch.optim.lr_scheduler, self.scheduler)(
-            optimizer, **self.scheduler_kwargs
-        )
-        return optimizer, scheduler
 
 
 class Model(torch.nn.Module):
@@ -68,6 +48,8 @@ class Model(torch.nn.Module):
         self._global_step = 0
         self._most_recent_checkpoint = 0
 
+        self._logging = True
+
     def generate_output_dir(self) -> Union[str, os.PathLike]:
         """
         Generates a unique path to a dedicated output directory for the model.
@@ -85,24 +67,51 @@ class Model(torch.nn.Module):
         return self._output_dir
 
     @property
+    def logger(self) -> tensorboard.SummaryWriter:
+        """
+        Handles logging to Tensorboard.
+        """
+        if not hasattr(self, "_logger"):
+            self._logger = tensorboard.SummaryWriter(
+                self._output_dir.joinpath("logs")
+            )
+        return self._logger
+
+    def logging(self) -> None:
+        """
+        Set global logging switch to True.
+        """
+        self._logging = True
+
+    def no_logging(self) -> None:
+        """
+        Set global logging switch to False.
+        """
+        self._logging = False
+
+    @property
     def global_step(self) -> int:
         """
         Total number of training steps since initialisation.
         """
         return self._global_step
 
+    @property
+    def current_loss(self) -> float:
+        """
+        Most recently computed value of the loss function.
+        """
+        return self._curr_loss
+
     def configure_training(
         self,
-        train_steps: int,
-        train_batch_size: int,
-        val_steps: int,
-        val_batch_size: int,
+        steps: int,
+        batch_size: int,
         optimizer: str,
         optimizer_kwargs: dict,
         scheduler: str,
         scheduler_kwargs: dict,
-        val_interval: Union[int, None] = -1,
-        ckpt_interval: Union[int, None] = -1,
+        ckpt_interval: Union[int, None] = None,
         pbar_interval: Union[int, None] = 25,
     ) -> None:
         """
@@ -111,15 +120,10 @@ class Model(torch.nn.Module):
         This method must be executed before running :meth:`fit`.
 
         Args:
-            train_steps
+            steps
                 Number of training steps to run
-            train_batch_size
+            batch_size
                 Size of each training batch
-            val_steps
-                Number of validation steps to run, each time validation
-                occurs
-            val_batch_size
-                Size of each validation batch
             optimizer
                 String denoting an optimizer defined in ``torch.optim``
             optimizer_kwargs
@@ -129,10 +133,6 @@ class Model(torch.nn.Module):
                 ``torch.optim.lr_schedulers``
             scheduler_kwargs
                 Keyword arguments for the scheduler
-            val_interval
-                Number of steps between validation runs. Set to `-1` to
-                run validation on final step. Set to falsey to never
-                run validation.
             ckpt_interval
                 Number of steps between saving checkpoints. Set to `-1`
                 to save checkpoint after final step. Set to `falsey` to
@@ -141,19 +141,47 @@ class Model(torch.nn.Module):
                 Number of steps between updates of the progress bar.
                 Set to `None` to disable progress bar.
         """
-        self.train_steps = train_steps
-        self.train_batch_size = train_batch_size
-        self.val_steps = val_steps
-        self.val_batch_size = val_batch_size
+        self.train_steps = steps
+        self.train_batch_size = batch_size
         self.optimizer = getattr(torch.optim, optimizer)(
             self.parameters(), **optimizer_kwargs
         )
         self.scheduler = getattr(torch.optim.lr_scheduler, scheduler)(
             self.optimizer, **scheduler_kwargs
         )
-        self.val_interval = val_interval
         self.ckpt_interval = ckpt_interval
         self.pbar_interval = pbar_interval
+
+        if not hasattr(self, "val_interval"):
+            self.val_interval = None  # do not perform validation
+
+    def configure_validation(
+        self,
+        batch_size: int,
+        batches: int,
+        metrics: Union[torchmetrics.Metric, torchmetrics.MetricCollection],
+        interval: int = -1,
+    ) -> None:
+        """
+        Set up the model for validation.
+
+        Args:
+            batch_size
+                Size of each validation batch
+            batches
+                Number of validation steps to run, each time validation
+                occurs
+            metrics
+                Validation metrics to compute
+            interval
+                Number of steps between validation runs. Set to `-1` to
+                run validation on final step
+
+        """
+        self.val_batch_size = batch_size
+        self.val_batches = batches
+        self.val_metrics = metrics
+        self.val_interval = interval
 
     def save_checkpoint(self) -> None:
         """
@@ -260,48 +288,88 @@ class Model(torch.nn.Module):
             else self.train_steps + 1
         )
 
-        pbar = (
-            tqdm.auto.trange(
-                self._global_step, self.train_steps, desc="Training"
-            )
-            if self.pbar_interval
-            else range(self._global_step, self.train_steps)
-        )
+        train_range = range(self._global_step, self.train_steps)
+        pbar = tqdm.auto.tqdm(train_range, desc="Training")
+        train_range = pbar if self.pbar_interval else train_range
         pbar_interval = self.pbar_interval or self.train_steps + 1
 
         self.train()
         torch.set_grad_enabled(True)
 
-        for step in pbar:
+        for step in train_range:
             self._global_step += 1
 
             loss = self.training_step()
             self.optimization_step(loss)
 
+            self._curr_loss = float(loss)
+
+            if self._logging:
+                self.log_training()
+
             if self._global_step % pbar_interval == 0:
-                pbar.set_postfix({"loss": f"{loss:.3e}"})
+                pbar.set_postfix({"loss": f"{float(loss):.3e}"})
 
             if self._global_step % val_interval == 0:
-                with torch.no_grad(), torchnf.utils.eval_mode(self):
-                    # TODO, actually log metrics
+                with torch.no_grad(), torchnf.utils.eval_mode(
+                    self
+                ), torchnf.utils.pbar_description(pbar, "Validating"):
                     _ = self.validate()
+                    if self._logging:
+                        self.log_validation()
+                        self.logger.flush()  # force logger to write to disk
 
             if self._global_step % ckpt_interval == 0:
                 self.save_checkpoint()
 
+        pbar.close()
+        if self._logging:
+            self.logger.close()
+
         self.eval()
 
-    def validate(self) -> list[Any]:
+    def validate(self) -> list[torchmetrics.Metric]:
         """
         Runs the validation loop.
+
         Unless overidden, this will just call :meth:`validation_step`
-        :code:`self.val_steps` times and return a list containing the
-        returned values.
+        ``self.val_batchess`` times, and return the result of
+        ``self.val_metrics.compute()``.
         """
-        out = []
-        for _ in range(self.val_steps):
-            out.append(self.validation_step())
-        return out
+        self.val_metrics.reset()
+        for _ in range(self.val_batches):
+            self.validation_step()
+        return self.val_metrics.compute()
+
+    def log_training(self) -> None:
+        """
+        Log information during training.
+        """
+        self.logger.add_scalar(
+            "Training/loss", self.current_loss, self.global_step
+        )
+        self.logger.add_scalar(
+            "Training/lr",
+            torch.Tensor([self.scheduler.get_last_lr()]),
+            self.global_step,
+        )
+
+    def log_validation(self) -> None:
+        """
+        Logs the validation metrics.
+
+        By default, this logs the **mean** of each item in
+        ``self.val_metrics``. If the metric contains multiple elements,
+        a histogram is also logged.
+        """
+        for metric, tensor in self.val_metrics.compute().items():
+            self.logger.add_scalar(
+                f"Validation/{metric}", tensor.mean(), self.global_step
+            )
+            if tensor.numel() > 1:
+                self.logger.add_histogram(
+                    f"Histograms/{metric}", tensor.flatten(), self.global_step
+                )
 
     def training_step(self) -> torch.Tensor:
         """
@@ -312,9 +380,11 @@ class Model(torch.nn.Module):
         """
         raise NotImplementedError
 
-    def validation_step(self) -> dict:
+    def validation_step(self) -> None:
         """
-        Performs a single validation step, returning any metrics.
+        Performs a single validation step.
+
+        This should also update ``val_metrics``.
 
         .. attention:: This must be overridden by the user!
 
@@ -405,16 +475,12 @@ class BoltzmannGenerator(Model):
         """
         return self.training_step_rev_kl()
 
-    def validation_step(self) -> torchnf.metrics.LogWeightMetrics:
+    def validation_step(self) -> None:
         """
-        Performs a single validation step, returning some metrics.
+        Performs a single validation step, .
         """
         _, log_weights = self.forward(self.val_batch_size)
-        metrics = torchnf.metrics.LogWeightMetrics(log_weights)
-        return metrics
-
-    def validate(self) -> dict[torch.Tensor]:
-        return torchnf.metrics.LogWeightMetrics.combine(super().validate())
+        self.val_metrics.update(log_weights)
 
     @staticmethod
     def _concat_samples(

@@ -5,6 +5,7 @@ import datetime
 import math
 import random
 
+import tqdm
 import torch
 
 
@@ -135,3 +136,14 @@ def eval_mode(model):
     finally:
         if was_training:
             model.train()
+
+
+@contextlib.contextmanager
+def pbar_description(pbar: tqdm.std.tqdm, desc: str):
+    """
+    Temporarily change the description of a tqdm progress bar.
+    """
+    original_desc = pbar.desc
+    pbar.set_description_str(desc)
+    yield pbar
+    pbar.set_description_str(original_desc)
