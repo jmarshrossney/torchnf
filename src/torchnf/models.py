@@ -204,9 +204,9 @@ class Model(torch.nn.Module):
         ckpt_path.mkdir(exist_ok=True, parents=True)
         torch.save(
             ckpt,
-            ckpt_path / "ckpt_{self._global_step}.pt",
+            ckpt_path / f"ckpt_{self._global_step}.pt",
         )
-        log.info("Checkpoint saved at step: {self._global_step}")
+        log.info(f"Checkpoint saved at step: {self._global_step}")
         self._most_recent_checkpoint = self._global_step
 
     def load_checkpoint(self, step: Optional[int] = None) -> None:
@@ -222,7 +222,7 @@ class Model(torch.nn.Module):
 
         ckpt_path = self.output_dir / "checkpoints"
         step = step or self._most_recent_checkpoint
-        ckpt = torch.load(ckpt_path / "ckpt_{step}.pt")
+        ckpt = torch.load(ckpt_path / f"ckpt_{step}.pt")
 
         assert ckpt["global_step"] == step
 
@@ -231,7 +231,7 @@ class Model(torch.nn.Module):
         self.optimizer.load_state_dict(ckpt["optimizer_state_dict"])
         self.scheduler.load_state_dict(ckpt["scheduler_state_dict"])
 
-        log.info("Loaded checkpoint from step: {step}")
+        log.info(f"Loaded checkpoint from step: {step}")
 
     def optimization_step(self, loss: torch.Tensor) -> None:
         """
