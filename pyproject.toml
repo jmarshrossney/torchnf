@@ -10,7 +10,7 @@ authors = ["marshrossney <17361029+marshrossney@users.noreply.github.com>"]
 license = "GPLv3"
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.8"
 torch = "^1.11.0"
 pytorch-lightning = {version = "^1.6.3", optional = true}
 tqdm = "^4.64.0"
