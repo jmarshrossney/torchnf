@@ -239,49 +239,34 @@ class IntegratedAutocorrelation(LogStatWeightMetricMCMC):
         # Return integrated autocorrelation
         return autocorrelation.sum(dim=0).add(0.5)
 
-        """
-        tally = [
-            0 for _ in range(self.history.numel())
-        ]  # first element is t=1
-        n_rej = 0
 
-        for step in self.history.tolist():
-            if step:  # candidate accepted
-                if n_rej > 0:
-                    for t in range(n_rej):
-                        tally[t] += n_rej - t
-                n_rej = 0
-            else:  # candidate rejected
-                n_rej += 1
+class LogStatWeightMetricCollection(torchmetrics.MetricCollection):
+    """
+    Collection of metrics computed using log statistical weights.
 
-        for t in range(n_rej):  # catch last run
-            tally[t] += n_rej - t
+    Args:
+        mcmc
+            If True, applies the Metropolis test to the log-weights,
+            as though they corresponded to a sequence of proposals
+            for a Metropolis-Hastings simulation, and computes
+            additional metrics based on the accept/reject history.
+    """
 
-        # Normalize
-        autocorr = [
-            a / b for a, b in zip(tally, range(self.history.numel(), 0, -1))
-        ]
+    def __init__(self, mcmc: bool = True) -> None:
+        metrics = [ShiftedKLDivergence(), EffectiveSampleSize()]
+        compute_groups = [["ShiftedKLDivergence", "EffectiveSampleSize"]]
+        if mcmc:
+            metrics += [
+                AcceptanceRate(),
+                LongestRejectionRun(),
+                IntegratedAutocorrelation(),
+            ]
+            compute_groups.append(
+                [
+                    "AcceptanceRate",
+                    "LongestRejectionRun",
+                    "IntegratedAutocorrelation",
+                ]
+            )
 
-        integrated_autocorr = 0.5 + sum(autocorr)
-
-        return torch.Tensor([integrated_autocorr])
-        """
-
-
-LogStatWeightMetrics = torchmetrics.MetricCollection(
-    metrics=[
-        ShiftedKLDivergence(),
-        EffectiveSampleSize(),
-        AcceptanceRate(),
-        LongestRejectionRun(),
-        IntegratedAutocorrelation(),
-    ],
-    compute_groups=[
-        ["ShiftedKLDivergence", "EffectiveSampleSize"],
-        [
-            "AcceptanceRate",
-            "LongestRejectionRun",
-            "IntegratedAutocorrelation",
-        ],
-    ],
-)
+        super().__init__(metrics=metrics, compute_groups=compute_groups)

@@ -12,7 +12,7 @@ from torchnf.metrics import (
     AcceptanceRate,
     LongestRejectionRun,
     IntegratedAutocorrelation,
-    LogStatWeightMetrics,
+    LogStatWeightMetricCollection,
 )
 
 
@@ -24,7 +24,8 @@ logweight_metrics = [
     IntegratedAutocorrelation,
 ]
 metric_collections = [
-    LogStatWeightMetrics,
+    LogStatWeightMetricCollection(True),
+    LogStatWeightMetricCollection(False),
 ]
 
 
@@ -78,7 +79,8 @@ def test_collections_forward(metric, log_weights):
 
 
 def test_compute_groups(log_weights):
-    assert len(LogStatWeightMetrics.compute_groups) == 2
+    assert len(LogStatWeightMetricCollection(False).compute_groups) == 1
+    assert len(LogStatWeightMetricCollection(True).compute_groups) == 2
 
 
 @pytest.mark.parametrize("metric", logweight_metrics)
