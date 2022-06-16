@@ -288,19 +288,15 @@ class Model(torch.nn.Module):
             else self.train_steps + 1
         )
 
-        pbar = (
-            tqdm.auto.trange(
-                self._global_step, self.train_steps, desc="Training"
-            )
-            if self.pbar_interval
-            else range(self._global_step, self.train_steps)
-        )
+        train_range = range(self._global_step, self.train_steps)
+        pbar = tqdm.auto.tqdm(train_range, desc="Training")
+        train_range = pbar if self.pbar_interval else train_range
         pbar_interval = self.pbar_interval or self.train_steps + 1
 
         self.train()
         torch.set_grad_enabled(True)
 
-        for step in pbar:
+        for step in train_range:
             self._global_step += 1
 
             loss = self.training_step()
@@ -315,16 +311,17 @@ class Model(torch.nn.Module):
                 pbar.set_postfix({"loss": f"{float(loss):.3e}"})
 
             if self._global_step % val_interval == 0:
-                pbar.set_description("Validating")
-                with torch.no_grad(), torchnf.utils.eval_mode(self):
+                with torch.no_grad(), torchnf.utils.eval_mode(
+                    self
+                ), torchnf.utils.pbar_description(pbar, "Validating"):
                     _ = self.validate()
                     if self._logging:
                         self.log_validation()
-                pbar.set_description("Training")
 
             if self._global_step % ckpt_interval == 0:
                 self.save_checkpoint()
 
+        pbar.close()
         # NOTE: close logger here?
 
         self.eval()
