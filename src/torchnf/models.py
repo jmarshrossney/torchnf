@@ -360,12 +360,17 @@ class Model(torch.nn.Module):
         Logs the validation metrics.
 
         By default, this logs the **mean** of each item in
-        ``self.val_metrics``.
+        ``self.val_metrics``. If the metric contains multiple elements,
+        a histogram is also logged.
         """
         for metric, tensor in self.val_metrics.compute().items():
             self.logger.add_scalar(
                 f"Validation/{metric}", tensor.mean(), self.global_step
             )
+            if tensor.numel() > 1:
+                self.logger.add_histogram(
+                    f"Validation/{metric}", tensor.flatten(), self.global_step
+                )
 
     def training_step(self) -> torch.Tensor:
         """
