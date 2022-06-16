@@ -317,6 +317,7 @@ class Model(torch.nn.Module):
                     _ = self.validate()
                     if self._logging:
                         self.log_validation()
+                        self.logger.flush()  # force logger to write to disk
 
             if self._global_step % ckpt_interval == 0:
                 self.save_checkpoint()
@@ -324,7 +325,6 @@ class Model(torch.nn.Module):
         pbar.close()
         if self._logging:
             self.logger.close()
-        # NOTE: close logger here?
 
         self.eval()
 
@@ -368,9 +368,8 @@ class Model(torch.nn.Module):
             )
             if tensor.numel() > 1:
                 self.logger.add_histogram(
-                    f"Validation/{metric}", tensor.flatten(), self.global_step
+                    f"Histograms/{metric}", tensor.flatten(), self.global_step
                 )
-        self.logger.flush()  # force logger to write to disk
 
     def training_step(self) -> torch.Tensor:
         """
