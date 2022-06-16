@@ -136,7 +136,7 @@
 <h2 id="A">A</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="torchnf.metrics.html#torchnf.metrics.LogWeightMetrics.acceptance">acceptance (torchnf.metrics.LogWeightMetrics property)</a>
+      <li><a href="torchnf.metrics.html#torchnf.metrics.AcceptanceRate">AcceptanceRate (class in torchnf.metrics)</a>
 </li>
       <li><a href="torchnf.recipes.networks.html#torchnf.recipes.networks.ConvNet.activation">activation (torchnf.recipes.networks.ConvNet attribute)</a>
 
@@ -154,10 +154,10 @@
         <li><a href="torchnf.recipes.networks.html#torchnf.recipes.networks.DenseNet.activation_kwargs">(torchnf.recipes.networks.DenseNet attribute)</a>
 </li>
       </ul></li>
-      <li><a href="torchnf.recipes.layers.html#torchnf.recipes.layers.AdditiveCouplingLayer">AdditiveCouplingLayer (class in torchnf.recipes.layers)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="torchnf.recipes.layers.html#torchnf.recipes.layers.AdditiveCouplingLayer">AdditiveCouplingLayer (class in torchnf.recipes.layers)</a>
+</li>
       <li><a href="torchnf.recipes.layers.html#torchnf.recipes.layers.AffineCouplingLayer">AffineCouplingLayer (class in torchnf.recipes.layers)</a>
 </li>
       <li><a href="torchnf.transformers.html#torchnf.transformers.AffineTransform">AffineTransform (class in torchnf.transformers)</a>
@@ -174,8 +174,6 @@
         <li><a href="torchnf.conditioners.html#torchnf.conditioners.MaskedConditionerStructurePreserving.apply_mask_to_output">(torchnf.conditioners.MaskedConditionerStructurePreserving method)</a>
 </li>
       </ul></li>
-      <li><a href="torchnf.metrics.html#torchnf.metrics.LogWeightMetrics.asdict">asdict() (torchnf.metrics.LogWeightMetrics method)</a>
-</li>
       <li><a href="torchnf.conditioners.html#torchnf.conditioners.AutoregressiveConditioner">AutoregressiveConditioner (class in torchnf.conditioners)</a>
 </li>
   </ul></td>
@@ -210,19 +208,33 @@
         <li><a href="torchnf.transformers.html#torchnf.transformers.Translation.codomain">(torchnf.transformers.Translation attribute)</a>
 </li>
       </ul></li>
-      <li><a href="torchnf.metrics.html#torchnf.metrics.LogWeightMetrics.combine">combine() (torchnf.metrics.LogWeightMetrics static method)</a>
+      <li><a href="torchnf.metrics.html#torchnf.metrics.AcceptanceRate.compute">compute() (torchnf.metrics.AcceptanceRate method)</a>
+
+      <ul>
+        <li><a href="torchnf.metrics.html#torchnf.metrics.EffectiveSampleSize.compute">(torchnf.metrics.EffectiveSampleSize method)</a>
 </li>
+        <li><a href="torchnf.metrics.html#torchnf.metrics.IntegratedAutocorrelation.compute">(torchnf.metrics.IntegratedAutocorrelation method)</a>
+</li>
+        <li><a href="torchnf.metrics.html#torchnf.metrics.LogStatWeightMetric.compute">(torchnf.metrics.LogStatWeightMetric method)</a>
+</li>
+        <li><a href="torchnf.metrics.html#torchnf.metrics.LongestRejectionRun.compute">(torchnf.metrics.LongestRejectionRun method)</a>
+</li>
+        <li><a href="torchnf.metrics.html#torchnf.metrics.ShiftedKLDivergence.compute">(torchnf.metrics.ShiftedKLDivergence method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="torchnf.conditioners.html#torchnf.conditioners.Conditioner">Conditioner (class in torchnf.conditioners)</a>
 </li>
       <li><a href="torchnf.recipes.layers.html#torchnf.recipes.layers.CouplingLayer.conditioner">conditioner (torchnf.recipes.layers.CouplingLayer property)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="torchnf.flow.html#torchnf.flow.FlowLayer.conditioner_forward">conditioner_forward() (torchnf.flow.FlowLayer method)</a>
 </li>
       <li><a href="torchnf.lit_models.html#torchnf.lit_models.LitBoltzmannGenerator.configure_optimizers">configure_optimizers() (torchnf.lit_models.LitBoltzmannGenerator method)</a>
 </li>
       <li><a href="torchnf.models.html#torchnf.models.Model.configure_training">configure_training() (torchnf.models.Model method)</a>
+</li>
+      <li><a href="torchnf.models.html#torchnf.models.Model.configure_validation">configure_validation() (torchnf.models.Model method)</a>
 </li>
       <li><a href="torchnf.recipes.networks.html#torchnf.recipes.networks.ConvNet.conv_kwargs">conv_kwargs (torchnf.recipes.networks.ConvNet attribute)</a>
 
@@ -235,6 +247,8 @@
       <li><a href="torchnf.recipes.networks.html#torchnf.recipes.networks.ConvNetCircular">ConvNetCircular (class in torchnf.recipes.networks)</a>
 </li>
       <li><a href="torchnf.recipes.layers.html#torchnf.recipes.layers.CouplingLayer">CouplingLayer (class in torchnf.recipes.layers)</a>
+</li>
+      <li><a href="torchnf.models.html#torchnf.models.Model.current_loss">current_loss (torchnf.models.Model property)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -270,7 +284,7 @@
 <h2 id="E">E</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="torchnf.metrics.html#torchnf.metrics.LogWeightMetrics.effective_sample_size">effective_sample_size (torchnf.metrics.LogWeightMetrics property)</a>
+      <li><a href="torchnf.metrics.html#torchnf.metrics.EffectiveSampleSize">EffectiveSampleSize (class in torchnf.metrics)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -314,6 +328,8 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="torchnf.flow.html#torchnf.flow.FlowLayer.freeze">freeze() (torchnf.flow.FlowLayer method)</a>
 </li>
+      <li><a href="torchnf.metrics.html#torchnf.metrics.LogStatWeightMetric.full_state_update">full_state_update (torchnf.metrics.LogStatWeightMetric attribute)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -345,6 +361,20 @@
 </li>
       </ul></li>
   </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="torchnf.metrics.html#torchnf.metrics.AcceptanceRate.higher_is_better">higher_is_better (torchnf.metrics.AcceptanceRate attribute)</a>
+
+      <ul>
+        <li><a href="torchnf.metrics.html#torchnf.metrics.EffectiveSampleSize.higher_is_better">(torchnf.metrics.EffectiveSampleSize attribute)</a>
+</li>
+        <li><a href="torchnf.metrics.html#torchnf.metrics.IntegratedAutocorrelation.higher_is_better">(torchnf.metrics.IntegratedAutocorrelation attribute)</a>
+</li>
+        <li><a href="torchnf.metrics.html#torchnf.metrics.LongestRejectionRun.higher_is_better">(torchnf.metrics.LongestRejectionRun attribute)</a>
+</li>
+        <li><a href="torchnf.metrics.html#torchnf.metrics.ShiftedKLDivergence.higher_is_better">(torchnf.metrics.ShiftedKLDivergence attribute)</a>
+</li>
+      </ul></li>
+  </ul></td>
 </tr></table>
 
 <h2 id="I">I</h2>
@@ -368,11 +398,11 @@
         <li><a href="torchnf.recipes.networks.html#torchnf.recipes.networks.ConvNetCircular.in_channels">(torchnf.recipes.networks.ConvNetCircular attribute)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="torchnf.recipes.networks.html#torchnf.recipes.networks.DenseNet.in_features">in_features (torchnf.recipes.networks.DenseNet attribute)</a>
 </li>
-      <li><a href="torchnf.metrics.html#torchnf.metrics.LogWeightMetrics.integrated_autocorrelation">integrated_autocorrelation (torchnf.metrics.LogWeightMetrics property)</a>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="torchnf.metrics.html#torchnf.metrics.IntegratedAutocorrelation">IntegratedAutocorrelation (class in torchnf.metrics)</a>
 </li>
       <li><a href="torchnf.recipes.layers.html#torchnf.recipes.layers.RQSplineCouplingLayer.interval">interval (torchnf.recipes.layers.RQSplineCouplingLayer attribute)</a>
 </li>
@@ -384,6 +414,12 @@
         <li><a href="torchnf.models.html#torchnf.models.BoltzmannGenerator.inverse">(torchnf.models.BoltzmannGenerator method)</a>
 </li>
         <li><a href="torchnf.transformers.html#torchnf.transformers.Transformer.inverse">(torchnf.transformers.Transformer method)</a>
+</li>
+      </ul></li>
+      <li><a href="torchnf.metrics.html#torchnf.metrics.LogStatWeightMetric.is_differentiable">is_differentiable (torchnf.metrics.LogStatWeightMetric attribute)</a>
+
+      <ul>
+        <li><a href="torchnf.metrics.html#torchnf.metrics.LogStatWeightMetricMCMC.is_differentiable">(torchnf.metrics.LogStatWeightMetricMCMC attribute)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -398,10 +434,6 @@
         <li><a href="torchnf.recipes.networks.html#torchnf.recipes.networks.ConvNetCircular.kernel_size">(torchnf.recipes.networks.ConvNetCircular attribute)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="torchnf.metrics.html#torchnf.metrics.LogWeightMetrics.kl_divergence">kl_divergence (torchnf.metrics.LogWeightMetrics property)</a>
-</li>
   </ul></td>
 </tr></table>
 
@@ -422,11 +454,23 @@
         <li><a href="torchnf.distributions.html#torchnf.distributions.Target.log_prob">(torchnf.distributions.Target method)</a>
 </li>
       </ul></li>
+      <li><a href="torchnf.models.html#torchnf.models.Model.log_training">log_training() (torchnf.models.Model method)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="torchnf.metrics.html#torchnf.metrics.LogWeightMetrics">LogWeightMetrics (class in torchnf.metrics)</a>
+      <li><a href="torchnf.models.html#torchnf.models.Model.log_validation">log_validation() (torchnf.models.Model method)</a>
 </li>
-      <li><a href="torchnf.metrics.html#torchnf.metrics.LogWeightMetrics.longest_rejection_run">longest_rejection_run (torchnf.metrics.LogWeightMetrics property)</a>
+      <li><a href="torchnf.models.html#torchnf.models.Model.logger">logger (torchnf.models.Model property)</a>
+</li>
+      <li><a href="torchnf.models.html#torchnf.models.Model.logging">logging() (torchnf.models.Model method)</a>
+</li>
+      <li><a href="torchnf.metrics.html#torchnf.metrics.LogStatWeightMetric">LogStatWeightMetric (class in torchnf.metrics)</a>
+</li>
+      <li><a href="torchnf.metrics.html#torchnf.metrics.LogStatWeightMetricCollection">LogStatWeightMetricCollection (class in torchnf.metrics)</a>
+</li>
+      <li><a href="torchnf.metrics.html#torchnf.metrics.LogStatWeightMetricMCMC">LogStatWeightMetricMCMC (class in torchnf.metrics)</a>
+</li>
+      <li><a href="torchnf.metrics.html#torchnf.metrics.LongestRejectionRun">LongestRejectionRun (class in torchnf.metrics)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -519,10 +563,10 @@
         <li><a href="torchnf.transformers.html#torchnf.transformers.Translation.n_params">(torchnf.transformers.Translation property)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="torchnf.recipes.layers.html#torchnf.recipes.layers.RQSplineCouplingLayer.n_segments">n_segments (torchnf.recipes.layers.RQSplineCouplingLayer attribute)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="torchnf.recipes.flows.html#torchnf.recipes.flows.NICE.net">net (torchnf.recipes.flows.NICE attribute)</a>
 
       <ul>
@@ -539,6 +583,8 @@
 </li>
       <li><a href="torchnf.recipes.flows.html#torchnf.recipes.flows.NICE">NICE (class in torchnf.recipes.flows)</a>
 </li>
+      <li><a href="torchnf.models.html#torchnf.models.Model.no_logging">no_logging() (torchnf.models.Model method)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -547,20 +593,14 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="torchnf.models.html#torchnf.models.Model.optimization_step">optimization_step() (torchnf.models.Model method)</a>
 </li>
-      <li><a href="torchnf.models.html#torchnf.models.OptimizerSpec.optimizer">optimizer (torchnf.models.OptimizerSpec attribute)</a>
-</li>
-      <li><a href="torchnf.models.html#torchnf.models.OptimizerSpec.optimizer_kwargs">optimizer_kwargs (torchnf.models.OptimizerSpec attribute)</a>
-</li>
-      <li><a href="torchnf.models.html#torchnf.models.OptimizerSpec">OptimizerSpec (class in torchnf.models)</a>
-</li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="torchnf.recipes.networks.html#torchnf.recipes.networks.ConvNet.out_channels">out_channels (torchnf.recipes.networks.ConvNet attribute)</a>
 
       <ul>
         <li><a href="torchnf.recipes.networks.html#torchnf.recipes.networks.ConvNetCircular.out_channels">(torchnf.recipes.networks.ConvNetCircular attribute)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="torchnf.recipes.networks.html#torchnf.recipes.networks.DenseNet.out_features">out_features (torchnf.recipes.networks.DenseNet attribute)</a>
 </li>
       <li><a href="torchnf.models.html#torchnf.models.Model.output_dir">output_dir (torchnf.models.Model property)</a>
@@ -571,10 +611,12 @@
 <h2 id="P">P</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="torchnf.distributions.html#torchnf.distributions.Prior">Prior (class in torchnf.distributions)</a>
+      <li><a href="torchnf.utils.html#torchnf.utils.pbar_description">pbar_description() (in module torchnf.utils)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="torchnf.distributions.html#torchnf.distributions.Prior">Prior (class in torchnf.distributions)</a>
+</li>
       <li><a href="torchnf.utils.html#torchnf.utils.prod">prod() (in module torchnf.utils)</a>
 </li>
   </ul></td>
@@ -613,9 +655,7 @@
       </ul></li>
       <li><a href="torchnf.models.html#torchnf.models.Model.save_checkpoint">save_checkpoint() (torchnf.models.Model method)</a>
 </li>
-      <li><a href="torchnf.models.html#torchnf.models.OptimizerSpec.scheduler">scheduler (torchnf.models.OptimizerSpec attribute)</a>
-</li>
-      <li><a href="torchnf.models.html#torchnf.models.OptimizerSpec.scheduler_kwargs">scheduler_kwargs (torchnf.models.OptimizerSpec attribute)</a>
+      <li><a href="torchnf.metrics.html#torchnf.metrics.ShiftedKLDivergence">ShiftedKLDivergence (class in torchnf.metrics)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -630,8 +670,6 @@
 </li>
       </ul></li>
       <li><a href="torchnf.flow.html#torchnf.flow.Flow.step_forward">step_forward() (torchnf.flow.Flow method)</a>
-</li>
-      <li><a href="torchnf.models.html#torchnf.models.OptimizerSpec.submodule">submodule (torchnf.models.OptimizerSpec attribute)</a>
 </li>
       <li><a href="torchnf.utils.html#torchnf.utils.sum_except_batch">sum_except_batch() (in module torchnf.utils)</a>
 </li>
@@ -805,6 +843,14 @@
       <li><a href="torchnf.flow.html#torchnf.flow.FlowLayer.unfreeze">unfreeze() (torchnf.flow.FlowLayer method)</a>
 </li>
   </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="torchnf.metrics.html#torchnf.metrics.LogStatWeightMetric.update">update() (torchnf.metrics.LogStatWeightMetric method)</a>
+
+      <ul>
+        <li><a href="torchnf.metrics.html#torchnf.metrics.LogStatWeightMetricMCMC.update">(torchnf.metrics.LogStatWeightMetricMCMC method)</a>
+</li>
+      </ul></li>
+  </ul></td>
 </tr></table>
 
 <h2 id="V">V</h2>
@@ -812,12 +858,8 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="torchnf.lit_models.html#torchnf.lit_models.LitBoltzmannGenerator.val_dataloader">val_dataloader() (torchnf.lit_models.LitBoltzmannGenerator method)</a>
 </li>
-      <li><a href="torchnf.models.html#torchnf.models.BoltzmannGenerator.validate">validate() (torchnf.models.BoltzmannGenerator method)</a>
-
-      <ul>
-        <li><a href="torchnf.models.html#torchnf.models.Model.validate">(torchnf.models.Model method)</a>
+      <li><a href="torchnf.models.html#torchnf.models.Model.validate">validate() (torchnf.models.Model method)</a>
 </li>
-      </ul></li>
       <li><a href="torchnf.lit_models.html#torchnf.lit_models.LitBoltzmannGenerator.validation_epoch_end">validation_epoch_end() (torchnf.lit_models.LitBoltzmannGenerator method)</a>
 </li>
   </ul></td>

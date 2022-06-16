@@ -200,18 +200,9 @@ an initial state will be drawn from the <strong>prior</strong> distribution.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="torchnf.models.BoltzmannGenerator.validate">
-<span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#torchnf.models.BoltzmannGenerator.validate" title="Permalink to this definition"></a></dt>
-<dd><p>Runs the validation loop.
-Unless overidden, this will just call <a class="reference internal" href="#torchnf.models.BoltzmannGenerator.validation_step" title="torchnf.models.BoltzmannGenerator.validation_step"><code class="xref py py-meth docutils literal notranslate"><span class="pre">validation_step()</span></code></a>
-<code class="code docutils literal notranslate"><span class="pre">self.val_steps</span></code> times and return a list containing the
-returned values.</p>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="torchnf.models.BoltzmannGenerator.validation_step">
-<span class="sig-name descname"><span class="pre">validation_step</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="torchnf.metrics.html#torchnf.metrics.LogWeightMetrics" title="torchnf.metrics.LogWeightMetrics"><span class="pre">LogWeightMetrics</span></a></span></span><a class="headerlink" href="#torchnf.models.BoltzmannGenerator.validation_step" title="Permalink to this definition"></a></dt>
-<dd><p>Performs a single validation step, returning some metrics.</p>
+<span class="sig-name descname"><span class="pre">validation_step</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#torchnf.models.BoltzmannGenerator.validation_step" title="Permalink to this definition"></a></dt>
+<dd><p>Performs a single validation step, .</p>
 </dd></dl>
 
 <dl class="py method">
@@ -261,25 +252,19 @@ provided, the fallback is to call <a class="reference internal" href="#torchnf.m
 </div>
 <dl class="py method">
 <dt class="sig sig-object py" id="torchnf.models.Model.configure_training">
-<span class="sig-name descname"><span class="pre">configure_training</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_steps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val_steps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val_batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer_kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler_kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val_interval</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-</span> <span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ckpt_interval</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-</span> <span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pbar_interval</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">25</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#torchnf.models.Model.configure_training" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">configure_training</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">steps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer_kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler_kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ckpt_interval</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pbar_interval</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">25</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#torchnf.models.Model.configure_training" title="Permalink to this definition"></a></dt>
 <dd><p>Set up the model for training.</p>
 <p>This method must be executed before running <a class="reference internal" href="#torchnf.models.Model.fit" title="torchnf.models.Model.fit"><code class="xref py py-meth docutils literal notranslate"><span class="pre">fit()</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>train_steps</strong> – Number of training steps to run</p></li>
-<li><p><strong>train_batch_size</strong> – Size of each training batch</p></li>
-<li><p><strong>val_steps</strong> – Number of validation steps to run, each time validation
-occurs</p></li>
-<li><p><strong>val_batch_size</strong> – Size of each validation batch</p></li>
+<li><p><strong>steps</strong> – Number of training steps to run</p></li>
+<li><p><strong>batch_size</strong> – Size of each training batch</p></li>
 <li><p><strong>optimizer</strong> – String denoting an optimizer defined in <code class="docutils literal notranslate"><span class="pre">torch.optim</span></code></p></li>
 <li><p><strong>optimizer_kwargs</strong> – Keyword arguments for the optimizer</p></li>
 <li><p><strong>scheduler</strong> – String denoting a learning rate scheduler defined in
 <code class="docutils literal notranslate"><span class="pre">torch.optim.lr_schedulers</span></code></p></li>
 <li><p><strong>scheduler_kwargs</strong> – Keyword arguments for the scheduler</p></li>
-<li><p><strong>val_interval</strong> – Number of steps between validation runs. Set to <cite>-1</cite> to
-run validation on final step. Set to falsey to never
-run validation.</p></li>
 <li><p><strong>ckpt_interval</strong> – Number of steps between saving checkpoints. Set to <cite>-1</cite>
 to save checkpoint after final step. Set to <cite>falsey</cite> to
 never save checkpoints,</p></li>
@@ -288,6 +273,30 @@ Set to <cite>None</cite> to disable progress bar.</p></li>
 </ul>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchnf.models.Model.configure_validation">
+<span class="sig-name descname"><span class="pre">configure_validation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batches</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">Metric</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">MetricCollection</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interval</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-</span> <span class="pre">1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#torchnf.models.Model.configure_validation" title="Permalink to this definition"></a></dt>
+<dd><p>Set up the model for validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>batch_size</strong> – Size of each validation batch</p></li>
+<li><p><strong>batches</strong> – Number of validation steps to run, each time validation
+occurs</p></li>
+<li><p><strong>metrics</strong> – Validation metrics to compute</p></li>
+<li><p><strong>interval</strong> – Number of steps between validation runs. Set to <cite>-1</cite> to
+run validation on final step</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchnf.models.Model.current_loss">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">current_loss</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#torchnf.models.Model.current_loss" title="Permalink to this definition"></a></dt>
+<dd><p>Most recently computed value of the loss function.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -328,6 +337,39 @@ call to <code class="docutils literal notranslate"><span class="pre">fit</span><
 <p class="admonition-title">See also</p>
 <p><a class="reference internal" href="#torchnf.models.Model.save_checkpoint" title="torchnf.models.Model.save_checkpoint"><code class="xref py py-meth docutils literal notranslate"><span class="pre">save_checkpoint()</span></code></a></p>
 </div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchnf.models.Model.log_training">
+<span class="sig-name descname"><span class="pre">log_training</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#torchnf.models.Model.log_training" title="Permalink to this definition"></a></dt>
+<dd><p>Log information during training.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchnf.models.Model.log_validation">
+<span class="sig-name descname"><span class="pre">log_validation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#torchnf.models.Model.log_validation" title="Permalink to this definition"></a></dt>
+<dd><p>Logs the validation metrics.</p>
+<p>By default, this logs the <strong>mean</strong> of each item in
+<code class="docutils literal notranslate"><span class="pre">self.val_metrics</span></code>. If the metric contains multiple elements,
+a histogram is also logged.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchnf.models.Model.logger">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">logger</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://pytorch.org/docs/stable/tensorboard.html#torch.utils.tensorboard.writer.SummaryWriter" title="(in PyTorch v1.11.0)"><span class="pre">SummaryWriter</span></a></em><a class="headerlink" href="#torchnf.models.Model.logger" title="Permalink to this definition"></a></dt>
+<dd><p>Handles logging to Tensorboard.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchnf.models.Model.logging">
+<span class="sig-name descname"><span class="pre">logging</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#torchnf.models.Model.logging" title="Permalink to this definition"></a></dt>
+<dd><p>Set global logging switch to True.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchnf.models.Model.no_logging">
+<span class="sig-name descname"><span class="pre">no_logging</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#torchnf.models.Model.no_logging" title="Permalink to this definition"></a></dt>
+<dd><p>Set global logging switch to False.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -380,53 +422,23 @@ scheduler, as well as the global step.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="torchnf.models.Model.validate">
-<span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#torchnf.models.Model.validate" title="Permalink to this definition"></a></dt>
-<dd><p>Runs the validation loop.
-Unless overidden, this will just call <a class="reference internal" href="#torchnf.models.Model.validation_step" title="torchnf.models.Model.validation_step"><code class="xref py py-meth docutils literal notranslate"><span class="pre">validation_step()</span></code></a>
-<code class="code docutils literal notranslate"><span class="pre">self.val_steps</span></code> times and return a list containing the
-returned values.</p>
+<span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">torchmetrics.metric.Metric</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#torchnf.models.Model.validate" title="Permalink to this definition"></a></dt>
+<dd><p>Runs the validation loop.</p>
+<p>Unless overidden, this will just call <a class="reference internal" href="#torchnf.models.Model.validation_step" title="torchnf.models.Model.validation_step"><code class="xref py py-meth docutils literal notranslate"><span class="pre">validation_step()</span></code></a>
+<code class="docutils literal notranslate"><span class="pre">self.val_batchess</span></code> times, and return the result of
+<code class="docutils literal notranslate"><span class="pre">self.val_metrics.compute()</span></code>.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="torchnf.models.Model.validation_step">
-<span class="sig-name descname"><span class="pre">validation_step</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#torchnf.models.Model.validation_step" title="Permalink to this definition"></a></dt>
-<dd><p>Performs a single validation step, returning any metrics.</p>
+<span class="sig-name descname"><span class="pre">validation_step</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#torchnf.models.Model.validation_step" title="Permalink to this definition"></a></dt>
+<dd><p>Performs a single validation step.</p>
+<p>This should also update <code class="docutils literal notranslate"><span class="pre">val_metrics</span></code>.</p>
 <div class="admonition attention">
 <p class="admonition-title">Attention</p>
 <p>This must be overridden by the user!</p>
 </div>
 </dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="torchnf.models.OptimizerSpec">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchnf.models.</span></span><span class="sig-name descname"><span class="pre">OptimizerSpec</span></span><a class="headerlink" href="#torchnf.models.OptimizerSpec" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="torchnf.models.OptimizerSpec.optimizer">
-<span class="sig-name descname"><span class="pre">optimizer</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#torchnf.models.OptimizerSpec.optimizer" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="torchnf.models.OptimizerSpec.optimizer_kwargs">
-<span class="sig-name descname"><span class="pre">optimizer_kwargs</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#torchnf.models.OptimizerSpec.optimizer_kwargs" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="torchnf.models.OptimizerSpec.scheduler">
-<span class="sig-name descname"><span class="pre">scheduler</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#torchnf.models.OptimizerSpec.scheduler" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="torchnf.models.OptimizerSpec.scheduler_kwargs">
-<span class="sig-name descname"><span class="pre">scheduler_kwargs</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#torchnf.models.OptimizerSpec.scheduler_kwargs" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="torchnf.models.OptimizerSpec.submodule">
-<span class="sig-name descname"><span class="pre">submodule</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#torchnf.models.OptimizerSpec.submodule" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
 
 </dd></dl>
 
