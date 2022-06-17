@@ -6,7 +6,7 @@ See :mod:`torchnf.lit_models` for equivalent versions based on
 :py:class:`pytorch_lightning.LightningModule`.
 """
 import pathlib
-from typing import Any, Callable, Optional, Union
+from typing import Optional, Union
 import torch
 import logging
 import os
@@ -46,7 +46,6 @@ class Model(torch.nn.Module):
         self._output_dir = pathlib.Path(str(output_dir)).resolve()
 
         self._global_step = 0
-        self._most_recent_checkpoint = 0
 
         self._logging = True
 
@@ -207,7 +206,6 @@ class Model(torch.nn.Module):
             ckpt_path / f"ckpt_{self._global_step}.pt",
         )
         log.info(f"Checkpoint saved at step: {self._global_step}")
-        self._most_recent_checkpoint = self._global_step
 
     def load_checkpoint(self, step: Optional[int] = None) -> None:
         """
@@ -216,20 +214,19 @@ class Model(torch.nn.Module):
         See Also:
             :meth:`save_checkpoint`
         """
-        # Have to instantiate the optimizers before we can load state dict
-        if not hasattr(self, "optimizer") or not hasattr(self, "scheduler"):
-            raise Exception("Optimizers have not yet been configured.")
-
         ckpt_path = self.output_dir / "checkpoints"
-        step = step or self._most_recent_checkpoint
         ckpt = torch.load(ckpt_path / f"ckpt_{step}.pt")
 
         assert ckpt["global_step"] == step
 
         self._global_step = ckpt["global_step"]
         self.load_state_dict(ckpt["model_state_dict"])
-        self.optimizer.load_state_dict(ckpt["optimizer_state_dict"])
-        self.scheduler.load_state_dict(ckpt["scheduler_state_dict"])
+
+        # Always attempt to load optimizer state dict if in train mode
+        # If in eval mode, only load if optimizer has been instantiated
+        if self.training or hasattr(self, "optimizer"):
+            self.optimizer.load_state_dict(ckpt["optimizer_state_dict"])
+            self.scheduler.load_state_dict(ckpt["scheduler_state_dict"])
 
         log.info(f"Loaded checkpoint from step: {step}")
 
@@ -246,7 +243,6 @@ class Model(torch.nn.Module):
             self.optimizer.step()
             self.scheduler.step()
         """
-        # TODO multiple optimizers, ReduceLROnPlateau
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
@@ -427,7 +423,8 @@ class BoltzmannGenerator(Model):
             log_weights = log_prob_target - log_prob_prior + log_det_jacob
             return y, log_weights
         """
-        x, log_prob_prior = self.prior.forward(batch_size)
+        x = self.prior.sample([batch_size])
+        log_prob_prior = self.prior.log_prob(x)
         y, log_det_jacob = self.flow.forward(x)
         log_prob_target = self.target.log_prob(y)
         log_weights = log_prob_target - log_prob_prior + log_det_jacob
@@ -583,7 +580,9 @@ class BoltzmannGenerator(Model):
         """
         # Initialise with a random state drawn from the prior
         if self.mcmc_current_state is None:
-            self.mcmc_current_state = self.prior.forward(1)
+            x = self.prior.sample([1])
+            log_prob = self.prior.log_prob(x)
+            self.mcmc_current_state = (x, log_prob)
 
         out = []
 

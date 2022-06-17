@@ -37,7 +37,7 @@ for the forward and inverse transformations are related by
 
 import logging
 import math
-from typing import ClassVar, NamedTuple
+from typing import ClassVar
 
 import torch
 import torch.nn.functional as F
