@@ -1,130 +1,55 @@
 """
 """
 import abc
+from collections.abc import Iterable
+
 import torch
 
 
-class Prior:
-    r"""
-    Base class for prior distributions.
+class Prior(abc.ABC):
+    """
+    Abstract base class for prior distributions.
 
-    The two essential requirements for a prior distribution are (a)
-    that it can be (efficiently) sampled from, and (b) that the log-
-    probability of a sample can be computed up to an unimportant
-    normalisation. Hence, derived classes should override :meth:`sample`
-    and :meth:`log_prob`.
+    All prior distributions must implement ``sample``:
 
-    Objects derived from this class can also be iterated over:
+    .. code:: python
 
-    .. code-block:: python
+        def sample(self, sample_shape: Iterable) -> torch.Tensor:
+            ...
 
-        prior = Prior(...)
-        prior = iter(prior)  # constructs a generator
-        sample, log_prob = next(prior)
+    and ``log_prob``:
 
-    This behaviour is similar to that of an
-    :py:class:`torch.utils.data.IterableDataset`, which means they can
-    be used in place of a ``DataLoader`` in PyTorch Lightning.
+    .. code:: python
 
-    Args:
-        batch_size
-            The default batch size, i.e. number of independent and
-            identically distributed data points to draw when sampling.
-            Used where prior is called as in ``next(iter(self))``.
+        def log_prob(self, sample: torch.Tensor) -> torch.Tensor:
+            ...
     """
 
-    def __init__(self, batch_size: int = 1) -> None:
-        self._batch_size = batch_size
+    @classmethod
+    def __subclasshook__(cls, C):
+        if hasattr(C, "sample") and hasattr(C, "log_prob"):
+            return True
+        return False
 
-    def __iter__(self):
-        return self
+    @abc.abstractmethod
+    def sample(self, sample_shape: Iterable[int]) -> torch.Tensor:
+        ...
 
-    def __next__(self) -> tuple[torch.Tensor]:
-        """
-        Alias for ``self.forward(self.batch_size)``.
-        """
-        return self.forward(self._batch_size)
-
-    def __call__(self, sample: torch.Tensor) -> torch.Tensor:
-        """
-        Alias for :meth:`log_prob`.
-        """
-        return self.log_prob(sample)
-
-    @property
-    def batch_size(self) -> int:
-        """
-        The default batch size used when calling ``next(self)``.
-        """
-        return self._batch_size
-
-    @batch_size.setter
-    def batch_size(self, new: int) -> None:
-        assert isinstance(new, int) and new > 0
-        self._batch_size = new
-
-    def forward(self, batch_size: int) -> tuple[torch.Tensor, torch.Tensor]:
-        """
-        Returns a new sample and its log probability density.
-
-        This simply does:
-
-        .. code-block:: python
-
-            sample = self.sample(batch_size)
-            return sample, self.log_prob(sample)
-        """
-        sample = self.sample(batch_size)
-        return sample, self.log_prob(sample)
-
-    def sample(self, batch_size: int) -> torch.Tensor:
-        """
-        Returns a new sample.
-        """
-        raise NotImplementedError
-
+    @abc.abstractmethod
     def log_prob(self, sample: torch.Tensor) -> torch.Tensor:
-        """
-        Computes the log probability density for a given sample.
-        """
-        raise NotImplementedError
-
-
-class SimplePrior(Prior):
-    """
-    Wraps around torch.distributions.Distribution to make it iterable.
-    """
-
-    def __init__(
-        self,
-        distribution: torch.distributions.Distribution,
-        batch_size: int = 1,
-        expand_shape: list[int] = [],
-    ):
-        super().__init__(batch_size)
-        distribution = distribution.expand(expand_shape)
-        distribution = torch.distributions.Independent(
-            distribution, len(distribution.batch_shape)
-        )
-        self.distribution = distribution
-
-    def sample(self, batch_size: int) -> torch.Tensor:
-        return self.distribution.sample([batch_size])
-
-    def log_prob(self, sample: torch.Tensor) -> torch.Tensor:
-        return self.distribution.log_prob(sample)
+        ...
 
 
 class Target(abc.ABC):
     """
     Abstract base class for target distributions.
 
-    All target distributions must implement ``log_prob``
+    All target distributions must implement ``log_prob``.
 
     .. code:: python
 
         def log_prob(self, sample: torch.Tensor) -> torch.Tensor:
-        ...
+            ...
 
     """
 
@@ -137,3 +62,120 @@ class Target(abc.ABC):
     @abc.abstractmethod
     def log_prob(self, sample: torch.Tensor) -> torch.Tensor:
         ...
+
+
+class IterablePrior(torch.utils.data.IterableDataset):
+    """
+    Class which wraps around a distribution allow sampling to be iterated.
+
+    Args:
+        distribution:
+            The distribution, whose ``sample`` method will be called at
+            each iteration step
+        batch_shape:
+            Batch shape returned by each iteration step
+
+    Example:
+
+        >>> # Create a prior distribution using expand_independent
+        >>> uv_gauss = torch.distributions.Normal(0, 1)
+        >>> prior = expand_independent(uv_gauss, [6, 6])
+        >>> prior.sample().shape
+        torch.Size([6, 6])
+        >>>
+        >>> # Make an iterable prior with batch size 100
+        >>> iprior = IterablePrior(prior, 100)
+        >>> next(iter(iprior)).shape
+        torch.Size([100, 6, 6])
+        >>>
+        >>> # iprior has the same attributes as prior
+        >>> iprior.mean()
+    """
+
+    def __init__(
+        self,
+        distribution: torch.distributions.Distribution,
+        batch_shape: Iterable[int] = [],
+    ) -> None:
+        assert isinstance(
+            distribution, Prior
+        ), "Distribution must implement 'sample' and 'log_prob'"
+        self.distribution = distribution.expand(batch_shape)
+
+    def __getattr__(self, attr):
+        return getattr(self.distribution, attr)
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        return self.sample()
+
+    def sample(self, sample_shape: Iterable[int] = torch.Size([])) -> torch.Tensor:
+        # NOTE: define these explicitly rather than relying on getattr, since
+        # otherwise does not register as instance of Prior
+        return self.distribution.sample(sample_shape)
+
+    def log_prob(self, sample: torch.Tensor) -> torch.Tensor:
+        return self.distribution.log_prob(sample)
+
+
+def expand_dist(
+    distribution: torch.distributions.Distribution,
+    event_shape: Iterable[int],
+    batch_shape: Iterable[int] = torch.Size([]),
+) -> torch.distributions.Independent:
+    """
+    Constructs a multivariate distribution with iid components.
+
+    The components of the resulting distribution are independent and
+    identically distributed according to the input distribution. The
+    resulting distribution has an event shape that is the concatenation
+    of ``event_shape`` with the shape(s) of the original distribution,
+    and a batch shape given by ``batch_shape``.
+
+    Args:
+        distribution:
+            The distribution of the iid components
+        event_shape:
+            The event shape of the resulting multivariate distribution,
+            not including the shape(s) of the original distribution
+        batch_shape:
+            The batch shape of the resulting distribution
+
+    Returns:
+        A multivariate distibution with independent components
+
+    Example:
+
+        This will create a multivariate Gaussian with diagonal covariance:
+
+        >>> # Create a univariate Gaussian distribution
+        >>> uv_gauss = torch.distributions.Normal(0, 1)
+        >>> uv_gauss.batch_shape, uv_gauss.event_shape
+        (torch.Size([]), torch.Size([]))
+        >>> uv_gauss.sample().shape
+        torch.Size([])
+        >>>
+        >>> # Create a multivariate Gaussian with diagonal covariance
+        >>> mv_gauss = expand_independent(uv_gauss, [6, 6])
+        >>> mv_gauss.batch_shape, mv_gauss.event_shape
+        (torch.Size([]), torch.Size([6, 6]))
+        >>> mv_gauss.sample().shape
+        torch.Size([6, 6])
+        >>>
+        >>> # What happens when we compute the log-prob?
+        >>> uv_gauss.log_prob(mv_gauss.sample()).shape
+        torch.Size([6, 6])
+        >>> mv_gauss.log_prob(mv_gauss.sample()).shape
+        torch.Size([])
+    """
+    # Expand original distribution by 'event_shape'
+    distribution = distribution.expand(event_shape)
+    # Register the components as being part of one distribution
+    distribution = torch.distributions.Independent(
+        distribution, len(distribution.batch_shape)
+    )
+    # Expand to the batch shape
+    distribution = distribution.expand(batch_shape)
+    return distribution
