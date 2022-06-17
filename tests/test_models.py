@@ -1,14 +1,10 @@
 import pytest
 import torch
-import torchmetrics
 
-from torchnf.models import BoltzmannGenerator
-from torchnf.distributions import SimplePrior
 from torchnf.flow import Flow, FlowLayer
 from torchnf.transformers import AffineTransform, Translation
 from torchnf.conditioners import (
     SimpleConditioner,
-    MaskedConditioner,
     MaskedConditionerStructurePreserving,
 )
 from torchnf.recipes.networks import DenseNet, ConvNetCircular

@@ -1,6 +1,6 @@
 import torch
 
-from torchnf.utils import sum_except_batch, expand_elements
+from torchnf.utils import expand_elements
 
 
 def test_expand_elements():

@@ -4,7 +4,7 @@ import random
 
 import torch.distributions
 
-from torchnf.distributions import Prior, SimplePrior
+from torchnf.distributions import SimplePrior
 
 _builtin_distributions = [
     torch.distributions.Normal(0, 1),

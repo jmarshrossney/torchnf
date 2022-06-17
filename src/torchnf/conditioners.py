@@ -2,7 +2,7 @@
 The :code:`forward` method should return a set of parameters upon which the
 transformer should be conditioned.
 """
-from typing import Callable, Optional, Union
+from typing import Optional, Union
 import torch
 
 import torchnf.utils
