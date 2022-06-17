@@ -1,6 +1,5 @@
 import math
 import pytest
-import random
 from hypothesis import given, strategies as st
 
 import torch
@@ -13,6 +12,7 @@ _distributions = [
     torch.distributions.VonMises(0, 1),
     torch.distributions.MultivariateNormal(torch.zeros(2), torch.eye(2)),
 ]
+
 
 def test_types():
     dist = torch.distributions.Normal(0, 1)

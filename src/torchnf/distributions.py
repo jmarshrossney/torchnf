@@ -111,7 +111,9 @@ class IterablePrior(torch.utils.data.IterableDataset):
     def __next__(self):
         return self.sample()
 
-    def sample(self, sample_shape: Iterable[int] = torch.Size([])) -> torch.Tensor:
+    def sample(
+        self, sample_shape: Iterable[int] = torch.Size([])
+    ) -> torch.Tensor:
         # NOTE: define these explicitly rather than relying on getattr, since
         # otherwise does not register as instance of Prior
         return self.distribution.sample(sample_shape)

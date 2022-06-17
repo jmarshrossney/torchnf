@@ -423,7 +423,8 @@ class BoltzmannGenerator(Model):
             log_weights = log_prob_target - log_prob_prior + log_det_jacob
             return y, log_weights
         """
-        x, log_prob_prior = self.prior.forward(batch_size)
+        x = self.prior.sample([batch_size])
+        log_prob_prior = self.prior.log_prob(x)
         y, log_det_jacob = self.flow.forward(x)
         log_prob_target = self.target.log_prob(y)
         log_weights = log_prob_target - log_prob_prior + log_det_jacob
@@ -579,7 +580,9 @@ class BoltzmannGenerator(Model):
         """
         # Initialise with a random state drawn from the prior
         if self.mcmc_current_state is None:
-            self.mcmc_current_state = self.prior.forward(1)
+            x = self.prior.sample([1])
+            log_prob = self.prior.log_prob(x)
+            self.mcmc_current_state = (x, log_prob)
 
         out = []
 

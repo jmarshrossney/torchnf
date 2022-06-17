@@ -24,9 +24,9 @@ class MultivariateGaussianSampler(torchnf.models.BoltzmannGenerator):
             covariance_matrix=covariance_matrix,
             precision_matrix=precision_matrix,
         )
-        prior = torchnf.distributions.SimplePrior(
+        prior = torchnf.distributions.expand_dist(
             torch.distributions.Normal(0, 1),
-            expand_shape=target.event_shape,
+            target.event_shape,
         )
         super().__init__(
             prior=prior,
