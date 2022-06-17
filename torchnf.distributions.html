@@ -87,90 +87,71 @@
   <section id="module-torchnf.distributions">
 <span id="torchnf-distributions"></span><h1>torchnf.distributions<a class="headerlink" href="#module-torchnf.distributions" title="Permalink to this heading"></a></h1>
 <dl class="py class">
-<dt class="sig sig-object py" id="torchnf.distributions.Prior">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchnf.distributions.</span></span><span class="sig-name descname"><span class="pre">Prior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchnf.distributions.Prior" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Base class for prior distributions.</p>
-<p>The two essential requirements for a prior distribution are (a)
-that it can be (efficiently) sampled from, and (b) that the log-
-probability of a sample can be computed up to an unimportant
-normalisation. Hence, derived classes should override <a class="reference internal" href="#torchnf.distributions.Prior.sample" title="torchnf.distributions.Prior.sample"><code class="xref py py-meth docutils literal notranslate"><span class="pre">sample()</span></code></a>
-and <a class="reference internal" href="#torchnf.distributions.Prior.log_prob" title="torchnf.distributions.Prior.log_prob"><code class="xref py py-meth docutils literal notranslate"><span class="pre">log_prob()</span></code></a>.</p>
-<p>Objects derived from this class can also be iterated over:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">prior</span> <span class="o">=</span> <span class="n">Prior</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
-<span class="n">prior</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">prior</span><span class="p">)</span>  <span class="c1"># constructs a generator</span>
-<span class="n">sample</span><span class="p">,</span> <span class="n">log_prob</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">prior</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>This behaviour is similar to that of an
-<a class="reference external" href="https://pytorch.org/docs/stable/data.html#torch.utils.data.IterableDataset" title="(in PyTorch v1.11.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.utils.data.IterableDataset</span></code></a>, which means they can
-be used in place of a <code class="docutils literal notranslate"><span class="pre">DataLoader</span></code> in PyTorch Lightning.</p>
+<dt class="sig sig-object py" id="torchnf.distributions.IterablePrior">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchnf.distributions.</span></span><span class="sig-name descname"><span class="pre">IterablePrior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">distribution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch.org/docs/stable/distributions.html#torch.distributions.distribution.Distribution" title="(in PyTorch v1.11.0)"><span class="pre">Distribution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchnf.distributions.IterablePrior" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">IterableDataset</span></code></p>
+<p>Class which wraps around a distribution allow sampling to be iterated.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>batch_size</strong> – The default batch size, i.e. number of independent and
-identically distributed data points to draw when sampling.
-Used where prior is called as in <code class="docutils literal notranslate"><span class="pre">next(iter(self))</span></code>.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>distribution</strong> – The distribution, whose <code class="docutils literal notranslate"><span class="pre">sample</span></code> method will be called at
+each iteration step</p></li>
+<li><p><strong>batch_shape</strong> – Batch shape returned by each iteration step</p></li>
+</ul>
 </dd>
 </dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="torchnf.distributions.Prior.__call__">
-<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></span><a class="headerlink" href="#torchnf.distributions.Prior.__call__" title="Permalink to this definition"></a></dt>
-<dd><p>Alias for <a class="reference internal" href="#torchnf.distributions.Prior.log_prob" title="torchnf.distributions.Prior.log_prob"><code class="xref py py-meth docutils literal notranslate"><span class="pre">log_prob()</span></code></a>.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="torchnf.distributions.Prior.__next__">
-<span class="sig-name descname"><span class="pre">__next__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#torchnf.distributions.Prior.__next__" title="Permalink to this definition"></a></dt>
-<dd><p>Alias for <code class="docutils literal notranslate"><span class="pre">self.forward(self.batch_size)</span></code>.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="torchnf.distributions.Prior.batch_size">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">batch_size</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#torchnf.distributions.Prior.batch_size" title="Permalink to this definition"></a></dt>
-<dd><p>The default batch size used when calling <code class="docutils literal notranslate"><span class="pre">next(self)</span></code>.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="torchnf.distributions.Prior.forward">
-<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#torchnf.distributions.Prior.forward" title="Permalink to this definition"></a></dt>
-<dd><p>Returns a new sample and its log probability density.</p>
-<p>This simply does:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sample</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">batch_size</span><span class="p">)</span>
-<span class="k">return</span> <span class="n">sample</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">sample</span><span class="p">)</span>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Create a prior distribution using expand_independent</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">uv_gauss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">distributions</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">prior</span> <span class="o">=</span> <span class="n">expand_independent</span><span class="p">(</span><span class="n">uv_gauss</span><span class="p">,</span> <span class="p">[</span><span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">prior</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span><span class="o">.</span><span class="n">shape</span>
+<span class="go">torch.Size([6, 6])</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Make an iterable prior with batch size 100</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">iprior</span> <span class="o">=</span> <span class="n">IterablePrior</span><span class="p">(</span><span class="n">prior</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">iprior</span><span class="p">))</span><span class="o">.</span><span class="n">shape</span>
+<span class="go">torch.Size([100, 6, 6])</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># iprior has the same attributes as prior</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">iprior</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
 </pre></div>
 </div>
-</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="torchnf.distributions.IterablePrior.log_prob">
+<span class="sig-name descname"><span class="pre">log_prob</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></span><a class="headerlink" href="#torchnf.distributions.IterablePrior.log_prob" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="torchnf.distributions.Prior.log_prob">
-<span class="sig-name descname"><span class="pre">log_prob</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></span><a class="headerlink" href="#torchnf.distributions.Prior.log_prob" title="Permalink to this definition"></a></dt>
-<dd><p>Computes the log probability density for a given sample.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="torchnf.distributions.Prior.sample">
-<span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></span><a class="headerlink" href="#torchnf.distributions.Prior.sample" title="Permalink to this definition"></a></dt>
-<dd><p>Returns a new sample.</p>
-</dd></dl>
+<dt class="sig sig-object py" id="torchnf.distributions.IterablePrior.sample">
+<span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">torch.Size([])</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></span><a class="headerlink" href="#torchnf.distributions.IterablePrior.sample" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="torchnf.distributions.SimplePrior">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchnf.distributions.</span></span><span class="sig-name descname"><span class="pre">SimplePrior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">distribution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch.org/docs/stable/distributions.html#torch.distributions.distribution.Distribution" title="(in PyTorch v1.11.0)"><span class="pre">Distribution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expand_shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchnf.distributions.SimplePrior" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#torchnf.distributions.Prior" title="torchnf.distributions.Prior"><code class="xref py py-class docutils literal notranslate"><span class="pre">Prior</span></code></a></p>
-<p>Wraps around torch.distributions.Distribution to make it iterable.</p>
+<dt class="sig sig-object py" id="torchnf.distributions.Prior">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchnf.distributions.</span></span><span class="sig-name descname"><span class="pre">Prior</span></span><a class="headerlink" href="#torchnf.distributions.Prior" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<p>Abstract base class for prior distributions.</p>
+<p>All prior distributions must implement <code class="docutils literal notranslate"><span class="pre">sample</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+<p>and <code class="docutils literal notranslate"><span class="pre">log_prob</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">log_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sample</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
 <dl class="py method">
-<dt class="sig sig-object py" id="torchnf.distributions.SimplePrior.log_prob">
-<span class="sig-name descname"><span class="pre">log_prob</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></span><a class="headerlink" href="#torchnf.distributions.SimplePrior.log_prob" title="Permalink to this definition"></a></dt>
-<dd><p>Computes the log probability density for a given sample.</p>
-</dd></dl>
+<dt class="sig sig-object py" id="torchnf.distributions.Prior.log_prob">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">log_prob</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></span><a class="headerlink" href="#torchnf.distributions.Prior.log_prob" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="torchnf.distributions.SimplePrior.sample">
-<span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></span><a class="headerlink" href="#torchnf.distributions.SimplePrior.sample" title="Permalink to this definition"></a></dt>
-<dd><p>Returns a new sample.</p>
-</dd></dl>
+<dt class="sig sig-object py" id="torchnf.distributions.Prior.sample">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></span><a class="headerlink" href="#torchnf.distributions.Prior.sample" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
 
 </dd></dl>
 
@@ -179,9 +160,9 @@ Used where prior is called as in <code class="docutils literal notranslate"><spa
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchnf.distributions.</span></span><span class="sig-name descname"><span class="pre">Target</span></span><a class="headerlink" href="#torchnf.distributions.Target" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
 <p>Abstract base class for target distributions.</p>
-<p>All target distributions must implement <code class="docutils literal notranslate"><span class="pre">log_prob</span></code></p>
+<p>All target distributions must implement <code class="docutils literal notranslate"><span class="pre">log_prob</span></code>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">log_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sample</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
-<span class="o">...</span>
+    <span class="o">...</span>
 </pre></div>
 </div>
 <dl class="py method">
@@ -189,6 +170,53 @@ Used where prior is called as in <code class="docutils literal notranslate"><spa
 <em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">log_prob</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></span><a class="headerlink" href="#torchnf.distributions.Target.log_prob" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="torchnf.distributions.expand_dist">
+<span class="sig-prename descclassname"><span class="pre">torchnf.distributions.</span></span><span class="sig-name descname"><span class="pre">expand_dist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">distribution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch.org/docs/stable/distributions.html#torch.distributions.distribution.Distribution" title="(in PyTorch v1.11.0)"><span class="pre">Distribution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">event_shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">torch.Size([])</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pytorch.org/docs/stable/distributions.html#torch.distributions.independent.Independent" title="(in PyTorch v1.11.0)"><span class="pre">Independent</span></a></span></span><a class="headerlink" href="#torchnf.distributions.expand_dist" title="Permalink to this definition"></a></dt>
+<dd><p>Constructs a multivariate distribution with iid components.</p>
+<p>The components of the resulting distribution are independent and
+identically distributed according to the input distribution. The
+resulting distribution has an event shape that is the concatenation
+of <code class="docutils literal notranslate"><span class="pre">event_shape</span></code> with the shape(s) of the original distribution,
+and a batch shape given by <code class="docutils literal notranslate"><span class="pre">batch_shape</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>distribution</strong> – The distribution of the iid components</p></li>
+<li><p><strong>event_shape</strong> – The event shape of the resulting multivariate distribution,
+not including the shape(s) of the original distribution</p></li>
+<li><p><strong>batch_shape</strong> – The batch shape of the resulting distribution</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A multivariate distibution with independent components</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<p>This will create a multivariate Gaussian with diagonal covariance:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Create a univariate Gaussian distribution</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">uv_gauss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">distributions</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">uv_gauss</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">,</span> <span class="n">uv_gauss</span><span class="o">.</span><span class="n">event_shape</span>
+<span class="go">(torch.Size([]), torch.Size([]))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">uv_gauss</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span><span class="o">.</span><span class="n">shape</span>
+<span class="go">torch.Size([])</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Create a multivariate Gaussian with diagonal covariance</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mv_gauss</span> <span class="o">=</span> <span class="n">expand_independent</span><span class="p">(</span><span class="n">uv_gauss</span><span class="p">,</span> <span class="p">[</span><span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mv_gauss</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">,</span> <span class="n">mv_gauss</span><span class="o">.</span><span class="n">event_shape</span>
+<span class="go">(torch.Size([]), torch.Size([6, 6]))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mv_gauss</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span><span class="o">.</span><span class="n">shape</span>
+<span class="go">torch.Size([6, 6])</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># What happens when we compute the log-prob?</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">uv_gauss</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">mv_gauss</span><span class="o">.</span><span class="n">sample</span><span class="p">())</span><span class="o">.</span><span class="n">shape</span>
+<span class="go">torch.Size([6, 6])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mv_gauss</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">mv_gauss</span><span class="o">.</span><span class="n">sample</span><span class="p">())</span><span class="o">.</span><span class="n">shape</span>
+<span class="go">torch.Size([])</span>
+</pre></div>
+</div>
 </dd></dl>
 
 </section>
