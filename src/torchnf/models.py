@@ -15,7 +15,7 @@ import torch.utils.tensorboard as tensorboard
 import torchmetrics
 
 import torchnf.flow
-import torchnf.distributions
+from torchnf.distributions import Prior, Target
 import torchnf.utils
 import torchnf.metrics
 
@@ -399,8 +399,8 @@ class BoltzmannGenerator(Model):
 
     def __init__(
         self,
-        prior: torchnf.distributions.Prior,
-        target: torchnf.distributions.Target,
+        prior: Prior,
+        target: Target,
         flow: torchnf.flow.Flow,
         output_dir: Optional[Union[str, os.PathLike]] = None,
     ) -> None:
@@ -479,16 +479,6 @@ class BoltzmannGenerator(Model):
         _, log_weights = self.forward(self.val_batch_size)
         self.val_metrics.update(log_weights)
 
-    @staticmethod
-    def _concat_samples(
-        *samples: tuple[torch.Tensor, torch.Tensor],
-    ) -> tuple[torch.Tensor, torch.Tensor]:
-        """
-        Helper function to concatenate samples and their log weights.
-        """
-        data, weights = list(map(list, zip(*samples)))
-        return torch.cat(data, dim=0), torch.cat(weights, dim=0)
-
     @torch.no_grad()
     def weighted_sample(
         self, batch_size: int, batches: int = 1
@@ -516,7 +506,7 @@ class BoltzmannGenerator(Model):
         out = []
         for _ in range(batches):
             out.append(self.forward(batch_size))
-        return self._concat_samples(*out)
+        return torchnf.utils.tuple_concat(*out)
 
     @property
     def mcmc_current_state(
@@ -587,7 +577,7 @@ class BoltzmannGenerator(Model):
         out = []
 
         for _ in range(batches):
-            y, logw = self._concat_samples(
+            y, logw = torchnf.utils.tuple_concat(
                 self.mcmc_current_state, self.forward(batch_size)
             )
             indices = torchnf.utils.metropolis_test(logw)

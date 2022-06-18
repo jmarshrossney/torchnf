@@ -29,7 +29,10 @@ numpy = "^1.22.3"
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
-filterwarnings = "ignore::DeprecationWarning"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::pytorch_lightning.utilities.warnings.PossibleUserWarning",
+]
 
 [tool.black]
 line-length = 79

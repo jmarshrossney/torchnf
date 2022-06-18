@@ -5,71 +5,114 @@ on :py:class:`pytorch_lightning.LightningModule` rather than the standard
 
 .. attention:: This is a work in progress. Do not use.
 """
-from typing import Callable
 import torch
+import pytorch_lightning as pl
 
-# import pytorch_lightning as pl
-
-import torchnf.distributions
+from torchnf.distributions import Target
 import torchnf.flow
+import torchnf.metrics
 
 
-class LitBoltzmannGenerator:  # (pl.LightningModule):
-    """Test"""
+class LitBoltzmannGenerator(pl.LightningModule):
+    """
+    Model representing Boltzmann Generator based on Normalizing Flow.
+
+    .. seealso:: :py:class:`torchnf.models.BoltzmannGenerator`
+    """
 
     def __init__(
         self,
-        prior: torchnf.distributions.Prior,
-        target: Callable[torch.Tensor, torch.Tensor],
         flow: torchnf.flow.Flow,
+        target: Target,
     ) -> None:
         super().__init__()
-        self.prior = prior
-        self.target = target
         self.flow = flow
+        self.target = target
 
-    def forward(self, batch):
-        """."""
+        self.metrics = torchnf.metrics.LogStatWeightMetricCollection()
+
+    def forward(
+        self, batch: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """
+        Passes inputs through the flow and evaluates the statistical weights.
+
+        What this does is
+
+        .. code::
+
+            x, log_prob_prior = batch
+            y, log_det_jacob = self.flow.forward(x)
+            log_prob_target = self.target.log_prob(y)
+            log_weights = log_prob_target - log_prob_prior + log_det_jacob
+            return y, log_weights
+        """
         x, log_prob_prior = batch
         y, log_det_jacob = self.flow(x)
-        log_prob_target = self.target(y)
+        log_prob_target = self.target.log_prob(y)
         log_weights = log_prob_target - log_prob_prior + log_det_jacob
         return y, log_weights
 
-    def train_dataloader(self):
-        """."""
-        return self.prior
+    def inverse(self, y: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        """
+        Inverse pass of the Boltzmann Generator.
 
-    def training_step(self, batch, batch_idx):
-        """."""
-        y, log_weights = self.forward(batch)
+        Takes a sample drawn from the target distribution, passes
+        it through the inverse-flow, and evaluates the density
+        of the outputs under the prior distribution.
+
+        Raises:
+            NotImplementedError
+        """
+        raise NotImplementedError
+
+    def training_step_rev_kl(self, batch: torch.Tensor) -> torch.Tensor:
+        """
+        Performs a single 'reverse KL' training step.
+
+        This simply does the following:
+
+        .. code-block:: python
+
+            _, log_weights = self.forward(batch)
+            loss = log_weights.mean().neg()
+            return loss
+        """
+        _, log_weights = self(batch)
         loss = log_weights.mean().neg()
         return loss
 
-    def training_step_end(self, outputs):
-        """."""
-        print(outputs)
+    def training_step_fwd_kl(self, batch: torch.Tensor, _):
+        raise NotImplementedError
+        # x, something = self.inverse(batch)
+        # loss =
 
-    def val_dataloader(self):
-        """."""
-        return self.prior
+    def training_step(self, batch: torch.Tensor, _):
+        """
+        Performs a single training step, returning the loss.
+        """
+        loss = self.training_step_rev_kl(batch)
+        self.log("train/loss", loss)
+        return loss
 
-    def validation_step(self, batch, batch_idx):
-        """."""
-        y, log_weights = self.forward(batch)
+    def validation_step(self, batch: torch.Tensor, _):
+        """
+        Performs a single validation step.
+        """
+        y, log_weights = self(batch)
+        self.metrics.update(log_weights)
 
-    def validation_epoch_end(self, metrics):
-        """."""
-        # combine metrics into mean and std. dev.
-        # log metrics
-        pass
+    def validation_epoch_end(self, val_outputs):
+        """
+        Compute and log metrics at the end of an epoch.
+        """
+        metrics = self.metrics.compute()
+        self.log("validation", metrics)
+        self.metrics.reset()
 
-    def configure_optimizers(self):
-        """."""
-        # raise NotImplementedError
-        optimizer = torch.optim.Adam(self.flow.parameters())
-        return optimizer
-
-    @torch.no_grad()
-    def sample(self) -> tuple[torch.Tensor]:
-        return self.forward(self.prior())
+    def test_step(self, batch: torch.Tensor, _):
+        """
+        Performs a single test step.
+        """
+        y, log_weights = self(batch)
+        self.metrics.update(log_weights)
