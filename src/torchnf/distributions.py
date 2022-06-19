@@ -4,6 +4,7 @@ import abc
 from collections.abc import Iterable
 from typing import Optional, Union
 
+from jsonargparse.typing import PositiveInt
 import torch
 import pytorch_lightning as pl
 
@@ -34,7 +35,7 @@ class Prior(abc.ABC):
         return False
 
     @abc.abstractmethod
-    def sample(self, sample_shape: Iterable[int]) -> torch.Tensor:
+    def sample(self, sample_shape: Iterable[PositiveInt]) -> torch.Tensor:
         ...
 
     @abc.abstractmethod
@@ -68,8 +69,8 @@ class Target(abc.ABC):
 
 def expand_dist(
     distribution: torch.distributions.Distribution,
-    event_shape: Iterable[int],
-    batch_shape: Iterable[int] = torch.Size([]),
+    event_shape: Iterable[PositiveInt],
+    batch_shape: Iterable[PositiveInt] = torch.Size([]),
 ) -> torch.distributions.Independent:
     """
     Constructs a multivariate distribution with iid components.
@@ -165,8 +166,8 @@ class IterablePrior(torch.utils.data.IterableDataset):
     def __init__(
         self,
         distribution: torch.distributions.Distribution,
-        batch_size: Union[int, Iterable[int]] = [],
-        length: Optional[int] = None,
+        batch_size: Union[PositiveInt, Iterable[PositiveInt]] = [],
+        length: Optional[PositiveInt] = None,
     ) -> None:
         assert isinstance(
             distribution, Prior
@@ -187,11 +188,11 @@ class IterablePrior(torch.utils.data.IterableDataset):
         sample = self.sample()
         return sample, self.log_prob(sample)
 
-    def __len__(self) -> int:
+    def __len__(self) -> PositiveInt:
         return self.length
 
     def sample(
-        self, sample_shape: Iterable[int] = torch.Size([])
+        self, sample_shape: Iterable[PositiveInt] = torch.Size([])
     ) -> torch.Tensor:
         # NOTE: define these explicitly rather than relying on getattr, since
         # otherwise does not register as instance of Prior
@@ -231,15 +232,15 @@ class PriorDataModule(pl.LightningDataModule):
     def __init__(
         self,
         distribution: torch.distributions.Distribution,
-        batch_size: int,
-        epoch_length: Optional[int] = None,
+        batch_size: PositiveInt,
+        epoch_length: Optional[PositiveInt] = None,
         *,
-        val_batch_size: Optional[int] = None,
-        test_batch_size: Optional[int] = None,
-        pred_batch_size: Optional[int] = None,
-        val_epoch_length: Optional[int] = None,
-        test_epoch_length: Optional[int] = None,
-        pred_epoch_length: Optional[int] = None,
+        val_batch_size: Optional[PositiveInt] = None,
+        test_batch_size: Optional[PositiveInt] = None,
+        pred_batch_size: Optional[PositiveInt] = None,
+        val_epoch_length: Optional[PositiveInt] = None,
+        test_epoch_length: Optional[PositiveInt] = None,
+        pred_epoch_length: Optional[PositiveInt] = None,
     ) -> None:
         super().__init__()
         self.distribution = distribution

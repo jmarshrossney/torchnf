@@ -5,6 +5,7 @@ import datetime
 import math
 import random
 
+from jsonargparse.typing import NonNegativeInt
 import torch
 
 
@@ -33,7 +34,7 @@ def sum_except_batch(x: torch.Tensor) -> torch.Tensor:
 
 
 def expand_elements(
-    x: torch.Tensor, data_shape: torch.Size, stack_dim: int = 0
+    x: torch.Tensor, data_shape: torch.Size, stack_dim: NonNegativeInt = 0
 ) -> torch.Tensor:
     """
     Expands and stacks each element of a one-dimensional tensor.

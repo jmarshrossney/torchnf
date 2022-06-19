@@ -39,6 +39,7 @@ import logging
 import math
 from typing import ClassVar
 
+from jsonargparse.typing import PositiveInt
 import torch
 import torch.nn.functional as F
 
@@ -69,7 +70,7 @@ class Transformer:
     codomain: ClassVar[tuple[float, float]]
 
     @property
-    def n_params(self) -> int:
+    def n_params(self) -> PositiveInt:
         """Number of parameters per element being transformed."""
         return NotImplemented
 
@@ -180,7 +181,7 @@ class Translation(Transformer):
     codomain = REALS
 
     @property
-    def n_params(self) -> int:
+    def n_params(self) -> PositiveInt:
         return 1
 
     @property
@@ -229,7 +230,7 @@ class Rescaling(Transformer):
     codomain = REALS
 
     @property
-    def n_params(self) -> int:
+    def n_params(self) -> PositiveInt:
         return 1
 
     @property
@@ -238,7 +239,7 @@ class Rescaling(Transformer):
 
     def _forward(
         self, x: torch.Tensor, params: torch.Tensor
-    ) -> tuple[torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         log_scale = params.view_as(x)
         y = x.mul(log_scale.neg().exp())
         ldj = torchnf.utils.sum_except_batch(log_scale.neg())
@@ -246,7 +247,7 @@ class Rescaling(Transformer):
 
     def _inverse(
         self, y: torch.Tensor, params: torch.Tensor
-    ) -> tuple[torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         log_scale = params.view_as(y)
         x = y.mul(log_scale.exp())
         ldj = torchnf.utils.sum_except_batch(log_scale)
@@ -284,7 +285,7 @@ class AffineTransform(Transformer):
     codomain = REALS
 
     @property
-    def n_params(self) -> int:
+    def n_params(self) -> PositiveInt:
         return 2
 
     @property
@@ -335,11 +336,11 @@ class RQSplineTransform(Transformer):
         ).tolist()
 
     @property
-    def _n_knots(self) -> int:
+    def _n_knots(self) -> PositiveInt:
         return self._n_segments - 1
 
     @property
-    def n_params(self) -> int:
+    def n_params(self) -> PositiveInt:
         return 2 * self._n_segments + self._n_knots
 
     @property
@@ -582,7 +583,7 @@ class RQSplineTransformIntervalDomain(RQSplineTransform):
         self.codomain = interval
 
     @property
-    def _n_knots(self) -> int:
+    def _n_knots(self) -> PositiveInt:
         return self._n_segments + 1
 
     @staticmethod
@@ -593,7 +594,7 @@ class RQSplineTransformIntervalDomain(RQSplineTransform):
 class RQSplineTransformCircularDomain(RQSplineTransform):
     def __init__(
         self,
-        n_segments: int,
+        n_segments: PositiveInt,
         interval: tuple[float],
     ):
         super().__init__(n_segments, interval)
@@ -602,7 +603,7 @@ class RQSplineTransformCircularDomain(RQSplineTransform):
         self.codomain = interval
 
     @property
-    def _n_knots(self) -> int:
+    def _n_knots(self) -> PositiveInt:
         return self._n_segments
 
     @staticmethod

@@ -11,6 +11,8 @@ TODO: document a convenient way of creating new class with identical
 parameters except for some user-specified changes E.g. dataclasses.replace
 """
 import dataclasses
+
+from jsonargparse.typing import PositiveInt
 import torch
 
 
@@ -34,9 +36,9 @@ class DenseNet(NetBuilder):
     See :py:class:`torch.nn.Linear`.
     """
 
-    in_features: int
-    out_features: int
-    hidden_shape: list[int]
+    in_features: PositiveInt
+    out_features: PositiveInt
+    hidden_shape: list[PositiveInt]
     activation: str
     activation_kwargs: dict = dataclasses.field(default_factory=dict)
     skip_final_activation: bool = False
@@ -75,12 +77,12 @@ class ConvNet(NetBuilder):
     See :py:class:`torch.nn.Conv2d`, and 1d/3d versions.
     """
 
-    dim: int
-    in_channels: int
-    out_channels: int
-    hidden_shape: list[int]
+    dim: PositiveInt
+    in_channels: PositiveInt
+    out_channels: PositiveInt
+    hidden_shape: list[PositiveInt]
     activation: str
-    kernel_size: int
+    kernel_size: PositiveInt
     activation_kwargs: dict = dataclasses.field(default_factory=dict)
     skip_final_activation: bool = False
     conv_kwargs: dict = dataclasses.field(default_factory=dict)

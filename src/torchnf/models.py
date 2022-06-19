@@ -13,6 +13,7 @@ import os
 import tqdm.auto
 import torch.utils.tensorboard as tensorboard
 import torchmetrics
+from jsonargparse.typing import PositiveInt, NonNegativeInt
 
 import torchnf.flow
 from torchnf.distributions import Prior, Target
@@ -89,7 +90,7 @@ class Model(torch.nn.Module):
         self._logging = False
 
     @property
-    def global_step(self) -> int:
+    def global_step(self) -> NonNegativeInt:
         """
         Total number of training steps since initialisation.
         """
@@ -104,8 +105,8 @@ class Model(torch.nn.Module):
 
     def configure_training(
         self,
-        steps: int,
-        batch_size: int,
+        steps: PositiveInt,
+        batch_size: PositiveInt,
         optimizer: str,
         optimizer_kwargs: dict,
         scheduler: str,
@@ -156,8 +157,8 @@ class Model(torch.nn.Module):
 
     def configure_validation(
         self,
-        batch_size: int,
-        batches: int,
+        batch_size: PositiveInt,
+        batches: PositiveInt,
         metrics: Union[torchmetrics.Metric, torchmetrics.MetricCollection],
         interval: int = -1,
     ) -> None:
@@ -207,7 +208,7 @@ class Model(torch.nn.Module):
         )
         log.info(f"Checkpoint saved at step: {self._global_step}")
 
-    def load_checkpoint(self, step: Optional[int] = None) -> None:
+    def load_checkpoint(self, step: Optional[NonNegativeInt]) -> None:
         """
         Loads a checkpoint from a `.pt` file.
 
@@ -409,7 +410,9 @@ class BoltzmannGenerator(Model):
         self.target = target
         self.flow = flow
 
-    def forward(self, batch_size: int) -> tuple[torch.Tensor, torch.Tensor]:
+    def forward(
+        self, batch_size: PositiveInt
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Samples from the model and evaluates the statistical weights.
 
@@ -481,7 +484,7 @@ class BoltzmannGenerator(Model):
 
     @torch.no_grad()
     def weighted_sample(
-        self, batch_size: int, batches: int = 1
+        self, batch_size: PositiveInt, batches: PositiveInt = 1
     ) -> torch.Tensor:
         """
         Generate a weighted sample from the model.
@@ -539,8 +542,8 @@ class BoltzmannGenerator(Model):
     @torch.no_grad()
     def mcmc_sample(
         self,
-        batch_size: int,
-        batches: int = 1,
+        batch_size: PositiveInt,
+        batches: PositiveInt = 1,
     ) -> torch.Tensor:
         r"""
         Generate an unbiased sample from the target distribution.

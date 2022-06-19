@@ -1,6 +1,7 @@
 import dataclasses
 
 import torch
+from jsonargparse.typing import PositiveInt
 
 import torchnf.conditioners
 import torchnf.flow
@@ -47,7 +48,7 @@ class AffineCouplingLayer(CouplingLayer):
 
 @dataclasses.dataclass
 class RQSplineCouplingLayer(CouplingLayer):
-    n_segments: int
+    n_segments: PositiveInt
     interval: tuple[float]
     domain: str = "reals"
 
