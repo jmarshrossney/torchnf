@@ -2,7 +2,7 @@ import pytest
 import torch
 import pytorch_lightning as pl
 
-from torchnf.lit_models import LitBoltzmannGenerator
+from torchnf.lit_models import LitBoltzmannGenerator, OptimizerConfig
 from torchnf.distributions import PriorDataModule, expand_dist
 from torchnf.transformers import Translation
 from torchnf.conditioners import SimpleConditioner
@@ -29,23 +29,23 @@ def trainer_args():
     )
 
 
-class Model(LitBoltzmannGenerator):
-    def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=0.1)
-        lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-            optimizer, T_max=TRAIN_STEPS
-        )
-        return dict(optimizer=optimizer, lr_scheduler=lr_scheduler)
-
-
 def test_shifted_gauss(trainer_args):
     prior = expand_dist(torch.distributions.Normal(0, 1), [36])
     target = expand_dist(torch.distributions.Normal(1, 1), [36])
     transformer = Translation()
     conditioner = SimpleConditioner(transformer.identity_params)
     flow = Flow(FlowLayer(transformer, conditioner))
-    model = Model(flow, target)
+    model = LitBoltzmannGenerator(flow, target)
     datamodule = PriorDataModule(prior, batch_size=1000, epoch_length=1000)
+
+    optimizer_config = OptimizerConfig(
+        "Adam",
+        {"lr": 0.1},
+        "CosineAnnealingLR",
+        {"T_max": TRAIN_STEPS},
+        submodule="flow",
+    )
+    optimizer_config.add_to(model)
 
     trainer = pl.Trainer(**trainer_args)
     trainer.fit(model, datamodule=datamodule)

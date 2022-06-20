@@ -5,12 +5,70 @@ on :py:class:`pytorch_lightning.LightningModule` rather than the standard
 
 .. attention:: This is a work in progress. Do not use.
 """
+import dataclasses
+import functools
+import types
+from typing import Optional, Union
+
 import torch
 import pytorch_lightning as pl
 
 from torchnf.distributions import Target
 import torchnf.flow
 import torchnf.metrics
+
+
+@dataclasses.dataclass
+class OptimizerConfig:
+    optimizer: Union[str, type[torch.optim.Optimizer]]
+    optimizer_init: dict = dataclasses.field(default_factory=dict)
+    scheduler: Optional[
+        Union[str, type[torch.optim.lr_scheduler._LRScheduler]]
+    ] = None
+    scheduler_init: dict = dataclasses.field(default_factory=dict)
+    submodule: Optional[str] = None
+
+    def __post_init__(self) -> None:
+        if isinstance(self.optimizer, str):
+            self.optimizer = getattr(torch.optim, self.optimizer)
+        if isinstance(self.scheduler, str):
+            self.scheduler = getattr(torch.optim.lr_scheduler, self.scheduler)
+
+    @staticmethod
+    def configure_optimizers(
+        model: pl.LightningModule,
+        optimizer: torch.optim.Optimizer,
+        scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
+    ):
+        if scheduler is None:
+            return optimizer
+        return [optimizer], [scheduler]
+
+    def add_to(self, model: pl.LightningModule) -> None:
+        module = getattr(model, self.submodule) if self.submodule else model
+        optimizer = self.optimizer(module.parameters(), **self.optimizer_init)
+        scheduler = (
+            self.scheduler(optimizer, **self.scheduler_init)
+            if self.scheduler is not None
+            else self.scheduler
+        )
+
+        configure_optimizers = functools.partial(
+            self.configure_optimizers,
+            optimizer=optimizer,
+            scheduler=scheduler,
+        )
+
+        # Adds __wrapped__ attribute to partial fn, required for
+        # PyTorch Lightning to regard configure_optimizers as overridden
+        # (see pytorch_lightning.utilities.model_helpers.is_overridden)
+        functools.update_wrapper(
+            configure_optimizers, self.configure_optimizers
+        )
+
+        model.configure_optimizers = types.MethodType(
+            configure_optimizers, model
+        )
 
 
 class LitBoltzmannGenerator(pl.LightningModule):
