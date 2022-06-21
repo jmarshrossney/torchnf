@@ -17,6 +17,7 @@ protobuf = "3.19"
 torchmetrics = "^0.9.1"
 tensorboard = "^2.9.1"
 jsonargparse = "^4.9.0"
+matplotlib = "^3.5.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.2"

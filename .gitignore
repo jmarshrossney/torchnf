@@ -8,3 +8,4 @@ __pycache__/
 docs/_build
 docs/source/torchnf.*
 docs/source/_templates/apidoc_orig
+lightning_logs/

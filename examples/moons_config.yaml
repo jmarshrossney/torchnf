@@ -1,0 +1,19 @@
+net_hidden_shape: [100]
+net_activation: Tanh
+flow_depth: 12
+
+epochs: 10
+
+optimizer:
+    optimizer: Adam
+    optimizer_init:
+        lr: 0.001
+    scheduler: CosineAnnealingLR
+    scheduler_init:
+        T_max: 10000
+    submodule: flow
+
+moons:
+    total_size: 10000
+    batch_size: 32
+    noise: 0.1

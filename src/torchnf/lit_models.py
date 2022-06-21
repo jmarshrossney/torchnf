@@ -10,10 +10,11 @@ import functools
 import types
 from typing import Optional, Union
 
+from jsonargparse.typing import PositiveInt
 import torch
 import pytorch_lightning as pl
 
-from torchnf.distributions import Target
+from torchnf.distributions import Target, Prior
 import torchnf.flow
 import torchnf.metrics
 
@@ -69,6 +70,49 @@ class OptimizerConfig:
         model.configure_optimizers = types.MethodType(
             configure_optimizers, model
         )
+
+
+class LitBijectiveEncoder(pl.LightningModule):
+    def __init__(self, flow: torchnf.flow.Flow, target: Prior) -> None:
+        super().__init__()
+        self.flow = flow
+        self.latent = target
+
+    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        return self.flow(x)
+
+    def inverse(self, z: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        return self.flow.inverse(z)
+
+    def _forward_and_loss(self, batch: list[torch.Tensor]) -> torch.Tensor:
+        z, log_det_jacob = self(*batch)
+        log_prob_latent = self.latent.log_prob(z)
+        loss = (log_prob_latent + log_det_jacob).mean().neg()
+        return loss
+
+    def training_step(self, batch: list[torch.Tensor], _) -> torch.Tensor:
+        loss = self._forward_and_loss(batch)
+        self.log("train/loss", loss)
+        return loss
+
+    def validation_step(self, batch: list[torch.Tensor], _) -> torch.Tensor:
+        loss = self._forward_and_loss(batch)
+        self.log("validation/loss", loss)
+        return loss
+
+    def test_step(self, batch: list[torch.Tensor], _) -> torch.Tensor:
+        loss = self._forward_and_loss(batch)
+        return loss
+
+    def predict_step(self, batch: list[torch.Tensor], _) -> torch.Tensor:
+        z, log_det_jacob = self(*batch)
+        return z
+
+    @torch.no_grad()
+    def sample(self, batch_size: PositiveInt) -> torch.Tensor:
+        z = self.latent.sample([batch_size])
+        x, _ = self.flow.inverse(z)
+        return x
 
 
 class LitBoltzmannGenerator(pl.LightningModule):
