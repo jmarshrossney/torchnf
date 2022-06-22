@@ -46,11 +46,9 @@ def test_iterable_prior(prior):
 
     seed = torch.random.seed()
     sample_1 = iprior.sample()
-    log_prob_1 = iprior.log_prob(sample_1)
     torch.random.manual_seed(seed)
-    sample_2, log_prob_2 = next(iter(iprior))
+    sample_2 = next(iter(iprior))
     assert torch.allclose(sample_1, sample_2)
-    assert torch.allclose(log_prob_1, log_prob_2)
 
     assert iprior.sample().shape == prior.event_shape
     assert iprior_batch.sample().shape == torch.Size([10, *prior.event_shape])

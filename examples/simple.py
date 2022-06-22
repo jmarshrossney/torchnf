@@ -1,23 +1,23 @@
-import dataclasses
 import itertools
 import jsonargparse
 from jsonargparse.typing import PositiveInt
+import pathlib
 import torch
 import pytorch_lightning as pl
 import matplotlib.pyplot as plt
 
-from torchnf.lit_models import LitBijectiveEncoder, OptimizerConfig
-from torchnf.distributions import PriorDataModule, expand_dist
-from torchnf.flow import Flow, FlowLayer
-from torchnf.conditioners import MaskedConditionerStructurePreserving
-from torchnf.transformers import AffineTransform
+from torchnf.lit_models import BijectiveAutoEncoder, OptimizerConfig
+from torchnf.distributions import expand_dist
+from torchnf.flow import Flow
 
 from torchnf.data.toy_datasets import Moons
 
-from torchnf.recipes.layers import AdditiveCouplingLayer, AffineCouplingLayer
+from torchnf.recipes.layers import AffineCouplingLayer
 from torchnf.recipes.networks import DenseNet
 
-parser = jsonargparse.ArgumentParser()
+_default_config = str(pathlib.Path(__file__).with_name("moons_config.yaml"))
+
+parser = jsonargparse.ArgumentParser(default_config_files=[_default_config])
 parser.add_argument("--net_hidden_shape", type=PositiveInt, nargs="*")
 parser.add_argument("--net_activation", type=str)
 parser.add_argument("--flow_depth", type=PositiveInt)
@@ -27,22 +27,21 @@ parser.add_class_arguments(Moons, "moons")
 parser.add_argument("-c", "--config", action=jsonargparse.ActionConfigFile)
 
 
-class Model(LitBijectiveEncoder):
-    def validation_step(self, batch, _):
-        z, ldj = self(*batch)
-        return z
-
-    def validation_epoch_end(self, outputs) -> None:
+class Model(BijectiveAutoEncoder):
+    def validation_epoch_end(self, z) -> None:
+        z = torch.cat(z)
         fig, ax = plt.subplots()
-        z = torch.cat(outputs)
         ax.scatter(*z.T)
 
-        self.logger.experiment.add_figure("data", fig, self.global_step)
+        self.logger.experiment.add_figure(
+            "Validation/encoded_data", fig, self.global_step
+        )
 
 
 def main():
 
     config = parser.parse_args()
+    # config = parser.instantiate_classes(config)
 
     net = DenseNet(
         in_features=1,

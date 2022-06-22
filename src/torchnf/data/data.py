@@ -1,10 +1,9 @@
 from collections.abc import Iterable
 import math
-from typing import Optional, Union
+from typing import Optional
 
-from jsonargparse.typing import PositiveInt, PositiveFloat
+from jsonargparse.typing import PositiveInt
 import torch
-import pytorch_lightning as pl
 
 import torchnf.distributions
 

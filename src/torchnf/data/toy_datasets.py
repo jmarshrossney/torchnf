@@ -1,6 +1,5 @@
-from collections.abc import Iterable
 import math
-from typing import Optional, Union
+from typing import Optional
 
 from jsonargparse.typing import (
     PositiveInt,
@@ -12,7 +11,6 @@ import torch
 from torch.utils.data import TensorDataset, DataLoader, random_split
 import pytorch_lightning as pl
 
-import torchnf.distributions
 
 PI = math.pi
 

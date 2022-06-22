@@ -128,6 +128,31 @@ def expand_dist(
     return distribution
 
 
+class DistributionLazyShape:
+    """
+    Wraps a distribution to allow sampling various shapes.
+    """
+
+    def __init__(self, distribution: torch.distributions.Distribution) -> None:
+        self.distribution = distribution
+
+    def __getattr__(self, attr):
+        return getattr(self.distribution, attr)
+
+    def sample(
+        self, sample_shape: Iterable[PositiveInt] = torch.Size([])
+    ) -> torch.Tensor:
+        # NOTE: define these explicitly rather than relying on getattr, since
+        # otherwise does not register as instance of Prior
+        return self.distribution.sample(sample_shape)
+
+    def log_prob(self, sample: torch.Tensor) -> torch.Tensor:
+        batch_size, *shape = sample.shape
+        return (
+            self.distribution.log_prob(sample).view(batch_size, -1).sum(dim=1)
+        )
+
+
 class IterablePrior(torch.utils.data.IterableDataset):
     """
     Wraps a distribution to allow sampling to be iterated over.
@@ -184,9 +209,8 @@ class IterablePrior(torch.utils.data.IterableDataset):
     def __iter__(self):
         return self
 
-    def __next__(self) -> tuple[torch.Tensor, torch.Tensor]:
-        sample = self.sample()
-        return sample, self.log_prob(sample)
+    def __next__(self) -> torch.Tensor:
+        return self.sample()
 
     def __len__(self) -> PositiveInt:
         return self.length
@@ -234,13 +258,10 @@ class PriorDataModule(pl.LightningDataModule):
         distribution: torch.distributions.Distribution,
         batch_size: PositiveInt,
         epoch_length: Optional[PositiveInt] = None,
-        *,
         val_batch_size: Optional[PositiveInt] = None,
         test_batch_size: Optional[PositiveInt] = None,
-        pred_batch_size: Optional[PositiveInt] = None,
         val_epoch_length: Optional[PositiveInt] = None,
         test_epoch_length: Optional[PositiveInt] = None,
-        pred_epoch_length: Optional[PositiveInt] = None,
     ) -> None:
         super().__init__()
         self.distribution = distribution
@@ -249,10 +270,8 @@ class PriorDataModule(pl.LightningDataModule):
 
         self.val_batch_size = val_batch_size or batch_size
         self.test_batch_size = test_batch_size or batch_size
-        self.pred_batch_Size = pred_batch_size or batch_size
         self.val_epoch_length = val_epoch_length or epoch_length
         self.test_epoch_length = test_epoch_length or epoch_length
-        self.pred_epoch_length = pred_epoch_length or epoch_length
 
     def train_dataloader(self) -> IterablePrior:
         return IterablePrior(
@@ -267,9 +286,4 @@ class PriorDataModule(pl.LightningDataModule):
     def test_dataloader(self) -> IterablePrior:
         return IterablePrior(
             self.distribution, self.test_batch_size, self.test_epoch_length
-        )
-
-    def predict_dataloader(self) -> IterablePrior:
-        return IterablePrior(
-            self.distribution, self.pred_batch_size, self.pred_epoch_length
         )
