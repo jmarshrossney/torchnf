@@ -14,8 +14,7 @@ import torchnf.flow
 from torchnf.models import OptimizerConfig
 from torchnf.transformers import Transformer
 from torchnf.data.toy_datasets import Moons
-from torchnf.recipes.layers import CouplingLayerDenseNet
-from torchnf.recipes.networks import DenseNet
+from torchnf.networks import DenseNet
 
 default_config = (
     pathlib.Path(__file__)
@@ -30,13 +29,16 @@ def make_flow(
     flow_depth: PositiveInt,
 ) -> torchnf.flow.Flow:
     mask = torch.tensor([True, False], dtype=bool)
-    layer_x = CouplingLayerDenseNet(transformer, net, mask)
-    layer_y = CouplingLayerDenseNet(transformer, net, ~mask)
-    layers = [
-        layer()
-        for _, layer in zip(
-            range(flow_depth), itertools.cycle([layer_x, layer_y])
+
+    conditioner = (
+        lambda mask_: torchnf.conditioners.MaskedConditioner(  # noqa: E731
+            net(1, transformer.n_params), mask_
         )
+    )
+
+    layers = [
+        torchnf.flow.FlowLayer(transformer, conditioner(m))
+        for _, m in zip(range(flow_depth), itertools.cycle([mask, ~mask]))
     ]
     return torchnf.flow.Flow(*layers)
 
