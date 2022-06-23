@@ -2,7 +2,7 @@ import pytest
 import torch
 import pytorch_lightning as pl
 
-from torchnf.lit_models import BoltzmannGenerator, OptimizerConfig
+from torchnf.models import BoltzmannGenerator, OptimizerConfig
 from torchnf.distributions import PriorDataModule, expand_dist
 from torchnf.transformers import Translation
 from torchnf.conditioners import SimpleConditioner

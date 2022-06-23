@@ -7,11 +7,11 @@ import pytorch_lightning as pl
 import matplotlib.pyplot as plt
 import types
 
-import torchnf.lit_models
+import torchnf.models
 import torchnf.distributions
 import torchnf.flow
 
-from torchnf.lit_models import OptimizerConfig
+from torchnf.models import OptimizerConfig
 from torchnf.transformers import Transformer
 from torchnf.data.toy_datasets import Moons
 from torchnf.recipes.layers import CouplingLayerDenseNet
@@ -72,7 +72,7 @@ def main(config: dict = {}):
     prior = torchnf.distributions.expand_dist(
         torch.distributions.Normal(0, 1), [2]
     )
-    model = torchnf.lit_models.BijectiveAutoEncoder(flow, prior)
+    model = torchnf.models.BijectiveAutoEncoder(flow, prior)
 
     # Add an extra method which collects all of the data generated
     # during validation and plots a scatter
