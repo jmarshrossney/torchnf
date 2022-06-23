@@ -258,9 +258,10 @@ class BijectiveAutoEncoder(FlowBasedModel):
         (x,) = batch
         z, log_prob_x = self.encode(x)
         loss = log_prob_x.mean().neg()  # forward KL
-        self.logger.experiment.add_scalars(
-            "loss", {"train": loss}, self.global_step
-        )
+        self.log("Train/loss", loss, on_step=True, on_epoch=False)
+        # self.logger.experiment.add_scalars(
+        #    "loss", {"train": loss}, self.global_step
+        # )
         return loss
 
     def validation_step(
@@ -272,10 +273,22 @@ class BijectiveAutoEncoder(FlowBasedModel):
         (x,) = batch
         z, log_prob_x = self.encode(x)
         loss = log_prob_x.mean().neg()  # forward KL
-        self.logger.experiment.add_scalars(
-            "loss", {"validation": loss}, self.global_step
-        )
+        self.log("Validation/loss", loss, on_step=False, on_epoch=True)
+        # self.logger.experiment.add_scalars(
+        #    "loss", {"validation": loss}, self.global_step
+        # )
         return z
+
+    def test_step(
+        self, batch: list[torch.Tensor], batch_idx: int
+    ) -> torch.Tensor:
+        """
+        Performs a single test step.
+        """
+        (x,) = batch
+        z, log_prob_x = self.encode(x)
+        loss = log_prob_x.mean().neg()  # forward KL
+        self.log("Test/loss", loss, on_step=False, on_epoch=True)
 
     @torch.no_grad()
     def sample(

@@ -1,7 +1,4 @@
-import dataclasses
-
 import torch
-from jsonargparse.typing import PositiveInt
 
 import torchnf.conditioners
 import torchnf.flow
@@ -9,59 +6,56 @@ import torchnf.transformers
 import torchnf.recipes.networks
 
 
-@dataclasses.dataclass
-class CouplingLayer:
+class CouplingLayerDenseNet:
+    def __init__(
+        self,
+        transformer: torchnf.transformers.Transformer,
+        net: torchnf.recipes.networks.DenseNet,
+        mask: torch.BoolTensor,
+    ) -> None:
+        self.transformer = transformer  # deepcopy this?
+        self.net = net
+        self.mask = mask
 
-    net: torchnf.recipes.networks.NetBuilder
-    mask: torch.BoolTensor
-
-    @property
-    def transformer(self) -> torchnf.transformers.Transformer:
-        raise NotImplementedError
+        self.size_in = int(mask.sum())
+        self.size_out = transformer.n_params * int(mask.logical_not().sum())
 
     @property
     def conditioner(self) -> torchnf.conditioners.MaskedConditioner:
-        # raise NotImplementedError
-        return torchnf.conditioners.MaskedConditioner(self.net(), self.mask)
+        return torchnf.conditioners.MaskedConditioner(
+            self.net(self.size_in, self.size_out), self.mask, mask_mode="index"
+        )
 
     def __call__(self) -> torchnf.flow.FlowLayer:
         return torchnf.flow.FlowLayer(self.transformer, self.conditioner)
 
 
-class AdditiveCouplingLayer(CouplingLayer):
-    @property
-    def transformer(self) -> torchnf.transformers.Translation:
-        return torchnf.transformers.Translation()
+class CouplingLayerConvNet:
+    def __init__(
+        self,
+        transformer: torchnf.transformers.Transformer,
+        net: torchnf.recipes.networks.ConvNet,
+        mask: torch.BoolTensor,
+        *,
+        create_channel_dim: bool = True,
+    ) -> None:
+        self.transformer = transformer  # deepcopy this?
+        self.net = net
+        self.mask = mask
 
+        self.size_in = None  # lazily infer
+        self.size_out = transformer.n_params
 
-class MultiplicativeCouplingLayer(CouplingLayer):
-    @property
-    def transformer(self) -> torchnf.transformers.Rescaling:
-        return torchnf.transformers.Rescaling()
-
-
-class AffineCouplingLayer(CouplingLayer):
-    @property
-    def transformer(self) -> torchnf.transformers.AffineTransform:
-        return torchnf.transformers.AffineTransform()
-
-
-@dataclasses.dataclass
-class RQSplineCouplingLayer(CouplingLayer):
-    n_segments: PositiveInt
-    interval: tuple[float]
-    domain: str = "reals"
-
-    def __post_init__(self) -> None:
-        assert self.domain in ("reals", "circle", "interval"), "invalid domain"
-        self._transformer_cls = {
-            "reals": torchnf.transformers.RQSplineTransform,
-            "interval": torchnf.transformers.RQSplineTransformIntervalDomain,
-            "circle": torchnf.transformers.RQSplineTransformCircularDomain,
-        }.__getitem__(self.domain)
+        self.create_channel_dim = create_channel_dim
 
     @property
-    def transformer(self) -> torchnf.transformers.RQSplineTransform:
-        return self._transformer_cls(
-            n_segments=self.n_segments, interval=self.interval
+    def conditioner(self) -> torchnf.conditioners.MaskedConditioner:
+        return torchnf.conditioners.MaskedConditioner(
+            self.net(self.size_in, self.size_out),
+            self.mask,
+            mask_mode="fill",
+            create_channel_dim=self.create_channel_dim,
         )
+
+    def __call__(self) -> torchnf.flow.FlowLayer:
+        return torchnf.flow.FlowLayer(self.transformer, self.conditioner)

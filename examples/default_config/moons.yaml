@@ -1,0 +1,29 @@
+flow:
+    transformer: torchnf.transformers.AffineTransform
+    net:
+        class_path: torchnf.recipes.networks.DenseNet
+        init_args:
+            hidden_shape: [100]
+            activation: Tanh
+            skip_final_activation: false
+    flow_depth: 12
+
+optimizer:
+    optimizer: Adam
+    optimizer_init:
+        lr: 0.001
+    scheduler: CosineAnnealingLR
+    scheduler_init:
+        T_max: 10000
+    submodule: flow
+
+trainer:
+    enable_checkpointing: False
+    max_epochs: 10
+    val_check_interval: 0.25
+
+moons:
+    total_size: 6400
+    batch_size: 32
+    noise: 0.1
+    train_frac: 0.75

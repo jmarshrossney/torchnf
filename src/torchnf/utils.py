@@ -154,3 +154,7 @@ def eval_mode(model):
     finally:
         if was_training:
             model.train()
+
+
+def raise_(exc: Exception):
+    raise Exception
