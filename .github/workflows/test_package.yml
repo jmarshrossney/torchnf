@@ -3,10 +3,10 @@ name: Test Package
 on:
   push:
     branches:
-      - main
+      - develop
   pull_request:
     branches:
-      - main
+      - develop
 
 jobs:
   build:
@@ -34,3 +34,6 @@ jobs:
 
       - name: Test
         run: tox
+
+      - name: Docs
+        run: tox -e docs
