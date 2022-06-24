@@ -1,603 +1,538 @@
 """
-Module containing classes which implement some standard models based on
-Normalizing Flows.
+Alternative implementations of the models from :mod:`torchnf.models`, based
+on :py:class:`pytorch_lightning.LightningModule` rather than the standard
+:py:class:`torch.nn.Module`.
 
-See :mod:`torchnf.lit_models` for equivalent versions based on
-:py:class:`pytorch_lightning.LightningModule`.
+.. attention:: This is a work in progress. Do not use.
 """
-import pathlib
+import dataclasses
+import functools
+import types
 from typing import Optional, Union
-import torch
-import logging
-import os
-import tqdm.auto
-import torch.utils.tensorboard as tensorboard
-import torchmetrics
 
+from jsonargparse.typing import PositiveInt
+import torch
+import pytorch_lightning as pl
+
+from torchnf.distributions import Target, Prior
 import torchnf.flow
-import torchnf.distributions
-import torchnf.utils
 import torchnf.metrics
 
-log = logging.getLogger(__name__)
 
-
-class Model(torch.nn.Module):
+@dataclasses.dataclass
+class OptimizerConfig:
     """
-    Base class for models.
+    Dataclass representing a single optimizer with optional lr scheduler.
 
-    Essentially this class acts as a container for a Normalizing Flow,
-    in which it can be trained, saved, loaded etc. It assigns a specific
-    directory to the model, where checkpoints, metrics, state dicts etc
-    can be saved and loaded.
+    This class provides, via the :meth:`add_to`` method, an alternative
+    way to configure an optimizer and lr scheduler, as opposed to
+    defining ``configure_optimizers`` in the ``LightningModule`` itself.
 
     Args:
-        output_dir
-            A dedicated directory for the model, where checkpoints, metrics,
-            logs, outputs etc. will be saved to and loaded from. If not
-            provided, the fallback is to call :meth:`generate_output_dir`.
+        optimizer:
+            The optimizer class
+        optimizer_init:
+            Keyword args to instantiate optimizer
+        scheduler:
+            The lr scheduler class
+        scheduler_init:
+            Keyword args to instantiate scheduelr
+        submodule:
+            Optionally specify a submodule whose ``parameters()``
+            will be passed to the optimizer.
 
-    .. attention:: Currently multiple optimizers are not supported.
+    Example:
+
+        >>> optimizer_config = OptimizerConfig(
+                "Adam",
+                {"lr": 0.001},
+                "CosineAnnealingLR",
+                {"T_max": 1000},
+            )
+        >>> # MyModel does not override configure_optimizers
+        >>> model = MyModel(...)
+        >>> optimizer_config.add_to(model)
     """
 
-    def __init__(self, output_dir: Optional[Union[str, os.PathLike]] = None):
+    optimizer: Union[str, type[torch.optim.Optimizer]]
+    optimizer_init: dict = dataclasses.field(default_factory=dict)
+    scheduler: Optional[
+        Union[str, type[torch.optim.lr_scheduler._LRScheduler]]
+    ] = None
+    scheduler_init: dict = dataclasses.field(default_factory=dict)
+    submodule: Optional[str] = None
+
+    def __post_init__(self) -> None:
+        if isinstance(self.optimizer, str):
+            self.optimizer = getattr(torch.optim, self.optimizer)
+        if isinstance(self.scheduler, str):
+            self.scheduler = getattr(torch.optim.lr_scheduler, self.scheduler)
+
+    @staticmethod
+    def configure_optimizers(
+        model: pl.LightningModule,
+        optimizer: torch.optim.Optimizer,
+        scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
+    ):
+        """
+        Simple function used to override ``configure_optimizers``.
+        """
+        if scheduler is None:
+            return optimizer
+        return [optimizer], [scheduler]
+
+    def add_to(self, model: pl.LightningModule) -> None:
+        """
+        Add the optimizer and scheduler to an existing ``LightningModule``.
+        """
+        module = getattr(model, self.submodule) if self.submodule else model
+        optimizer = self.optimizer(module.parameters(), **self.optimizer_init)
+        scheduler = (
+            self.scheduler(optimizer, **self.scheduler_init)
+            if self.scheduler is not None
+            else self.scheduler
+        )
+
+        configure_optimizers = functools.partial(
+            self.configure_optimizers,
+            optimizer=optimizer,
+            scheduler=scheduler,
+        )
+
+        # Adds __wrapped__ attribute to partial fn, required for
+        # PyTorch Lightning to regard configure_optimizers as overridden
+        # (see pytorch_lightning.utilities.model_helpers.is_overridden)
+        functools.update_wrapper(
+            configure_optimizers, self.configure_optimizers
+        )
+
+        model.configure_optimizers = types.MethodType(
+            configure_optimizers, model
+        )
+
+
+class FlowBasedModel(pl.LightningModule):
+    """
+    Base LightningModule for Normalizing Flows.
+
+    Args:
+        flow:
+            A Normalizing Flow. If this is not provided then
+            :meth:`flow_forward` and :meth:`flow_inverse` should be
+            overridden to implement the flow.
+    """
+
+    def __init__(self, flow: torchnf.flow.Flow) -> None:
         super().__init__()
-        output_dir = output_dir or self.generate_output_dir()
-        self._output_dir = pathlib.Path(str(output_dir)).resolve()
+        self.flow = flow
+        self.configure_metrics()
 
-        self._global_step = 0
+    def flow_forward(
+        self, x: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """
+        Forward pass of the Normalizing Flow.
 
-        self._logging = True
+        Unless overridden, this simply returns ``self.flow(x)``.
+        """
+        return self.flow(x)
 
-    def generate_output_dir(self) -> Union[str, os.PathLike]:
+    def flow_inverse(
+        self, y: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
-        Generates a unique path to a dedicated output directory for the model.
-        """
-        ts = torchnf.utils.timestamp()
-        name = self.__class__.__name__
-        output_dir = pathlib.Path(f"{name}_{ts}").resolve()
-        return output_dir
+        Inverse pass of the Normalizing Flow.
 
-    @property
-    def output_dir(self) -> pathlib.Path:
+        Unless overridden, this simply returns ``self.flow.inverse(y)``.
         """
-        Path to dedicated directory for this model.
-        """
-        return self._output_dir
+        return self.flow.inverse(y)
 
-    @property
-    def logger(self) -> tensorboard.SummaryWriter:
+    def configure_metrics(self) -> None:
         """
-        Handles logging to Tensorboard.
+        Instantiate metrics (called in constructor).
         """
-        if not hasattr(self, "_logger"):
-            self._logger = tensorboard.SummaryWriter(
-                self._output_dir.joinpath("logs")
-            )
-        return self._logger
+        ...
 
-    def logging(self) -> None:
-        """
-        Set global logging switch to True.
-        """
-        self._logging = True
 
-    def no_logging(self) -> None:
-        """
-        Set global logging switch to False.
-        """
-        self._logging = False
+class BijectiveAutoEncoder(FlowBasedModel):
+    """
+    Latent variables model based on a Normalizing Flow.
 
-    @property
-    def global_step(self) -> int:
-        """
-        Total number of training steps since initialisation.
-        """
-        return self._global_step
+    Args:
+        flow:
+            A Normalizing Flow
+        prior:
+            The distribution from which latent variables are drawn.
+        forward_is_encode:
+            If True, the ``forward`` method of the Normalizing Flow
+            performs the encoding step, and the ``inverse`` method
+            performs the decoding; if False, the converse
+    """
 
-    @property
-    def current_loss(self) -> float:
+    def __init__(
+        self,
+        flow: torchnf.flow.Flow,
+        prior: Prior,
+        *,
+        forward_is_encode: bool = True,
+    ) -> None:
+        super().__init__(flow)
+        self.prior = prior
+
+        self._encode, self._decode = (
+            (self.flow_forward, self.flow_inverse)
+            if forward_is_encode
+            else (self.flow_inverse, self.flow_forward)
+        )
+
+    def encode(self, x: torch.Tensor) -> torch.Tensor:
+        r"""
+        Encodes the input data and computes the log likelihood.
+
+        The log likelihood of the point :math:`x` under the model is
+
+        .. math::
+
+            \log \ell(x) = \log q(z)
+            + \log \left\lvert \frac{\partial z}{\partial x} \right\rvert
+
+        where :math:`z` is the corresponding point in latent space,
+        :math:`q` is the prior distribution, and the Jacobian is that
+        of the encoding transformation.
+
+        Args:
+            x:
+                A batch of data drawn from the target distribution
+
+        Returns:
+            Tuple containing the encoded data and the log likelihood
+            under the model
         """
-        Most recently computed value of the loss function.
+        z, log_det_jacob = self._encode(x)
+        log_prob_z = self.prior.log_prob(z)
+        log_prob_x = log_prob_z + log_det_jacob
+        return z, log_prob_x
+
+    def decode(self, z: torch.Tensor) -> torch.Tensor:
+        r"""
+        Decodes the latent data and computes the log statistical weights.
+
+        The log likelihood of the point :math:`x` under the model is
+
+        .. math::
+
+            \log \ell(x) = \log q(z)
+            - \log \left\lvert \frac{\partial x}{\partial z} \right\rvert
+
+        where :math:`z` is the corresponding point in latent space,
+        :math:`q` is the prior distribution, and the Jacobian is that
+        of the decoding transformation.
+
+        Args:
+            z:
+                A batch of latent variables drawn from the prior
+                distribution
+
+        Returns:
+            Tuple containing the decoded data and the log likelihood
+            under the model
         """
-        return self._curr_loss
+        log_prob_z = self.prior.log_prob(z)
+        x, log_det_jacob = self._decode(z)
+        log_prob_x = log_prob_z - log_det_jacob
+        return x, log_prob_x
+
+    def training_step(
+        self, batch: list[torch.Tensor], batch_idx: int
+    ) -> torch.Tensor:
+        r"""
+        Performs a single training step, returning the loss.
+
+        The loss returned is the mean of the negative log-likelihood
+        of the inputs, under the model, i.e.
+
+        .. math::
+
+            L(\{x\}) = \frac{1}{N} \sum_{\{x\}} -\log q(x)
+        """
+        (x,) = batch
+        z, log_prob_x = self.encode(x)
+        loss = log_prob_x.mean().neg()  # forward KL
+        self.log("Train/loss", loss, on_step=True, on_epoch=False)
+        # self.logger.experiment.add_scalars(
+        #    "loss", {"train": loss}, self.global_step
+        # )
+        return loss
+
+    def validation_step(
+        self, batch: list[torch.Tensor], batch_idx: int
+    ) -> torch.Tensor:
+        """
+        Performs a single validation step, returning the encoded data.
+        """
+        (x,) = batch
+        z, log_prob_x = self.encode(x)
+        loss = log_prob_x.mean().neg()  # forward KL
+        self.log("Validation/loss", loss, on_step=False, on_epoch=True)
+        # self.logger.experiment.add_scalars(
+        #    "loss", {"validation": loss}, self.global_step
+        # )
+        return z
+
+    def test_step(
+        self, batch: list[torch.Tensor], batch_idx: int
+    ) -> torch.Tensor:
+        """
+        Performs a single test step.
+        """
+        (x,) = batch
+        z, log_prob_x = self.encode(x)
+        loss = log_prob_x.mean().neg()  # forward KL
+        self.log("Test/loss", loss, on_step=False, on_epoch=True)
+
+    @torch.no_grad()
+    def sample(
+        self, batch_size: PositiveInt, batches: PositiveInt = 1
+    ) -> torch.Tensor:
+        """
+        Generate synthetic data by sampling from the model.
+        """
+        z = self.prior.sample([batch_size])
+        x, _ = self._decode(z)
+        return x
+
+
+class BoltzmannGenerator(BijectiveAutoEncoder):
+    r"""
+    Latent Variable Model whose target distribution is a known functional.
+
+    If the target distribution has a known functional form,
+
+    .. math::
+
+        \int \mathrm{d} x p(x) = \frac{1}{Z} \int \mathrm{d} x e^{-E(x)}
+
+    then we can estimate the 'reverse' Kullbach-Leibler divergence
+    between the model :math:`q(x)` and the target,
+
+    .. math::
+
+        D_{KL}(q \Vert p) = \int \mathrm{d} x q(x)
+        \log \frac{q(x)}{p(x)}
+
+    up to an unimportant normalisation due to :math:`\log Z`, using
+
+    .. math::
+
+        \hat{D}_{KL} = \mathrm{E}_{x \sim q} \left[
+        -E(x) - \log q(x) \right]
+
+    This serves as a loss function for 'reverse-KL training'.
+
+    Furthermore, data generated from the model can be assigned an
+    un-normalised statistical weight
+
+    .. math::
+
+        \log w(x) = -E(x) - \log q(x)
+
+    which allows for (asymptotically) unbiased inference.
+    """
+
+    def __init__(
+        self,
+        flow: torchnf.flow.Flow,
+        prior: Prior,
+        target: Target,
+    ) -> None:
+        super().__init__(flow, prior, forward_is_encode=False)
+        self.target = target
+
+    def configure_metrics(self) -> None:
+        self.metrics = torchnf.metrics.LogStatWeightMetricCollection()
+
+    def forward(self, z: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        r"""
+        Decodes a batch of latent variables and computes the log weights.
+
+        This decodes the latent variables, computes the log probability
+        of the decoded data under the model and the target, and returns
+        the decoded batch along with the logarithm of un-normalised
+        statistical weights.
+
+        The statistical weights are defined
+
+        .. math::
+
+            \log w(x) = \log p(x) - \log q(x)
+        """
+        x, log_prob_x = self.decode(z)
+        log_prob_target = self.target.log_prob(x)
+        log_stat_weight = log_prob_target - log_prob_x
+        return x, log_stat_weight
+
+    def training_step_rev_kl(self, z: torch.Tensor) -> torch.Tensor:
+        r"""
+        Performs a single 'reverse' KL step.
+
+        This decodes the latent variables, computes the log probability
+        of the decoded data under the model and the target, and returns
+        an estimate of the 'reverse' Kullbach-Leibler divergence, up to
+        the unknown shift due to normalisations.
+
+        The loss returned is defined by
+
+        .. math::
+
+            L(\{x\}) = \frac{1}{N} \sum_{\{x\}} \left[
+            \log p(x) - \log q(x) \right]
+
+        Args:
+            z:
+                A batch of latent variables drawn from the prior
+                distribution
+
+        Returns:
+            The mean of the negative log-likelihood of the inputs,
+            under the model
+
+        .. note:: This relies on :meth:`forward`.
+        """
+        x, log_stat_weight = self(z)
+        loss = log_stat_weight.mean().neg()
+        return loss
 
     def configure_training(
         self,
-        steps: int,
-        batch_size: int,
-        optimizer: str,
-        optimizer_kwargs: dict,
-        scheduler: str,
-        scheduler_kwargs: dict,
-        ckpt_interval: Union[int, None] = None,
-        pbar_interval: Union[int, None] = 25,
+        batch_size: PositiveInt,
+        epoch_length: PositiveInt,
+        val_batch_size: Optional[PositiveInt] = None,
+        val_epoch_length: Optional[PositiveInt] = None,
+        test_batch_size: Optional[PositiveInt] = None,
+        test_epoch_length: Optional[PositiveInt] = None,
     ) -> None:
         """
-        Set up the model for training.
+        Sets the batch sizes and epoch lengths for reverse KL training.
 
-        This method must be executed before running :meth:`fit`.
-
-        Args:
-            steps
-                Number of training steps to run
-            batch_size
-                Size of each training batch
-            optimizer
-                String denoting an optimizer defined in ``torch.optim``
-            optimizer_kwargs
-                Keyword arguments for the optimizer
-            scheduler
-                String denoting a learning rate scheduler defined in
-                ``torch.optim.lr_schedulers``
-            scheduler_kwargs
-                Keyword arguments for the scheduler
-            ckpt_interval
-                Number of steps between saving checkpoints. Set to `-1`
-                to save checkpoint after final step. Set to `falsey` to
-                never save checkpoints,
-            pbar_interval
-                Number of steps between updates of the progress bar.
-                Set to `None` to disable progress bar.
+        Before training in reverse KL mode (i.e. decoding latent
+        variables and evaluating log p - log q), this method must be
+        executed in order to set the batch sizes and epoch lengths.
         """
-        self.train_steps = steps
-        self.train_batch_size = batch_size
-        self.optimizer = getattr(torch.optim, optimizer)(
-            self.parameters(), **optimizer_kwargs
+        self.batch_size = batch_size
+        self.epoch_length = epoch_length
+        self.val_batch_size = val_batch_size or batch_size
+        self.val_epoch_length = val_epoch_length or epoch_length
+        self.test_batch_size = test_batch_size or batch_size
+        self.test_epoch_length = test_epoch_length or epoch_length
+
+    def _prior_as_dataloader(
+        self, batch_size: PositiveInt, epoch_length: PositiveInt
+    ) -> torchnf.distributions.IterablePrior:
+        """
+        Returns an iterable version of the prior distribution.
+        """
+        if not hasattr(self, "batch_size"):
+            raise Exception("First, run 'configure_training'")
+        return torchnf.distributions.IterablePrior(
+            self.prior,
+            batch_size,
+            epoch_length,
         )
-        self.scheduler = getattr(torch.optim.lr_scheduler, scheduler)(
-            self.optimizer, **scheduler_kwargs
+
+    def train_dataloader(self) -> torchnf.distributions.IterablePrior:
+        return self._prior_as_dataloader(self.batch_size, self.epoch_length)
+
+    def val_dataloader(self) -> torchnf.distributions.IterablePrior:
+        return self._prior_as_dataloader(
+            self.val_batch_size, self.val_epoch_length
         )
-        self.ckpt_interval = ckpt_interval
-        self.pbar_interval = pbar_interval
 
-        if not hasattr(self, "val_interval"):
-            self.val_interval = None  # do not perform validation
-
-    def configure_validation(
-        self,
-        batch_size: int,
-        batches: int,
-        metrics: Union[torchmetrics.Metric, torchmetrics.MetricCollection],
-        interval: int = -1,
-    ) -> None:
-        """
-        Set up the model for validation.
-
-        Args:
-            batch_size
-                Size of each validation batch
-            batches
-                Number of validation steps to run, each time validation
-                occurs
-            metrics
-                Validation metrics to compute
-            interval
-                Number of steps between validation runs. Set to `-1` to
-                run validation on final step
-
-        """
-        self.val_batch_size = batch_size
-        self.val_batches = batches
-        self.val_metrics = metrics
-        self.val_interval = interval
-
-    def save_checkpoint(self) -> None:
-        """
-        Saves a checkpoint containing the current model state.
-
-        The checkpoint gets saved to `self.output_dir/checkpoints/`
-        under the name `ckpt_<self.global_step>.pt`. It contains
-        a snapshot of the state dict of the model, optimizer, and
-        scheduler, as well as the global step.
-
-        .. seealso:: :meth:`load_checkpoint`
-        """
-        ckpt = {
-            "global_step": self._global_step,
-            "model_state_dict": self.state_dict(),
-            "optimizer_state_dict": self.optimizer.state_dict(),
-            "scheduler_state_dict": self.scheduler.state_dict(),
-        }
-        ckpt_path = self.output_dir / "checkpoints"
-        ckpt_path.mkdir(exist_ok=True, parents=True)
-        torch.save(
-            ckpt,
-            ckpt_path / f"ckpt_{self._global_step}.pt",
+    def test_dataloader(self) -> torchnf.distributions.IterablePrior:
+        return self._prior_as_dataloader(
+            self.test_batch_size, self.test_epoch_length
         )
-        log.info(f"Checkpoint saved at step: {self._global_step}")
 
-    def load_checkpoint(self, step: Optional[int] = None) -> None:
+    def predict_dataloader(self) -> torchnf.distributions.IterablePrior:
+        return self._prior_as_dataloader(
+            self.pred_batch_size, self.pred_epoch_length
+        )
+
+    def training_step(
+        self, batch: torch.Tensor, batch_idx: int
+    ) -> torch.Tensor:
         """
-        Loads a checkpoint from a `.pt` file.
+        Single training step.
 
-        See Also:
-            :meth:`save_checkpoint`
+        Unless overridden, this just calls :meth:`training_step_rev_kl`.
         """
-        ckpt_path = self.output_dir / "checkpoints"
-        ckpt = torch.load(ckpt_path / f"ckpt_{step}.pt")
+        # TODO: flag to switch to forward KL training?
+        loss = self.training_step_rev_kl(batch)
+        return loss
 
-        assert ckpt["global_step"] == step
-
-        self._global_step = ckpt["global_step"]
-        self.load_state_dict(ckpt["model_state_dict"])
-
-        # Always attempt to load optimizer state dict if in train mode
-        # If in eval mode, only load if optimizer has been instantiated
-        if self.training or hasattr(self, "optimizer"):
-            self.optimizer.load_state_dict(ckpt["optimizer_state_dict"])
-            self.scheduler.load_state_dict(ckpt["scheduler_state_dict"])
-
-        log.info(f"Loaded checkpoint from step: {step}")
-
-    def optimization_step(self, loss: torch.Tensor) -> None:
+    def validation_step(self, batch: torch.Tensor, batch_idx: int) -> None:
         """
-        Performs a single optimization step.
+        Single validation step.
 
         Unless overridden, this simply does the following:
 
         .. code-block:: python
 
-            self.optimizer.zero_grad()
-            loss.backward()
-            self.optimizer.step()
-            self.scheduler.step()
-        """
-        self.optimizer.zero_grad()
-        loss.backward()
-        self.optimizer.step()
-        self.scheduler.step()
-
-    def fit(self) -> None:
-        """
-        Runs the training loop.
-
-        Essentially what this does is the following:
-
-        .. code-block::
-
-            for _ in range(steps):
-                loss = self.training_step(batch_size)
-                self.optimizer_step(loss)
-
-        along with incrementing :attr:`global_step` and, optionally,
-        validating and saving checkpoints.
-
-        Notes:
-            The conditions for running validation and saving a checkpoint are
-            based on the global step, not the step number within the current
-            call to ``fit``.
-        """
-        # unchanged if +ve, final_step if -ve, final_step + 1 if falsey
-        val_interval = (
-            (self.val_interval if self.val_interval > 0 else self.train_steps)
-            if self.val_interval
-            else self.train_steps + 1
-        )
-        ckpt_interval = (
-            (
-                self.ckpt_interval
-                if self.ckpt_interval > 0
-                else self.train_steps
-            )
-            if self.ckpt_interval
-            else self.train_steps + 1
-        )
-
-        train_range = range(self._global_step, self.train_steps)
-        pbar = tqdm.auto.tqdm(train_range, desc="Training")
-        train_range = pbar if self.pbar_interval else train_range
-        pbar_interval = self.pbar_interval or self.train_steps + 1
-
-        self.train()
-        torch.set_grad_enabled(True)
-
-        for step in train_range:
-            self._global_step += 1
-
-            loss = self.training_step()
-            self.optimization_step(loss)
-
-            self._curr_loss = float(loss)
-
-            if self._logging:
-                self.log_training()
-
-            if self._global_step % pbar_interval == 0:
-                pbar.set_postfix({"loss": f"{float(loss):.3e}"})
-
-            if self._global_step % val_interval == 0:
-                with torch.no_grad(), torchnf.utils.eval_mode(
-                    self
-                ), torchnf.utils.pbar_description(pbar, "Validating"):
-                    _ = self.validate()
-                    if self._logging:
-                        self.log_validation()
-                        self.logger.flush()  # force logger to write to disk
-
-            if self._global_step % ckpt_interval == 0:
-                self.save_checkpoint()
-
-        pbar.close()
-        if self._logging:
-            self.logger.close()
-
-        self.eval()
-
-    def validate(self) -> list[torchmetrics.Metric]:
-        """
-        Runs the validation loop.
-
-        Unless overidden, this will just call :meth:`validation_step`
-        ``self.val_batchess`` times, and return the result of
-        ``self.val_metrics.compute()``.
-        """
-        self.val_metrics.reset()
-        for _ in range(self.val_batches):
-            self.validation_step()
-        return self.val_metrics.compute()
-
-    def log_training(self) -> None:
-        """
-        Log information during training.
-        """
-        self.logger.add_scalar(
-            "Training/loss", self.current_loss, self.global_step
-        )
-        self.logger.add_scalar(
-            "Training/lr",
-            torch.Tensor([self.scheduler.get_last_lr()]),
-            self.global_step,
-        )
-
-    def log_validation(self) -> None:
-        """
-        Logs the validation metrics.
-
-        By default, this logs the **mean** of each item in
-        ``self.val_metrics``. If the metric contains multiple elements,
-        a histogram is also logged.
-        """
-        for metric, tensor in self.val_metrics.compute().items():
-            self.logger.add_scalar(
-                f"Validation/{metric}", tensor.mean(), self.global_step
-            )
-            if tensor.numel() > 1:
-                self.logger.add_histogram(
-                    f"Histograms/{metric}", tensor.flatten(), self.global_step
-                )
-
-    def training_step(self) -> torch.Tensor:
-        """
-        Performs a single training step, returning the loss.
-
-        .. attention:: This must be overridden by the user!
+            y, log_stat_weights = self(batch)
+            self.metrics.update(log_stat_weights)
 
         """
-        raise NotImplementedError
+        y, log_stat_weights = self(batch)
+        self.metrics.update(log_stat_weights)
 
-    def validation_step(self) -> None:
+    def validation_epoch_end(self, val_outputs):
         """
-        Performs a single validation step.
-
-        This should also update ``val_metrics``.
-
-        .. attention:: This must be overridden by the user!
-
+        Compute and log metrics at the end of an epoch.
         """
-        raise NotImplementedError
+        metrics = self.metrics.compute()
+        self.log("Validation", metrics)
+        self.metrics.reset()
 
-
-class BoltzmannGenerator(Model):
-    """
-    Model representing a Boltzmann Generator based on a Normalizing Flow.
-
-    References:
-        The term 'Boltzmann Generator' was introduced in
-        :arxiv:`1812.01729`.
-    """
-
-    def __init__(
-        self,
-        prior: torchnf.distributions.Prior,
-        target: torchnf.distributions.Target,
-        flow: torchnf.flow.Flow,
-        output_dir: Optional[Union[str, os.PathLike]] = None,
-    ) -> None:
-        super().__init__(output_dir)
-        self.prior = prior
-        self.target = target
-        self.flow = flow
-
-    def forward(self, batch_size: int) -> tuple[torch.Tensor, torch.Tensor]:
+    def test_step(self, batch: torch.Tensor, batch_idx: int) -> None:
         """
-        Samples from the model and evaluates the statistical weights.
+        Single test step.
 
-        What this does is
-
-        .. code::
-
-            x, log_prob_prior = self.prior.forward(batch_size)
-            y, log_det_jacob = self.flow.forward(x)
-            log_prob_target = self.target.log_prob(y)
-            log_weights = log_prob_target - log_prob_prior + log_det_jacob
-            return y, log_weights
+        Unless overridden, this simply calls :meth:`validation_step`.
         """
-        x = self.prior.sample([batch_size])
-        log_prob_prior = self.prior.log_prob(x)
-        y, log_det_jacob = self.flow.forward(x)
-        log_prob_target = self.target.log_prob(y)
-        log_weights = log_prob_target - log_prob_prior + log_det_jacob
-        return y, log_weights
+        return self.validation_step(batch, batch_idx)
 
-    def inverse(self, y: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+    def test_epoch_end(self, val_outputs):
         """
-        Inverse pass of the Boltzmann Generator.
-
-        Takes a sample drawn from the target distribution, passes
-        it through the inverse-flow, and evaluates the density
-        of the outputs under the prior distribution.
-
-        Raises:
-            NotImplementedError
+        Compute and log metrics at the end of an epoch.
         """
-        raise NotImplementedError
-
-    def training_step_rev_kl(self) -> torch.Tensor:
-        """
-        Performs a single 'reverse KL' training step.
-
-        This simply does the following:
-
-        .. code-block:: python
-
-            _, log_weights = self.forward(self.train_batch_size)
-            loss = log_weights.mean().neg()
-            return loss
-        """
-        _, log_weights = self.forward(self.train_batch_size)
-        loss = log_weights.mean().neg()
-        return loss
-
-    def training_step_fwd_kl(self) -> torch.Tensor:
-        """
-        Raises:
-            NotImplementedError
-        """
-        raise NotImplementedError
-
-    def training_step(self) -> torch.Tensor:
-        """
-        Performs a single training step, returning the loss.
-        """
-        return self.training_step_rev_kl()
-
-    def validation_step(self) -> None:
-        """
-        Performs a single validation step, .
-        """
-        _, log_weights = self.forward(self.val_batch_size)
-        self.val_metrics.update(log_weights)
-
-    @staticmethod
-    def _concat_samples(
-        *samples: tuple[torch.Tensor, torch.Tensor],
-    ) -> tuple[torch.Tensor, torch.Tensor]:
-        """
-        Helper function to concatenate samples and their log weights.
-        """
-        data, weights = list(map(list, zip(*samples)))
-        return torch.cat(data, dim=0), torch.cat(weights, dim=0)
+        metrics = self.metrics.compute()
+        self.log("Test", metrics)
+        self.metrics.reset()
 
     @torch.no_grad()
     def weighted_sample(
-        self, batch_size: int, batches: int = 1
-    ) -> torch.Tensor:
+        self, batch_size: PositiveInt, batches: PositiveInt = 1
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
-        Generate a weighted sample from the model.
+        Generate a weighted sample by sampling from the model.
 
-        This simply called the :meth:`forward` method multiple times
-        (with gradients disabled), and concatenates the result.
+        Essentially, this does
 
-        Sampling from the model results in a biased sample with respect
-        to the target distribution. However, the statistical weights
-        allow unbiased expectation values to be calculated.
+        .. code:: python
 
-        Args:
-            batch_size:
-                Size of each batch
-            batches
-                Number of batches in the sample
+        for _ in range(batches):
+            z = self.prior.sample([batch_size])
+            x, log_prob_x = self.decode(z)
+            log_prob_target = self.target.log_prob(x)
+            log_stat_weight = log_prob_target - log_prob_x
+            ...
 
-        Returns:
-            Tuple containing (1) the sample and (2) the logarithm of
-            statistical weights.
+        The returned tuple ``(x, log_stat_weight)`` contains the
+        concatenation of all of the batches.
+
+        .. note:: This calls :meth:`forward`.
         """
         out = []
         for _ in range(batches):
-            out.append(self.forward(batch_size))
-        return self._concat_samples(*out)
-
-    @property
-    def mcmc_current_state(
-        self,
-    ) -> Union[tuple[torch.Tensor, torch.Tensor], None]:
-        """
-        Current state of the Markov chain, and it's log statistical weight.
-
-        This is used by :meth:`mcmc_sample` to initialise the Markov chain.
-
-        Usually, there is no need for the user to set this explicitly;
-        it will be updated automatically at the end of an MCMC sampling
-        phase.
-        """
-        try:
-            return self._mcmc_current_state
-        except AttributeError:
-            return None
-
-    @mcmc_current_state.setter
-    def mcmc_current_state(
-        self, state: tuple[torch.Tensor, torch.Tensor]
-    ) -> None:
-        self._mcmc_current_state = state
-
-    @mcmc_current_state.deleter
-    def mcmc_current_state(self) -> None:
-        del self._mcmc_current_state
-
-    @torch.no_grad()
-    def mcmc_sample(
-        self,
-        batch_size: int,
-        batches: int = 1,
-    ) -> torch.Tensor:
-        r"""
-        Generate an unbiased sample from the target distribution.
-
-        The Boltzmann Generator is used as the proposal distribution in
-        the Metropolis-Hastings algorithm. An asymptotically unbiased
-        sample is generated by accepting or rejecting data drawn from
-        the model using the Metropolis test:
-
-        .. math::
-
-            A(y \to y^\prime) = \min \left( 1,
-           \frac{q(y)}{p(y)} \frac{p(y^\prime)}{q(y^\prime)} \right) \, .
-
-        Args:
-            batch_size:
-                Size of each batch
-            batches
-                Number of batches in the sample
-
-        Notes:
-            If :attr:`mcmc_current_state` is not :code:`None`, the
-            Markov chain will be initialised using this state. Oherwise,
-            an initial state will be drawn from the **prior** distribution.
-
-        .. seealso:: :py:func:`torchnf.utils.metropolis_test`
-        """
-        # Initialise with a random state drawn from the prior
-        if self.mcmc_current_state is None:
-            x = self.prior.sample([1])
-            log_prob = self.prior.log_prob(x)
-            self.mcmc_current_state = (x, log_prob)
-
-        out = []
-
-        for _ in range(batches):
-            y, logw = self._concat_samples(
-                self.mcmc_current_state, self.forward(batch_size)
-            )
-            indices = torchnf.utils.metropolis_test(logw)
-
-            out.append(y[indices])
-
-            curr_idx = indices[-1]
-            self.mcmc_current_state = (
-                y[curr_idx].unsqueeze(0),
-                logw[curr_idx].unsqueeze(0),
-            )
-
-        return torch.cat(out, dim=0)
+            z = self.prior.sample([batch_size])
+            out.append(self(z))
+        return torchnf.utils.tuple_concat(*out)

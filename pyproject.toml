@@ -12,11 +12,12 @@ license = "GPLv3"
 [tool.poetry.dependencies]
 python = "^3.8"
 torch = "^1.11.0"
-pytorch-lightning = {version = "^1.6.3", optional = true}
-tqdm = "^4.64.0"
+pytorch-lightning = "^1.6.3"
 protobuf = "3.19"
 torchmetrics = "^0.9.1"
 tensorboard = "^2.9.1"
+jsonargparse = "^4.9.0"
+matplotlib = "^3.5.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.2"
@@ -29,7 +30,10 @@ numpy = "^1.22.3"
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
-filterwarnings = "ignore::DeprecationWarning"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::pytorch_lightning.utilities.warnings.PossibleUserWarning",
+]
 
 [tool.black]
 line-length = 79

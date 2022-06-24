@@ -5,7 +5,7 @@ import datetime
 import math
 import random
 
-import tqdm
+from jsonargparse.typing import NonNegativeInt
 import torch
 
 
@@ -34,7 +34,7 @@ def sum_except_batch(x: torch.Tensor) -> torch.Tensor:
 
 
 def expand_elements(
-    x: torch.Tensor, data_shape: torch.Size, stack_dim: int = 0
+    x: torch.Tensor, data_shape: torch.Size, stack_dim: NonNegativeInt = 0
 ) -> torch.Tensor:
     """
     Expands and stacks each element of a one-dimensional tensor.
@@ -64,6 +64,24 @@ def expand_elements(
         [el.expand(data_shape) for el in x.split(1)],
         dim=stack_dim,
     )
+
+
+def tuple_concat(*tuples: tuple[torch.Tensor]) -> tuple[torch.Tensor]:
+    """
+    Dim 0 concatenation of tuples of torch.Tensors.
+
+    Example:
+
+        >>> a, b, c = (
+                (torch.rand(1), torch.rand(10), torch.rand(1, 10))
+                for _ in range(3)
+        )
+        >>> x, y, z = tuple_concat(a, b, c)
+        >>> x.shape, y.shape, z.shape
+        (torch.Size([3]), torch.Size([30]), torch.Size([3, 10]))
+
+    """
+    return (torch.cat(tensors) for tensors in map(list, zip(*tuples)))
 
 
 def metropolis_test(log_weights: torch.Tensor) -> list:
@@ -138,12 +156,5 @@ def eval_mode(model):
             model.train()
 
 
-@contextlib.contextmanager
-def pbar_description(pbar: tqdm.std.tqdm, desc: str):
-    """
-    Temporarily change the description of a tqdm progress bar.
-    """
-    original_desc = pbar.desc
-    pbar.set_description_str(desc)
-    yield pbar
-    pbar.set_description_str(original_desc)
+def raise_(exc: Exception):
+    raise Exception

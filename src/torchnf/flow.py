@@ -104,7 +104,7 @@ class FlowLayer(torch.nn.Module):
         """
         self.context = context
         params = self.conditioner_forward(y)
-        x, ldj = self.transformer_forward(y, params)
+        x, ldj = self.transformer_inverse(y, params)
         return x, ldj
 
     def freeze(self) -> None:
