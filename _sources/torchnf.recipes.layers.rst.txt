@@ -1,7 +1,0 @@
-torchnf.recipes.layers
-======================
-
-.. automodule:: torchnf.recipes.layers
-   :members:
-   :undoc-members:
-   :show-inheritance:

@@ -9,13 +9,13 @@ torchnf
    torchnf.distributions
    torchnf.exceptions
    torchnf.flow
-   torchnf.lit_models
    torchnf.metrics
    torchnf.models
+   torchnf.networks
    torchnf.transformers
    torchnf.utils
 
 .. toctree::
    :maxdepth: 4
 
-   torchnf.recipes
+   torchnf.data

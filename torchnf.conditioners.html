@@ -50,12 +50,12 @@
 <li class="toctree-l2"><a class="reference internal" href="torchnf.distributions.html">torchnf.distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.exceptions.html">torchnf.exceptions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.flow.html">torchnf.flow</a></li>
-<li class="toctree-l2"><a class="reference internal" href="torchnf.lit_models.html">torchnf.lit_models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.metrics.html">torchnf.metrics</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.models.html">torchnf.models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="torchnf.networks.html">torchnf.networks</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.transformers.html">torchnf.transformers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.utils.html">torchnf.utils</a></li>
-<li class="toctree-l2"><a class="reference internal" href="torchnf.recipes.html">torchnf.recipes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="torchnf.data.html">torchnf.data</a></li>
 </ul>
 </li>
 </ul>
@@ -122,7 +122,7 @@ transformer should be conditioned.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="torchnf.conditioners.MaskedConditioner">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchnf.conditioners.</span></span><span class="sig-name descname"><span class="pre">MaskedConditioner</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">net</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Sequential</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">BoolTensor</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">create_channel_dim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchnf.conditioners.MaskedConditioner" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchnf.conditioners.</span></span><span class="sig-name descname"><span class="pre">MaskedConditioner</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">net</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Sequential</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">BoolTensor</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask_mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">BoolTensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">create_channel_dim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchnf.conditioners.MaskedConditioner" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#torchnf.conditioners.Conditioner" title="torchnf.conditioners.Conditioner"><code class="xref py py-class docutils literal notranslate"><span class="pre">Conditioner</span></code></a></p>
 <p>Masked conditioner.</p>
 <p>In this conditioner, the inputs <span class="math notranslate nohighlight">\(x\)</span> are first masked so that
@@ -134,11 +134,18 @@ logical negation of the original mask.</p>
 <p>A Normalizing Flow layer where the transformer is conditioned on
 these parameters is called a Coupling Layer. The archetypal example
 is Real NVP (<a class="reference external" href="https://arxiv.org/abs/1605.08803">arxiv:1605.08803</a>).</p>
-<p>Derived classes may override <code class="xref py py-meth docutils literal notranslate"><span class="pre">_forward()</span></code> and <code class="xref py py-meth docutils literal notranslate"><span class="pre">get_mask()</span></code>.</p>
-<dl class="simple">
-<dt>TODO</dt><dd><p>Explain how to get a mask which depends on the data shape.
-Consider allowing functionality to mask x with values that aren’t
-zero, e.g. noise drawn from a known distribution…</p>
+<p>Derived classes may override <a class="reference internal" href="#torchnf.conditioners.MaskedConditioner.forward_" title="torchnf.conditioners.MaskedConditioner.forward_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">forward_()</span></code></a> and <a class="reference internal" href="#torchnf.conditioners.MaskedConditioner.mask" title="torchnf.conditioners.MaskedConditioner.mask"><code class="xref py py-attr docutils literal notranslate"><span class="pre">mask</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>net</strong> – Neural network that takes the masked input tensor and returns
+a set of parameters</p></li>
+<li><p><strong>mask</strong> – Boolean mask where the ‘False’ elements are the masked ones,
+i.e. they will not be passed to <code class="docutils literal notranslate"><span class="pre">forward_</span></code></p></li>
+<li><p><strong>create_channel_dim</strong> – If True, an extra dimension of size 1 will be added to the
+input tensor before passing it to <code class="docutils literal notranslate"><span class="pre">forward_</span></code></p></li>
+<li><p><strong>mask_mode</strong> – TODO: document</p></li>
+</ul>
 </dd>
 </dl>
 <dl class="py method">
@@ -151,6 +158,20 @@ zero, e.g. noise drawn from a known distribution…</p>
 <dt class="sig sig-object py" id="torchnf.conditioners.MaskedConditioner.apply_mask_to_output">
 <span class="sig-name descname"><span class="pre">apply_mask_to_output</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></span><a class="headerlink" href="#torchnf.conditioners.MaskedConditioner.apply_mask_to_output" title="Permalink to this definition"></a></dt>
 <dd><p>Applies mask to the output parameters.</p>
+<p>The output parameters must be either</p>
+<ol class="arabic simple">
+<li><p>A tensor of dimension 3 or more, where the dimensions are
+<code class="docutils literal notranslate"><span class="pre">(batch_size,</span> <span class="pre">n_params,</span> <span class="pre">*data_shape)</span></code></p></li>
+<li><p>A tensor of dimension 2, where the dimensions are
+<code class="docutils literal notranslate"><span class="pre">(batch_size,</span> <span class="pre">n_params</span> <span class="pre">*</span> <span class="pre">n_masked_elements)</span></code></p></li>
+</ol>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A tensor with dimensions <code class="docutils literal notranslate"><span class="pre">(batch_size,</span> <span class="pre">n_params,</span> <span class="pre">*data_shape)</span></code>
+where the elements corresponding to input data that was <em>not</em>
+masked are <a href="#id1"><span class="problematic" id="id2">``</span></a>NaN``s.</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -160,12 +181,28 @@ zero, e.g. noise drawn from a known distribution…</p>
 <p>Masked elements are NaN’s.</p>
 <p>This does the following:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span>  <span class="bp">self</span><span class="o">.</span><span class="n">context</span> <span class="o">=</span> <span class="n">context</span>
-<span class="linenos">2</span>  <span class="n">x_masked</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">apply_mask_to_inputs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-<span class="linenos">3</span>  <span class="n">params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_forward</span><span class="p">(</span><span class="n">x_masked</span><span class="p">)</span>
-<span class="linenos">4</span>  <span class="n">params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">apply_mask_to_outputs</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
-<span class="linenos">5</span>  <span class="k">return</span> <span class="n">params</span>
+<span class="linenos">2</span>  <span class="n">x_masked</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">apply_mask_to_input</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="linenos">3</span>  <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_channel_dim</span><span class="p">:</span>
+<span class="linenos">4</span>      <span class="n">x_masked</span><span class="o">.</span><span class="n">unsqueeze_</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="linenos">5</span>  <span class="n">params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_forward</span><span class="p">(</span><span class="n">x_masked</span><span class="p">)</span>
+<span class="linenos">6</span>  <span class="n">params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">apply_mask_to_output</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+<span class="linenos">7</span>  <span class="k">return</span> <span class="n">params</span>
 </pre></div>
 </div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchnf.conditioners.MaskedConditioner.forward_">
+<span class="sig-name descname"><span class="pre">forward_</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_masked</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></span><a class="headerlink" href="#torchnf.conditioners.MaskedConditioner.forward_" title="Permalink to this definition"></a></dt>
+<dd><p>Computes and returns the parameters.</p>
+<p>Unless overridden, this simply called the <code class="code docutils literal notranslate"><span class="pre">forward</span></code>
+method of <code class="docutils literal notranslate"><span class="pre">self.net</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchnf.conditioners.MaskedConditioner.index_with_mask">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">index_with_mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchnf.conditioners.MaskedConditioner.index_with_mask" title="Permalink to this definition"></a></dt>
+<dd><p>Use the mask to index the input tensor.</p>
 </dd></dl>
 
 <dl class="py property">
@@ -174,32 +211,15 @@ zero, e.g. noise drawn from a known distribution…</p>
 <dd><p>Returns the mask that delineates the partitions of the coupling layer.</p>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="torchnf.conditioners.MaskedConditioner.mul_by_mask">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">mul_by_mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchnf.conditioners.MaskedConditioner.mul_by_mask" title="Permalink to this definition"></a></dt>
+<dd><p>Multiply the input tensor by the binary mask</p>
+</dd></dl>
+
 <dl class="py attribute">
 <dt class="sig sig-object py" id="torchnf.conditioners.MaskedConditioner.training">
 <span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#torchnf.conditioners.MaskedConditioner.training" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="torchnf.conditioners.MaskedConditionerStructurePreserving">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchnf.conditioners.</span></span><span class="sig-name descname"><span class="pre">MaskedConditionerStructurePreserving</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">net</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Sequential</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">BoolTensor</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">create_channel_dim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchnf.conditioners.MaskedConditionerStructurePreserving" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#torchnf.conditioners.MaskedConditioner" title="torchnf.conditioners.MaskedConditioner"><code class="xref py py-class docutils literal notranslate"><span class="pre">MaskedConditioner</span></code></a></p>
-<dl class="py method">
-<dt class="sig sig-object py" id="torchnf.conditioners.MaskedConditionerStructurePreserving.apply_mask_to_input">
-<span class="sig-name descname"><span class="pre">apply_mask_to_input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></span><a class="headerlink" href="#torchnf.conditioners.MaskedConditionerStructurePreserving.apply_mask_to_input" title="Permalink to this definition"></a></dt>
-<dd><p>Applies mask to the input tensor.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="torchnf.conditioners.MaskedConditionerStructurePreserving.apply_mask_to_output">
-<span class="sig-name descname"><span class="pre">apply_mask_to_output</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></span><a class="headerlink" href="#torchnf.conditioners.MaskedConditionerStructurePreserving.apply_mask_to_output" title="Permalink to this definition"></a></dt>
-<dd><p>Applies mask to the output parameters.</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="torchnf.conditioners.MaskedConditionerStructurePreserving.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#torchnf.conditioners.MaskedConditionerStructurePreserving.training" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 </dd></dl>

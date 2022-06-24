@@ -1,0 +1,9 @@
+torchnf.data
+============
+
+
+.. toctree::
+   :maxdepth: 4
+
+   torchnf.data.data
+   torchnf.data.toy_datasets

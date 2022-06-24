@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>torchnf.recipes &mdash; torchnf 0.1.0 documentation</title>
+  <title>torchnf.data.data &mdash; torchnf 0.1.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -19,8 +19,8 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="torchnf.recipes.flows" href="torchnf.recipes.flows.html" />
-    <link rel="prev" title="torchnf.utils" href="torchnf.utils.html" /> 
+    <link rel="next" title="torchnf.data.toy_datasets" href="torchnf.data.toy_datasets.html" />
+    <link rel="prev" title="torchnf.data" href="torchnf.data.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -49,16 +49,14 @@
 <li class="toctree-l2"><a class="reference internal" href="torchnf.distributions.html">torchnf.distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.exceptions.html">torchnf.exceptions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.flow.html">torchnf.flow</a></li>
-<li class="toctree-l2"><a class="reference internal" href="torchnf.lit_models.html">torchnf.lit_models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.metrics.html">torchnf.metrics</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.models.html">torchnf.models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="torchnf.networks.html">torchnf.networks</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.transformers.html">torchnf.transformers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.utils.html">torchnf.utils</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">torchnf.recipes</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="torchnf.recipes.flows.html">torchnf.recipes.flows</a></li>
-<li class="toctree-l3"><a class="reference internal" href="torchnf.recipes.layers.html">torchnf.recipes.layers</a></li>
-<li class="toctree-l3"><a class="reference internal" href="torchnf.recipes.models.html">torchnf.recipes.models</a></li>
-<li class="toctree-l3"><a class="reference internal" href="torchnf.recipes.networks.html">torchnf.recipes.networks</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="torchnf.data.html">torchnf.data</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">torchnf.data.data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="torchnf.data.toy_datasets.html">torchnf.data.toy_datasets</a></li>
 </ul>
 </li>
 </ul>
@@ -80,9 +78,10 @@
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
           <li><a href="torchnf.html">torchnf</a> &raquo;</li>
-      <li>torchnf.recipes</li>
+          <li><a href="torchnf.data.html">torchnf.data</a> &raquo;</li>
+      <li>torchnf.data.data</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="_sources/torchnf.recipes.rst.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/torchnf.data.data.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -90,24 +89,22 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="torchnf-recipes">
-<h1>torchnf.recipes<a class="headerlink" href="#torchnf-recipes" title="Permalink to this heading"></a></h1>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="torchnf.recipes.flows.html">torchnf.recipes.flows</a></li>
-<li class="toctree-l1"><a class="reference internal" href="torchnf.recipes.layers.html">torchnf.recipes.layers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="torchnf.recipes.models.html">torchnf.recipes.models</a></li>
-<li class="toctree-l1"><a class="reference internal" href="torchnf.recipes.networks.html">torchnf.recipes.networks</a></li>
-</ul>
-</div>
+  <section id="module-torchnf.data.data">
+<span id="torchnf-data-data"></span><h1>torchnf.data.data<a class="headerlink" href="#module-torchnf.data.data" title="Permalink to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="torchnf.data.data.DiagonalGaussian">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchnf.data.data.</span></span><span class="sig-name descname"><span class="pre">DiagonalGaussian</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">PositiveInt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epoch_length</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">PositiveInt</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">jsonargparse.typing.PositiveInt</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchnf.data.data.DiagonalGaussian" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="torchnf.distributions.html#torchnf.distributions.PriorDataModule" title="torchnf.distributions.PriorDataModule"><code class="xref py py-class docutils literal notranslate"><span class="pre">PriorDataModule</span></code></a></p>
+</dd></dl>
+
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="torchnf.utils.html" class="btn btn-neutral float-left" title="torchnf.utils" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="torchnf.recipes.flows.html" class="btn btn-neutral float-right" title="torchnf.recipes.flows" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="torchnf.data.html" class="btn btn-neutral float-left" title="torchnf.data" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="torchnf.data.toy_datasets.html" class="btn btn-neutral float-right" title="torchnf.data.toy_datasets" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

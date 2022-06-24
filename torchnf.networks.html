@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchnf.networks &mdash; torchnf 0.1.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="torchnf.transformers" href="torchnf.transformers.html" />
+    <link rel="prev" title="torchnf.models" href="torchnf.models.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> torchnf
+          </a>
+              <div class="version">
+                0.1.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="torchnf.html">torchnf</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="torchnf.conditioners.html">torchnf.conditioners</a></li>
+<li class="toctree-l2"><a class="reference internal" href="torchnf.distributions.html">torchnf.distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="torchnf.exceptions.html">torchnf.exceptions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="torchnf.flow.html">torchnf.flow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="torchnf.metrics.html">torchnf.metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="torchnf.models.html">torchnf.models</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">torchnf.networks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="torchnf.transformers.html">torchnf.transformers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="torchnf.utils.html">torchnf.utils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="torchnf.data.html">torchnf.data</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">torchnf</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="torchnf.html">torchnf</a> &raquo;</li>
+      <li>torchnf.networks</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/torchnf.networks.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-torchnf.networks">
+<span id="torchnf-networks"></span><h1>torchnf.networks<a class="headerlink" href="#module-torchnf.networks" title="Permalink to this heading"></a></h1>
+<p>Module containing convenience classes which generate neural networks for
+use in conditioners.</p>
+<p>Specifically, classes defined herein implement a <code class="code docutils literal notranslate"><span class="pre">__call__()</span></code> method
+which returns an instance of <a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.Sequential.html#torch.nn.Sequential" title="(in PyTorch v1.11.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Sequential</span></code></a> instance
+representing the neural network. This allows one to easily generate multiple
+independent network (e.g. one for each flow layer) using the same spec.</p>
+<p>TODO: document a convenient way of creating new class with identical
+parameters except for some user-specified changes E.g. dataclasses.replace</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="torchnf.networks.ConvNet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchnf.networks.</span></span><span class="sig-name descname"><span class="pre">ConvNet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">dim:</span> <span class="pre">~jsonargparse.typing.ConvDim,</span> <span class="pre">hidden_shape:</span> <span class="pre">list[jsonargparse.typing.PositiveInt],</span> <span class="pre">activation:</span> <span class="pre">str,</span> <span class="pre">kernel_size:</span> <span class="pre">~jsonargparse.typing.PositiveInt,</span> <span class="pre">activation_kwargs:</span> <span class="pre">dict</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;,</span> <span class="pre">skip_final_activation:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False,</span> <span class="pre">conv_kwargs:</span> <span class="pre">dict</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;,</span> <span class="pre">in_channels:</span> <span class="pre">~typing.Optional[~jsonargparse.typing.PositiveInt]</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">out_channels:</span> <span class="pre">~typing.Optional[~jsonargparse.typing.PositiveInt]</span> <span class="pre">=</span> <span class="pre">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchnf.networks.ConvNet" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#torchnf.networks.NetBuilder" title="torchnf.networks.NetBuilder"><code class="xref py py-class docutils literal notranslate"><span class="pre">NetBuilder</span></code></a></p>
+<p>Convolutional neural network.</p>
+<p>See <a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.Conv2d.html#torch.nn.Conv2d" title="(in PyTorch v1.11.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Conv2d</span></code></a>, and 1d/3d versions.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="docutils literal notranslate"><span class="pre">in_channels</span></code> and <code class="docutils literal notranslate"><span class="pre">out_channels</span></code> may alternatively</p>
+</div>
+<p>be passed to <code class="docutils literal notranslate"><span class="pre">__call__</span></code> rather than <code class="docutils literal notranslate"><span class="pre">__init__</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchnf.networks.ConvNet.activation">
+<span class="sig-name descname"><span class="pre">activation</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#torchnf.networks.ConvNet.activation" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchnf.networks.ConvNet.activation_kwargs">
+<span class="sig-name descname"><span class="pre">activation_kwargs</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#torchnf.networks.ConvNet.activation_kwargs" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchnf.networks.ConvNet.conv_kwargs">
+<span class="sig-name descname"><span class="pre">conv_kwargs</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#torchnf.networks.ConvNet.conv_kwargs" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchnf.networks.ConvNet.dim">
+<span class="sig-name descname"><span class="pre">dim</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ConvDim</span></em><a class="headerlink" href="#torchnf.networks.ConvNet.dim" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchnf.networks.ConvNet.hidden_shape">
+<span class="sig-name descname"><span class="pre">hidden_shape</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">jsonargparse.typing.PositiveInt</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#torchnf.networks.ConvNet.hidden_shape" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchnf.networks.ConvNet.in_channels">
+<span class="sig-name descname"><span class="pre">in_channels</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">PositiveInt</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#torchnf.networks.ConvNet.in_channels" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchnf.networks.ConvNet.kernel_size">
+<span class="sig-name descname"><span class="pre">kernel_size</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">PositiveInt</span></em><a class="headerlink" href="#torchnf.networks.ConvNet.kernel_size" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchnf.networks.ConvNet.out_channels">
+<span class="sig-name descname"><span class="pre">out_channels</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">PositiveInt</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#torchnf.networks.ConvNet.out_channels" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchnf.networks.ConvNet.skip_final_activation">
+<span class="sig-name descname"><span class="pre">skip_final_activation</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#torchnf.networks.ConvNet.skip_final_activation" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="torchnf.networks.ConvNetCircular">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchnf.networks.</span></span><span class="sig-name descname"><span class="pre">ConvNetCircular</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">dim:</span> <span class="pre">~jsonargparse.typing.ConvDim,</span> <span class="pre">hidden_shape:</span> <span class="pre">list[jsonargparse.typing.PositiveInt],</span> <span class="pre">activation:</span> <span class="pre">str,</span> <span class="pre">kernel_size:</span> <span class="pre">~jsonargparse.typing.PositiveInt,</span> <span class="pre">activation_kwargs:</span> <span class="pre">dict</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;,</span> <span class="pre">skip_final_activation:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False,</span> <span class="pre">conv_kwargs:</span> <span class="pre">dict</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;,</span> <span class="pre">in_channels:</span> <span class="pre">~typing.Optional[~jsonargparse.typing.PositiveInt]</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">out_channels:</span> <span class="pre">~typing.Optional[~jsonargparse.typing.PositiveInt]</span> <span class="pre">=</span> <span class="pre">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchnf.networks.ConvNetCircular" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#torchnf.networks.ConvNet" title="torchnf.networks.ConvNet"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConvNet</span></code></a></p>
+<p>Convolutional neural network with circular padding.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchnf.networks.ConvNetCircular.activation">
+<span class="sig-name descname"><span class="pre">activation</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#torchnf.networks.ConvNetCircular.activation" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchnf.networks.ConvNetCircular.activation_kwargs">
+<span class="sig-name descname"><span class="pre">activation_kwargs</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#torchnf.networks.ConvNetCircular.activation_kwargs" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchnf.networks.ConvNetCircular.conv_kwargs">
+<span class="sig-name descname"><span class="pre">conv_kwargs</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#torchnf.networks.ConvNetCircular.conv_kwargs" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchnf.networks.ConvNetCircular.dim">
+<span class="sig-name descname"><span class="pre">dim</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ConvDim</span></em><a class="headerlink" href="#torchnf.networks.ConvNetCircular.dim" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchnf.networks.ConvNetCircular.hidden_shape">
+<span class="sig-name descname"><span class="pre">hidden_shape</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">jsonargparse.typing.PositiveInt</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#torchnf.networks.ConvNetCircular.hidden_shape" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchnf.networks.ConvNetCircular.kernel_size">
+<span class="sig-name descname"><span class="pre">kernel_size</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">PositiveInt</span></em><a class="headerlink" href="#torchnf.networks.ConvNetCircular.kernel_size" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="torchnf.networks.DenseNet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchnf.networks.</span></span><span class="sig-name descname"><span class="pre">DenseNet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">hidden_shape:</span> <span class="pre">list[jsonargparse.typing.PositiveInt],</span> <span class="pre">activation:</span> <span class="pre">str,</span> <span class="pre">activation_kwargs:</span> <span class="pre">dict</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;,</span> <span class="pre">skip_final_activation:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False,</span> <span class="pre">linear_kwargs:</span> <span class="pre">dict</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;,</span> <span class="pre">in_features:</span> <span class="pre">~typing.Optional[~jsonargparse.typing.PositiveInt]</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">out_features:</span> <span class="pre">~typing.Optional[~jsonargparse.typing.PositiveInt]</span> <span class="pre">=</span> <span class="pre">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchnf.networks.DenseNet" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#torchnf.networks.NetBuilder" title="torchnf.networks.NetBuilder"><code class="xref py py-class docutils literal notranslate"><span class="pre">NetBuilder</span></code></a></p>
+<p>Fully-connected feed-forward neural network.</p>
+<p>See <a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.Linear.html#torch.nn.Linear" title="(in PyTorch v1.11.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Linear</span></code></a>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="docutils literal notranslate"><span class="pre">in_features</span></code> and <code class="docutils literal notranslate"><span class="pre">out_features</span></code> may alternatively
+be passed to <code class="docutils literal notranslate"><span class="pre">__call__</span></code> rather than <code class="docutils literal notranslate"><span class="pre">__init__</span></code></p>
+</div>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchnf.networks.DenseNet.activation">
+<span class="sig-name descname"><span class="pre">activation</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#torchnf.networks.DenseNet.activation" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchnf.networks.DenseNet.activation_kwargs">
+<span class="sig-name descname"><span class="pre">activation_kwargs</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#torchnf.networks.DenseNet.activation_kwargs" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchnf.networks.DenseNet.hidden_shape">
+<span class="sig-name descname"><span class="pre">hidden_shape</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">jsonargparse.typing.PositiveInt</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#torchnf.networks.DenseNet.hidden_shape" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchnf.networks.DenseNet.in_features">
+<span class="sig-name descname"><span class="pre">in_features</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">PositiveInt</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#torchnf.networks.DenseNet.in_features" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchnf.networks.DenseNet.linear_kwargs">
+<span class="sig-name descname"><span class="pre">linear_kwargs</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#torchnf.networks.DenseNet.linear_kwargs" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchnf.networks.DenseNet.out_features">
+<span class="sig-name descname"><span class="pre">out_features</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">PositiveInt</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#torchnf.networks.DenseNet.out_features" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchnf.networks.DenseNet.skip_final_activation">
+<span class="sig-name descname"><span class="pre">skip_final_activation</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#torchnf.networks.DenseNet.skip_final_activation" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="torchnf.networks.GenericNetBuilder">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchnf.networks.</span></span><span class="sig-name descname"><span class="pre">GenericNetBuilder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spec</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchnf.networks.GenericNetBuilder" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#torchnf.networks.NetBuilder" title="torchnf.networks.NetBuilder"><code class="xref py py-class docutils literal notranslate"><span class="pre">NetBuilder</span></code></a></p>
+<p>General-purpose network builder.</p>
+<p>Work in progress.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="torchnf.networks.NetBuilder">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchnf.networks.</span></span><span class="sig-name descname"><span class="pre">NetBuilder</span></span><a class="headerlink" href="#torchnf.networks.NetBuilder" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Base class for neural network builders. Simply defines a __call__ method.</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="torchnf.models.html" class="btn btn-neutral float-left" title="torchnf.models" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="torchnf.transformers.html" class="btn btn-neutral float-right" title="torchnf.transformers" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Joe Marsh Rossney.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,7 @@
+torchnf.data.toy\_datasets
+==========================
+
+.. automodule:: torchnf.data.toy_datasets
+   :members:
+   :undoc-members:
+   :show-inheritance:
