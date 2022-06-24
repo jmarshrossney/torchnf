@@ -45,16 +45,14 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="torchnf.html">torchnf</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="torchnf.abc.html">torchnf.abc</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.conditioners.html">torchnf.conditioners</a></li>
-<li class="toctree-l2"><a class="reference internal" href="torchnf.distributions.html">torchnf.distributions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="torchnf.exceptions.html">torchnf.exceptions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.flow.html">torchnf.flow</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.metrics.html">torchnf.metrics</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.models.html">torchnf.models</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">torchnf.networks</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.transformers.html">torchnf.transformers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.utils.html">torchnf.utils</a></li>
-<li class="toctree-l2"><a class="reference internal" href="torchnf.data.html">torchnf.data</a></li>
 </ul>
 </li>
 </ul>
@@ -97,14 +95,14 @@ parameters except for some user-specified changes E.g. dataclasses.replace</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="torchnf.networks.ConvNet">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchnf.networks.</span></span><span class="sig-name descname"><span class="pre">ConvNet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">dim:</span> <span class="pre">~jsonargparse.typing.ConvDim,</span> <span class="pre">hidden_shape:</span> <span class="pre">list[jsonargparse.typing.PositiveInt],</span> <span class="pre">activation:</span> <span class="pre">str,</span> <span class="pre">kernel_size:</span> <span class="pre">~jsonargparse.typing.PositiveInt,</span> <span class="pre">activation_kwargs:</span> <span class="pre">dict</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;,</span> <span class="pre">skip_final_activation:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False,</span> <span class="pre">conv_kwargs:</span> <span class="pre">dict</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;,</span> <span class="pre">in_channels:</span> <span class="pre">~typing.Optional[~jsonargparse.typing.PositiveInt]</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">out_channels:</span> <span class="pre">~typing.Optional[~jsonargparse.typing.PositiveInt]</span> <span class="pre">=</span> <span class="pre">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchnf.networks.ConvNet" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#torchnf.networks.NetBuilder" title="torchnf.networks.NetBuilder"><code class="xref py py-class docutils literal notranslate"><span class="pre">NetBuilder</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Convolutional neural network.</p>
 <p>See <a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.Conv2d.html#torch.nn.Conv2d" title="(in PyTorch v1.11.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Conv2d</span></code></a>, and 1d/3d versions.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p><code class="docutils literal notranslate"><span class="pre">in_channels</span></code> and <code class="docutils literal notranslate"><span class="pre">out_channels</span></code> may alternatively</p>
+<p><code class="docutils literal notranslate"><span class="pre">in_channels</span></code> and <code class="docutils literal notranslate"><span class="pre">out_channels</span></code> may alternatively
+be passed to <code class="docutils literal notranslate"><span class="pre">__call__</span></code> rather than <code class="docutils literal notranslate"><span class="pre">__init__</span></code></p>
 </div>
-<p>be passed to <code class="docutils literal notranslate"><span class="pre">__call__</span></code> rather than <code class="docutils literal notranslate"><span class="pre">__init__</span></code></p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="torchnf.networks.ConvNet.activation">
 <span class="sig-name descname"><span class="pre">activation</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#torchnf.networks.ConvNet.activation" title="Permalink to this definition"></a></dt>
@@ -192,7 +190,7 @@ parameters except for some user-specified changes E.g. dataclasses.replace</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="torchnf.networks.DenseNet">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchnf.networks.</span></span><span class="sig-name descname"><span class="pre">DenseNet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">hidden_shape:</span> <span class="pre">list[jsonargparse.typing.PositiveInt],</span> <span class="pre">activation:</span> <span class="pre">str,</span> <span class="pre">activation_kwargs:</span> <span class="pre">dict</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;,</span> <span class="pre">skip_final_activation:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False,</span> <span class="pre">linear_kwargs:</span> <span class="pre">dict</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;,</span> <span class="pre">in_features:</span> <span class="pre">~typing.Optional[~jsonargparse.typing.PositiveInt]</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">out_features:</span> <span class="pre">~typing.Optional[~jsonargparse.typing.PositiveInt]</span> <span class="pre">=</span> <span class="pre">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchnf.networks.DenseNet" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#torchnf.networks.NetBuilder" title="torchnf.networks.NetBuilder"><code class="xref py py-class docutils literal notranslate"><span class="pre">NetBuilder</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Fully-connected feed-forward neural network.</p>
 <p>See <a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.Linear.html#torch.nn.Linear" title="(in PyTorch v1.11.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Linear</span></code></a>.</p>
 <div class="admonition note">
@@ -240,16 +238,12 @@ be passed to <code class="docutils literal notranslate"><span class="pre">__call
 <dl class="py class">
 <dt class="sig sig-object py" id="torchnf.networks.GenericNetBuilder">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchnf.networks.</span></span><span class="sig-name descname"><span class="pre">GenericNetBuilder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spec</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchnf.networks.GenericNetBuilder" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#torchnf.networks.NetBuilder" title="torchnf.networks.NetBuilder"><code class="xref py py-class docutils literal notranslate"><span class="pre">NetBuilder</span></code></a></p>
-<p>General-purpose network builder.</p>
-<p>Work in progress.</p>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="torchnf.networks.NetBuilder">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchnf.networks.</span></span><span class="sig-name descname"><span class="pre">NetBuilder</span></span><a class="headerlink" href="#torchnf.networks.NetBuilder" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Base class for neural network builders. Simply defines a __call__ method.</p>
+<p>General-purpose network builder.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Untested! Work in progress.</p>
+</div>
 </dd></dl>
 
 </section>

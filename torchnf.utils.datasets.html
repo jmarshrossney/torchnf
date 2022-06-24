@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>torchnf.data &mdash; torchnf 0.1.0 documentation</title>
+  <title>torchnf.utils.datasets &mdash; torchnf 0.1.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -19,7 +19,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="torchnf.data.data" href="torchnf.data.data.html" />
+    <link rel="next" title="torchnf.utils.distribution" href="torchnf.utils.distribution.html" />
     <link rel="prev" title="torchnf.utils" href="torchnf.utils.html" /> 
 </head>
 
@@ -45,18 +45,18 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="torchnf.html">torchnf</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="torchnf.abc.html">torchnf.abc</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.conditioners.html">torchnf.conditioners</a></li>
-<li class="toctree-l2"><a class="reference internal" href="torchnf.distributions.html">torchnf.distributions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="torchnf.exceptions.html">torchnf.exceptions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.flow.html">torchnf.flow</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.metrics.html">torchnf.metrics</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.models.html">torchnf.models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.networks.html">torchnf.networks</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.transformers.html">torchnf.transformers</a></li>
-<li class="toctree-l2"><a class="reference internal" href="torchnf.utils.html">torchnf.utils</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">torchnf.data</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="torchnf.data.data.html">torchnf.data.data</a></li>
-<li class="toctree-l3"><a class="reference internal" href="torchnf.data.toy_datasets.html">torchnf.data.toy_datasets</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="torchnf.utils.html">torchnf.utils</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">torchnf.utils.datasets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="torchnf.utils.distribution.html">torchnf.utils.distribution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="torchnf.utils.mcmc.html">torchnf.utils.mcmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="torchnf.utils.tensor.html">torchnf.utils.tensor</a></li>
 </ul>
 </li>
 </ul>
@@ -78,9 +78,10 @@
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
           <li><a href="torchnf.html">torchnf</a> &raquo;</li>
-      <li>torchnf.data</li>
+          <li><a href="torchnf.utils.html">torchnf.utils</a> &raquo;</li>
+      <li>torchnf.utils.datasets</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="_sources/torchnf.data.rst.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/torchnf.utils.datasets.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -88,14 +89,21 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="torchnf-data">
-<h1>torchnf.data<a class="headerlink" href="#torchnf-data" title="Permalink to this heading"></a></h1>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="torchnf.data.data.html">torchnf.data.data</a></li>
-<li class="toctree-l1"><a class="reference internal" href="torchnf.data.toy_datasets.html">torchnf.data.toy_datasets</a></li>
-</ul>
-</div>
+  <section id="module-torchnf.utils.datasets">
+<span id="torchnf-utils-datasets"></span><h1>torchnf.utils.datasets<a class="headerlink" href="#module-torchnf.utils.datasets" title="Permalink to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="torchnf.utils.datasets.Moons">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchnf.utils.datasets.</span></span><span class="sig-name descname"><span class="pre">Moons</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">total_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">PositiveInt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">PositiveInt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">OpenUnitInterval</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_frac</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ClosedUnitInterval</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.7</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchnf.utils.datasets.Moons" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_ToyDataModule</span></code></p>
+<p>A 2-dimensional toy dataset which resembles moons in the (x, y) plane.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="torchnf.utils.datasets.Moons.generate_data">
+<span class="sig-name descname"><span class="pre">generate_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></span><a class="headerlink" href="#torchnf.utils.datasets.Moons.generate_data" title="Permalink to this definition"></a></dt>
+<dd><p>Generates the dataset. Called in <code class="xref py py-meth docutils literal notranslate"><span class="pre">setup()</span></code>.</p>
+</dd></dl>
+
+</dd></dl>
+
 </section>
 
 
@@ -103,7 +111,7 @@
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="torchnf.utils.html" class="btn btn-neutral float-left" title="torchnf.utils" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="torchnf.data.data.html" class="btn btn-neutral float-right" title="torchnf.data.data" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="torchnf.utils.distribution.html" class="btn btn-neutral float-right" title="torchnf.utils.distribution" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

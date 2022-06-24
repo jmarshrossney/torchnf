@@ -20,7 +20,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="torchnf.metrics" href="torchnf.metrics.html" />
-    <link rel="prev" title="torchnf.exceptions" href="torchnf.exceptions.html" /> 
+    <link rel="prev" title="torchnf.conditioners" href="torchnf.conditioners.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -45,16 +45,14 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="torchnf.html">torchnf</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="torchnf.abc.html">torchnf.abc</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.conditioners.html">torchnf.conditioners</a></li>
-<li class="toctree-l2"><a class="reference internal" href="torchnf.distributions.html">torchnf.distributions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="torchnf.exceptions.html">torchnf.exceptions</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">torchnf.flow</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.metrics.html">torchnf.metrics</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.models.html">torchnf.models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.networks.html">torchnf.networks</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.transformers.html">torchnf.transformers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.utils.html">torchnf.utils</a></li>
-<li class="toctree-l2"><a class="reference internal" href="torchnf.data.html">torchnf.data</a></li>
 </ul>
 </li>
 </ul>
@@ -87,28 +85,25 @@
   <section id="module-torchnf.flow">
 <span id="torchnf-flow"></span><h1>torchnf.flow<a class="headerlink" href="#module-torchnf.flow" title="Permalink to this heading"></a></h1>
 <dl class="py class">
-<dt class="sig sig-object py" id="torchnf.flow.Flow">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchnf.flow.</span></span><span class="sig-name descname"><span class="pre">Flow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">layers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#torchnf.flow.FlowLayer" title="torchnf.flow.FlowLayer"><span class="pre">FlowLayer</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchnf.flow.Flow" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="torchnf.flow.Composition">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchnf.flow.</span></span><span class="sig-name descname"><span class="pre">Composition</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">transforms</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="torchnf.abc.html#torchnf.abc.DensityTransform" title="torchnf.abc.DensityTransform"><span class="pre">DensityTransform</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchnf.flow.Composition" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Sequential</span></code></p>
-<p>Class representing a Normalizing Flow.</p>
-<p>This is a subclass of <a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.Sequential.html#torch.nn.Sequential" title="(in PyTorch v1.11.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Sequential</span></code></a> which composes
-several <a class="reference internal" href="#torchnf.flow.FlowLayer" title="torchnf.flow.FlowLayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">torchnf.flow.FlowLayer</span></code></a>’s and aggregates their
-log Jacobian determinants.</p>
+<p>Composes density transformations and aggregates log det Jacobians.</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="torchnf.flow.Flow.forward">
-<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#torchnf.flow.Flow.forward" title="Permalink to this definition"></a></dt>
-<dd><p>Forward pass of the Normalizing Flow.</p>
+<dt class="sig sig-object py" id="torchnf.flow.Composition.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#torchnf.flow.Composition.forward" title="Permalink to this definition"></a></dt>
+<dd><p>Forward pass of the density transformation.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="torchnf.flow.Flow.inverse">
-<span class="sig-name descname"><span class="pre">inverse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#torchnf.flow.Flow.inverse" title="Permalink to this definition"></a></dt>
-<dd><p>Inverse of <a class="reference internal" href="#torchnf.flow.Flow.forward" title="torchnf.flow.Flow.forward"><code class="xref py py-meth docutils literal notranslate"><span class="pre">forward()</span></code></a>.</p>
+<dt class="sig sig-object py" id="torchnf.flow.Composition.inverse">
+<span class="sig-name descname"><span class="pre">inverse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#torchnf.flow.Composition.inverse" title="Permalink to this definition"></a></dt>
+<dd><p>Inverse of <a class="reference internal" href="#torchnf.flow.Composition.forward" title="torchnf.flow.Composition.forward"><code class="xref py py-meth docutils literal notranslate"><span class="pre">forward()</span></code></a>.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="torchnf.flow.Flow.step_forward">
-<span class="sig-name descname"><span class="pre">step_forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchnf.flow.Flow.step_forward" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="torchnf.flow.Composition.step_forward">
+<span class="sig-name descname"><span class="pre">step_forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchnf.flow.Composition.step_forward" title="Permalink to this definition"></a></dt>
 <dd><p>WIP</p>
 </dd></dl>
 
@@ -116,21 +111,20 @@ log Jacobian determinants.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="torchnf.flow.FlowLayer">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchnf.flow.</span></span><span class="sig-name descname"><span class="pre">FlowLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transformer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="torchnf.transformers.html#torchnf.transformers.Transformer" title="torchnf.transformers.Transformer"><span class="pre">Transformer</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">conditioner</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="torchnf.conditioners.html#torchnf.conditioners.Conditioner" title="torchnf.conditioners.Conditioner"><span class="pre">Conditioner</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchnf.flow.FlowLayer" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
-<p>Class representing a layer of a Normalizing Flow.</p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchnf.flow.</span></span><span class="sig-name descname"><span class="pre">FlowLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transformer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="torchnf.abc.html#torchnf.abc.Transformer" title="torchnf.abc.Transformer"><span class="pre">Transformer</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">conditioner</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="torchnf.abc.html#torchnf.abc.Conditioner" title="torchnf.abc.Conditioner"><span class="pre">Conditioner</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchnf.flow.FlowLayer" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="torchnf.abc.html#torchnf.abc.DensityTransform" title="torchnf.abc.DensityTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">DensityTransform</span></code></a></p>
+<p>Class representing a Normalizing Flow layer.</p>
 <p>This is a subclass of <a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v1.11.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a> with a specific
 modular structure that provides the flexibility to construct a variety
-of different flows.</p>
+of different types of conditional density transformations. Such
+transformations can be chained to make a Normalizing Flow.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>transformer</strong> – An instance of <a class="reference internal" href="torchnf.transformers.html#torchnf.transformers.Transformer" title="torchnf.transformers.Transformer"><code class="xref py py-class docutils literal notranslate"><span class="pre">torchnf.transformers.Transformer</span></code></a> which
-implements the forward and inverse transformations, given an
-input tensor and a tensor of parameters which the transformation
-is conditioned on</p></li>
-<li><p><strong>conditioner</strong> – An instance of <a class="reference internal" href="torchnf.conditioners.html#torchnf.conditioners.Conditioner" title="torchnf.conditioners.Conditioner"><code class="xref py py-class docutils literal notranslate"><span class="pre">torchnf.conditioners.Conditioner</span></code></a> whose
-<code class="code docutils literal notranslate"><span class="pre">forward</span></code> method takes the flow layer inputs and returns
+<li><p><strong>transformer</strong> – A class which implements the forward and inverse transformations,
+given an input tensor and a tensor of parameters which the
+transformation is conditioned on</p></li>
+<li><p><strong>conditioner</strong> – A class whose <code class="code docutils literal notranslate"><span class="pre">forward</span></code> method takes the inputs and returns
 a tensor of parameters for the transformer</p></li>
 </ul>
 </dd>
@@ -146,7 +140,7 @@ a tensor of parameters for the transformer</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="torchnf.flow.FlowLayer.forward">
 <span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#torchnf.flow.FlowLayer.forward" title="Permalink to this definition"></a></dt>
-<dd><p>Forward pass of the flow layer.</p>
+<dd><p>Forward pass of the density transformation.</p>
 <p>Unless overridden, this method does the following:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="bp">self</span><span class="o">.</span><span class="n">context</span> <span class="o">=</span> <span class="n">context</span>
 <span class="n">params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conditioner_forward</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
@@ -210,7 +204,7 @@ a tensor of parameters for the transformer</p></li>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="torchnf.exceptions.html" class="btn btn-neutral float-left" title="torchnf.exceptions" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="torchnf.conditioners.html" class="btn btn-neutral float-left" title="torchnf.conditioners" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="torchnf.metrics.html" class="btn btn-neutral float-right" title="torchnf.metrics" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

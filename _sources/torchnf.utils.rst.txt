@@ -1,7 +1,11 @@
 torchnf.utils
 =============
 
-.. automodule:: torchnf.utils
-   :members:
-   :undoc-members:
-   :show-inheritance:
+
+.. toctree::
+   :maxdepth: 4
+
+   torchnf.utils.datasets
+   torchnf.utils.distribution
+   torchnf.utils.mcmc
+   torchnf.utils.tensor

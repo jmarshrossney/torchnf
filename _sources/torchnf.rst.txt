@@ -5,17 +5,15 @@ torchnf
 .. toctree::
    :maxdepth: 4
 
+   torchnf.abc
    torchnf.conditioners
-   torchnf.distributions
-   torchnf.exceptions
    torchnf.flow
    torchnf.metrics
    torchnf.models
    torchnf.networks
    torchnf.transformers
-   torchnf.utils
 
 .. toctree::
    :maxdepth: 4
 
-   torchnf.data
+   torchnf.utils

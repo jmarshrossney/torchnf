@@ -1,7 +1,7 @@
-torchnf.data.toy\_datasets
+torchnf.utils.distribution
 ==========================
 
-.. automodule:: torchnf.data.toy_datasets
+.. automodule:: torchnf.utils.distribution
    :members:
    :undoc-members:
    :show-inheritance:

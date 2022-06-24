@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>torchnf.exceptions &mdash; torchnf 0.1.0 documentation</title>
+  <title>torchnf.utils.mcmc &mdash; torchnf 0.1.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -16,11 +16,12 @@
         <script src="_static/underscore.js"></script>
         <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="torchnf.flow" href="torchnf.flow.html" />
-    <link rel="prev" title="torchnf.distributions" href="torchnf.distributions.html" /> 
+    <link rel="next" title="torchnf.utils.tensor" href="torchnf.utils.tensor.html" />
+    <link rel="prev" title="torchnf.utils.distribution" href="torchnf.utils.distribution.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -45,16 +46,20 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="torchnf.html">torchnf</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="torchnf.abc.html">torchnf.abc</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.conditioners.html">torchnf.conditioners</a></li>
-<li class="toctree-l2"><a class="reference internal" href="torchnf.distributions.html">torchnf.distributions</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">torchnf.exceptions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.flow.html">torchnf.flow</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.metrics.html">torchnf.metrics</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.models.html">torchnf.models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.networks.html">torchnf.networks</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.transformers.html">torchnf.transformers</a></li>
-<li class="toctree-l2"><a class="reference internal" href="torchnf.utils.html">torchnf.utils</a></li>
-<li class="toctree-l2"><a class="reference internal" href="torchnf.data.html">torchnf.data</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="torchnf.utils.html">torchnf.utils</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="torchnf.utils.datasets.html">torchnf.utils.datasets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="torchnf.utils.distribution.html">torchnf.utils.distribution</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">torchnf.utils.mcmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="torchnf.utils.tensor.html">torchnf.utils.tensor</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -74,9 +79,10 @@
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
           <li><a href="torchnf.html">torchnf</a> &raquo;</li>
-      <li>torchnf.exceptions</li>
+          <li><a href="torchnf.utils.html">torchnf.utils</a> &raquo;</li>
+      <li>torchnf.utils.mcmc</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="_sources/torchnf.exceptions.rst.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/torchnf.utils.mcmc.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -84,16 +90,46 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="module-torchnf.exceptions">
-<span id="torchnf-exceptions"></span><h1>torchnf.exceptions<a class="headerlink" href="#module-torchnf.exceptions" title="Permalink to this heading"></a></h1>
+  <section id="module-torchnf.utils.mcmc">
+<span id="torchnf-utils-mcmc"></span><h1>torchnf.utils.mcmc<a class="headerlink" href="#module-torchnf.utils.mcmc" title="Permalink to this heading"></a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="torchnf.utils.mcmc.metropolis_test">
+<span class="sig-prename descclassname"><span class="pre">torchnf.utils.mcmc.</span></span><span class="sig-name descname"><span class="pre">metropolis_test</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log_weights</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span></span></span><a class="headerlink" href="#torchnf.utils.mcmc.metropolis_test" title="Permalink to this definition"></a></dt>
+<dd><p>Subjects a set of log-weights to the Metropolis test.</p>
+<p>The Metropolis-Hastings algorithm generates an asymptotically unbiased
+sample from some ‘target’ distribution <span class="math notranslate nohighlight">\(p(y)\)</span> given a proposal
+distribution <span class="math notranslate nohighlight">\(q(y)\)</span> which can be sampled from exactly.</p>
+<p>For each member of the sample, <span class="math notranslate nohighlight">\(y\)</span>, the log-weight is defined as</p>
+<div class="math notranslate nohighlight">
+\[\log w(y) = \log p(y) - \log q(y)\]</div>
+<p>A Markov chain is constructed by running through the sample sequentially
+and transitioning to a new state with probability</p>
+<div class="math notranslate nohighlight">
+\[A(y \to y^\prime) = \min \left( 1,
+\frac{q(y)}{p(y)} \frac{p(y^\prime)}{q(y^\prime)} \right) \, .\]</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>log_weights</strong> – One-dimensional tensor containing <cite>N</cite> log weights</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A set of <cite>N-1</cite> indices corresponding to the state of the Markov chain
+at each step.</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Note that the Markov chain is initialised using the first element.</p>
+</div>
+</dd></dl>
+
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="torchnf.distributions.html" class="btn btn-neutral float-left" title="torchnf.distributions" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="torchnf.flow.html" class="btn btn-neutral float-right" title="torchnf.flow" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="torchnf.utils.distribution.html" class="btn btn-neutral float-left" title="torchnf.utils.distribution" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="torchnf.utils.tensor.html" class="btn btn-neutral float-right" title="torchnf.utils.tensor" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

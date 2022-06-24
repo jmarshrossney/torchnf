@@ -1,0 +1,7 @@
+torchnf.utils.tensor
+====================
+
+.. automodule:: torchnf.utils.tensor
+   :members:
+   :undoc-members:
+   :show-inheritance:

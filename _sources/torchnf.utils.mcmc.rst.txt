@@ -1,7 +1,7 @@
-torchnf.exceptions
+torchnf.utils.mcmc
 ==================
 
-.. automodule:: torchnf.exceptions
+.. automodule:: torchnf.utils.mcmc
    :members:
    :undoc-members:
    :show-inheritance:
