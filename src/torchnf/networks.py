@@ -16,7 +16,12 @@ from typing import Optional
 from jsonargparse.typing import PositiveInt, restricted_number_type
 import torch
 
-from torchnf.utils import raise_
+__all__ = [
+    "DenseNet",
+    "ConvNet",
+    "ConvNetCircular",
+    "GenericNetBuilder",
+]
 
 ConvDim = restricted_number_type(
     name="ConvDim",
@@ -27,20 +32,12 @@ ConvDim = restricted_number_type(
 )
 
 
-class NetBuilder:
-    """
-    Base class for neural network builders. Simply defines a __call__ method.
-    """
-
-    # NOTE: Should i have a @property for network_preserves_structure for
-    # input/output? Would help decide which conditioner to use automatically
-
-    def __call__(self) -> torch.nn.Sequential:
-        raise NotImplementedError
+def raise_(exc: Exception):
+    raise Exception
 
 
 @dataclasses.dataclass
-class DenseNet(NetBuilder):
+class DenseNet:
     """
     Fully-connected feed-forward neural network.
 
@@ -100,14 +97,16 @@ class DenseNet(NetBuilder):
 
 
 @dataclasses.dataclass
-class ConvNet(NetBuilder):
+class ConvNet:
     """
     Convolutional neural network.
 
     See :py:class:`torch.nn.Conv2d`, and 1d/3d versions.
 
-    .. note:: ``in_channels`` and ``out_channels`` may alternatively
-    be passed to ``__call__`` rather than ``__init__``
+    .. note::
+
+        ``in_channels`` and ``out_channels`` may alternatively
+        be passed to ``__call__`` rather than ``__init__``
     """
 
     dim: ConvDim
@@ -181,11 +180,11 @@ class ConvNetCircular(ConvNet):
         )
 
 
-class GenericNetBuilder(NetBuilder):
+class GenericNetBuilder:
     """
     General-purpose network builder.
 
-    Work in progress.
+    .. warning:: Untested! Work in progress.
     """
 
     def __init__(self, spec: list[dict]) -> None:

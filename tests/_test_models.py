@@ -1,3 +1,5 @@
+# TODO: move most of this to examples
+# Only keep minimimal unit tests for CI
 import pytest
 import torch
 import pytorch_lightning as pl

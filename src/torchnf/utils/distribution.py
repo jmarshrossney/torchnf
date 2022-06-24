@@ -1,74 +1,27 @@
 """
+A collection of utils for constructing objects based on distributions.
 """
-import abc
 from collections.abc import Iterable
 from typing import Optional, Union
 
 from jsonargparse.typing import PositiveInt
 import torch
+from torch.distributions import Distribution
 import pytorch_lightning as pl
 
+from torchnf.utils.tensor import sum_except_batch
 
-class Prior(abc.ABC):
-    """
-    Abstract base class for prior distributions.
-
-    All prior distributions must implement ``sample``:
-
-    .. code:: python
-
-        def sample(self, sample_shape: Iterable) -> torch.Tensor:
-            ...
-
-    and ``log_prob``:
-
-    .. code:: python
-
-        def log_prob(self, sample: torch.Tensor) -> torch.Tensor:
-            ...
-    """
-
-    @classmethod
-    def __subclasshook__(cls, C):
-        if hasattr(C, "sample") and hasattr(C, "log_prob"):
-            return True
-        return False
-
-    @abc.abstractmethod
-    def sample(self, sample_shape: Iterable[PositiveInt]) -> torch.Tensor:
-        ...
-
-    @abc.abstractmethod
-    def log_prob(self, sample: torch.Tensor) -> torch.Tensor:
-        ...
-
-
-class Target(abc.ABC):
-    """
-    Abstract base class for target distributions.
-
-    All target distributions must implement ``log_prob``.
-
-    .. code:: python
-
-        def log_prob(self, sample: torch.Tensor) -> torch.Tensor:
-            ...
-
-    """
-
-    @classmethod
-    def __subclasshook__(cls, C):
-        if hasattr(C, "log_prob"):
-            return True
-        return False
-
-    @abc.abstractmethod
-    def log_prob(self, sample: torch.Tensor) -> torch.Tensor:
-        ...
+__all__ = [
+    "expand_dist",
+    "diagonal_gaussian",
+    "DistributionLazyShape",
+    "IterableDistribution",
+    "DistributionDataModule",
+]
 
 
 def expand_dist(
-    distribution: torch.distributions.Distribution,
+    distribution: Distribution,
     event_shape: Iterable[PositiveInt],
     batch_shape: Iterable[PositiveInt] = torch.Size([]),
 ) -> torch.distributions.Independent:
@@ -128,37 +81,43 @@ def expand_dist(
     return distribution
 
 
+def diagonal_gaussian(
+    event_shape: Iterable[PositiveInt],
+    batch_shape: Iterable[PositiveInt] = torch.Size([]),
+) -> torch.distributions.Normal:
+    """
+    Creates a Gaussian with null mean and unit diagonal covariance.
+
+    This is equivalent to calling :func:`expand_dist` with
+    ``distribution=torch.distributions.Normal(0, 1)``.
+    """
+    return expand_dist(
+        torch.distributions.Normal(0, 1), event_shape, batch_shape
+    )
+
+
 class DistributionLazyShape:
     """
     Wraps a distribution to allow sampling various shapes.
     """
 
-    def __init__(self, distribution: torch.distributions.Distribution) -> None:
+    def __init__(self, distribution: Distribution) -> None:
         self.distribution = distribution
 
     def __getattr__(self, attr):
         return getattr(self.distribution, attr)
 
-    def sample(
-        self, sample_shape: Iterable[PositiveInt] = torch.Size([])
-    ) -> torch.Tensor:
-        # NOTE: define these explicitly rather than relying on getattr, since
-        # otherwise does not register as instance of Prior
-        return self.distribution.sample(sample_shape)
-
     def log_prob(self, sample: torch.Tensor) -> torch.Tensor:
-        batch_size, *shape = sample.shape
-        return (
-            self.distribution.log_prob(sample).view(batch_size, -1).sum(dim=1)
-        )
+        logp = self.distribution.log_prob(sample)
+        return sum_except_batch(logp) if logp.dim() > 1 else logp
 
 
-class IterablePrior(torch.utils.data.IterableDataset):
-    """
+class IterableDistribution(torch.utils.data.IterableDataset):
+    r"""
     Wraps a distribution to allow sampling to be iterated over.
 
-    The motivation for this is that instances of IterablePrior may be used
-    as ``DataLoader``s in PyTorch Lightning.
+    The motivation for this is that an instance of IterableDistribution
+    may be used as a ``DataLoader`` in PyTorch Lightning.
 
     Args:
         distribution:
@@ -180,12 +139,13 @@ class IterablePrior(torch.utils.data.IterableDataset):
         torch.Size([6, 6])
         >>>
         >>> # Make an iterable prior with batch size 100
-        >>> iprior = IterablePrior(prior, 100)
+        >>> iprior = IterableDistribution(prior, 100)
         >>> next(iter(iprior)).shape
         torch.Size([100, 6, 6])
         >>>
         >>> # iprior has the same attributes as prior
         >>> iprior.mean()
+
     """
 
     def __init__(
@@ -194,9 +154,7 @@ class IterablePrior(torch.utils.data.IterableDataset):
         batch_size: Union[PositiveInt, Iterable[PositiveInt]] = [],
         length: Optional[PositiveInt] = None,
     ) -> None:
-        assert isinstance(
-            distribution, Prior
-        ), "Distribution must implement 'sample' and 'log_prob'"
+        assert isinstance(distribution, Distribution)
         batch_shape = (
             batch_size if isinstance(batch_size, Iterable) else [batch_size]
         )
@@ -226,7 +184,7 @@ class IterablePrior(torch.utils.data.IterableDataset):
         return self.distribution.log_prob(sample)
 
 
-class PriorDataModule(pl.LightningDataModule):
+class DistributionDataModule(pl.LightningDataModule):
     """
     Wraps a distribution in a DataModule.
 
@@ -255,7 +213,7 @@ class PriorDataModule(pl.LightningDataModule):
 
     def __init__(
         self,
-        distribution: torch.distributions.Distribution,
+        distribution: Distribution,
         batch_size: PositiveInt,
         epoch_length: Optional[PositiveInt] = None,
         val_batch_size: Optional[PositiveInt] = None,
@@ -273,17 +231,26 @@ class PriorDataModule(pl.LightningDataModule):
         self.val_epoch_length = val_epoch_length or epoch_length
         self.test_epoch_length = test_epoch_length or epoch_length
 
-    def train_dataloader(self) -> IterablePrior:
-        return IterablePrior(
+    def train_dataloader(self) -> IterableDistribution:
+        """
+        Returns an iterable version of the prior distribution.
+        """
+        return IterableDistribution(
             self.distribution, self.batch_size, self.epoch_length
         )
 
-    def val_dataloader(self) -> IterablePrior:
-        return IterablePrior(
+    def val_dataloader(self) -> IterableDistribution:
+        """
+        Returns an iterable version of the prior distribution.
+        """
+        return IterableDistribution(
             self.distribution, self.val_batch_size, self.val_epoch_length
         )
 
-    def test_dataloader(self) -> IterablePrior:
-        return IterablePrior(
+    def test_dataloader(self) -> IterableDistribution:
+        """
+        Returns an iterable version of the prior distribution.
+        """
+        return IterableDistribution(
             self.distribution, self.test_batch_size, self.test_epoch_length
         )

@@ -1,33 +1,36 @@
 import torch
 
-import torchnf.conditioners
-import torchnf.transformers
+from torchnf.abc import Conditioner, Transformer, DensityTransform
+
+__all__ = [
+    "FlowLayer",
+    "Composition",
+]
 
 
-class FlowLayer(torch.nn.Module):
+class FlowLayer(DensityTransform):
     """
-    Class representing a layer of a Normalizing Flow.
+    Class representing a Normalizing Flow layer.
 
     This is a subclass of :py:class:`torch.nn.Module` with a specific
     modular structure that provides the flexibility to construct a variety
-    of different flows.
+    of different types of conditional density transformations. Such
+    transformations can be chained to make a Normalizing Flow.
 
     Args:
         transformer
-            An instance of :class:`torchnf.transformers.Transformer` which
-            implements the forward and inverse transformations, given an
-            input tensor and a tensor of parameters which the transformation
-            is conditioned on
+            A class which implements the forward and inverse transformations,
+            given an input tensor and a tensor of parameters which the
+            transformation is conditioned on
         conditioner
-            An instance of :class:`torchnf.conditioners.Conditioner` whose
-            :code:`forward` method takes the flow layer inputs and returns
+            A class whose :code:`forward` method takes the inputs and returns
             a tensor of parameters for the transformer
     """
 
     def __init__(
         self,
-        transformer: torchnf.transformers.Transformer,
-        conditioner: torchnf.conditioners.Conditioner,
+        transformer: Transformer,
+        conditioner: Conditioner,
     ) -> None:
         super().__init__()
         self.transformer = transformer
@@ -71,7 +74,7 @@ class FlowLayer(torch.nn.Module):
         self, x: torch.Tensor, context: dict = {}
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """
-        Forward pass of the flow layer.
+        Forward pass of the density transformation.
 
         Unless overridden, this method does the following:
 
@@ -122,28 +125,24 @@ class FlowLayer(torch.nn.Module):
             param.requires_grad = True
 
 
-class Flow(torch.nn.Sequential):
+class Composition(torch.nn.Sequential):
     """
-    Class representing a Normalizing Flow.
-
-    This is a subclass of :py:class:`torch.nn.Sequential` which composes
-    several :class:`torchnf.flow.FlowLayer`'s and aggregates their
-    log Jacobian determinants.
+    Composes density transformations and aggregates log det Jacobians.
     """
 
-    def __init__(self, *layers: FlowLayer) -> None:
-        super().__init__(*layers)
+    def __init__(self, *transforms: DensityTransform) -> None:
+        super().__init__(*transforms)
 
     def forward(
         self, x: torch.Tensor, context: dict = {}
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """
-        Forward pass of the Normalizing Flow.
+        Forward pass of the density transformation.
         """
         log_det_jacob = torch.zeros(x.shape[0], device=x.device)
         y = x
-        for layer in self:
-            y, ldj = layer(y, context)
+        for transform in self:
+            y, ldj = transform(y, context)
             log_det_jacob = log_det_jacob.add(ldj)
         return y, log_det_jacob
 
@@ -155,8 +154,8 @@ class Flow(torch.nn.Sequential):
         """
         log_det_jacob = torch.zeros(y.shape[0], device=y.device)
         x = y
-        for layer in reversed(self):
-            x, ldj = layer.inverse(x, context)
+        for transform in reversed(self):
+            x, ldj = transform.inverse(x, context)
             log_det_jacob = log_det_jacob.add(ldj)
         return x, log_det_jacob
 
@@ -167,7 +166,7 @@ class Flow(torch.nn.Sequential):
         # TODO maybe replace this
         log_det_jacob = torch.zeros(x.shape[0]).type_as(x)
         y = x
-        for layer in self:
-            y, ldj = layer(y)
+        for transform in self:
+            y, ldj = transform(y)
             log_det_jacob.add_(ldj)
             yield y, log_det_jacob

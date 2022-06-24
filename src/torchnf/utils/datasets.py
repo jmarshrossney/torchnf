@@ -11,6 +11,9 @@ import torch
 from torch.utils.data import TensorDataset, DataLoader, random_split
 import pytorch_lightning as pl
 
+__all__ = [
+    "Moons",
+]
 
 PI = math.pi
 
@@ -38,7 +41,7 @@ def _generate_moons(
     return x
 
 
-class ToyDataModule(pl.LightningDataModule):
+class _ToyDataModule(pl.LightningDataModule):
     def __init__(
         self,
         batch_size: PositiveInt,
@@ -49,6 +52,13 @@ class ToyDataModule(pl.LightningDataModule):
         self._log_hyperparams = False
 
     def setup(self, stage: Optional[str] = None) -> None:
+        """
+        Setup stage.
+
+        Calls :meth:`generate_data`, wrapping the resulting tensor
+        in a :py:class:`torch.utils.data.TensorDataset`. Then, performs
+        the train/validation/test split and sets state.
+        """
         dataset = TensorDataset(self.generate_data())
 
         n_total = len(dataset)
@@ -63,22 +73,41 @@ class ToyDataModule(pl.LightningDataModule):
         ) = random_split(dataset, [n_train, n_val, n_test])
 
     def train_dataloader(self) -> DataLoader:
+        """
+        Returns a dataloader with the training set.
+        """
         return DataLoader(self._train_dataset, self.batch_size)
 
     def val_dataloader(self) -> DataLoader:
+        """
+        Returns a dataloader with the validation set.
+        """
         return DataLoader(self._val_dataset, self.batch_size)
 
     def test_dataloader(self) -> DataLoader:
+        """
+        Returns a dataloader with the test set.
+        """
         return DataLoader(self._test_dataset, self.batch_size)
 
     def predict_dataloader(self) -> DataLoader:
+        """
+        Returns a dataloader with the test set.
+        """
         return DataLoader(self._test_dataset, self.batch_size)
 
     def generate_data(self) -> torch.Tensor:
+        """
+        Generates the dataset. Called in :meth:`setup`.
+        """
         raise NotImplementedError
 
 
-class Moons(ToyDataModule):
+class Moons(_ToyDataModule):
+    """
+    A 2-dimensional toy dataset which resembles moons in the (x, y) plane.
+    """
+
     def __init__(
         self,
         total_size: PositiveInt,

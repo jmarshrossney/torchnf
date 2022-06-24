@@ -1,18 +1,9 @@
-from __future__ import annotations
-
 import random
 
 import pytest
 import torch
 
-from torchnf.metrics import (
-    ShiftedKLDivergence,
-    EffectiveSampleSize,
-    AcceptanceRate,
-    LongestRejectionRun,
-    IntegratedAutocorrelation,
-    LogStatWeightMetricCollection,
-)
+from torchnf.metrics import *
 
 
 logweight_metrics = [

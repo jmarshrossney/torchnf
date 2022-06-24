@@ -1,11 +1,9 @@
 flow:
     transformer: torchnf.transformers.AffineTransform
     net:
-        class_path: torchnf.networks.DenseNet
-        init_args:
-            hidden_shape: [100]
-            activation: Tanh
-            skip_final_activation: false
+        hidden_shape: [100]
+        activation: Tanh
+        skip_final_activation: false
     flow_depth: 12
 
 optimizer:

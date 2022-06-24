@@ -1,10 +1,10 @@
 import math
-import pytest
-from hypothesis import given, strategies as st
 
+from hypothesis import given, strategies as st
+import pytest
 import torch
 
-from torchnf.distributions import Prior, Target, IterablePrior, expand_dist
+from torchnf.utils.distribution import *
 
 _distributions = [
     torch.distributions.Normal(0, 1),
@@ -12,18 +12,6 @@ _distributions = [
     torch.distributions.VonMises(0, 1),
     torch.distributions.MultivariateNormal(torch.zeros(2), torch.eye(2)),
 ]
-
-
-def test_types():
-    dist = torch.distributions.Normal(0, 1)
-    assert isinstance(dist, Prior)
-    assert isinstance(dist, Target)
-    assert not isinstance(dist, IterablePrior)
-
-    idist = IterablePrior(dist)
-    assert isinstance(idist, Prior)
-    assert isinstance(idist, Target)
-    assert isinstance(idist, IterablePrior)
 
 
 @pytest.mark.parametrize("dist", _distributions)
@@ -41,8 +29,8 @@ def test_expand_dist(dist, data_shape, batch_shape):
 
 @pytest.mark.parametrize("prior", _distributions)
 def test_iterable_prior(prior):
-    iprior = IterablePrior(prior)
-    iprior_batch = IterablePrior(prior, [10])
+    iprior = IterableDistribution(prior)
+    iprior_batch = IterableDistribution(prior, [10])
 
     seed = torch.random.seed()
     sample_1 = iprior.sample()

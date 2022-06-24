@@ -1,5 +1,4 @@
 r"""
-
 Module containing parametrised bijective transformations and their inverses.
 
 Transformation functions take an input tensor and one or more tensors that
@@ -43,7 +42,8 @@ from jsonargparse.typing import PositiveInt
 import torch
 import torch.nn.functional as F
 
-import torchnf.utils
+from torchnf.abc import Transformer
+from torchnf.utils.tensor import stacked_nan_to_num, sum_except_batch
 
 log = logging.getLogger(__name__)
 
@@ -51,8 +51,17 @@ INF = float("inf")
 REALS = (-INF, INF)
 PI = math.pi
 
+__all__ = [
+    "Translation",
+    "Rescaling",
+    "AffineTransform",
+    "RQSplineTransform",
+    "RQSplineTransformIntervalDomain",
+    "RQSplineTransformCircularDomain",
+]
 
-class Transformer:
+
+class _Transformer(Transformer):
     """
     Base class that should be inherited by all transformers.
 
@@ -64,6 +73,8 @@ class Transformer:
     - :code:`_inverse()`
 
     .. attention:: Do **not** override :meth:`forward()` or :meth:`inverse()`!
+
+    :meta public:
     """
 
     domain: ClassVar[tuple[float, float]]
@@ -71,25 +82,17 @@ class Transformer:
 
     @property
     def n_params(self) -> PositiveInt:
-        """Number of parameters per element being transformed."""
+        """
+        Number of parameters specifying how to transform a single element.
+        """
         return NotImplemented
 
     @property
-    def identity_params(self) -> list[float]:
-        """The parameters which result in an identity transformation."""
+    def identity_params(self) -> torch.Tensor:
+        """
+        The parameters which result in an identity transformation.
+        """
         return NotImplemented
-
-    def _nan_to_identity(
-        self, params: torch.Tensor, data_shape: torch.Size
-    ) -> torch.Tensor:
-        """"""
-        return params.nan_to_num(0).add(
-            torchnf.utils.expand_elements(
-                torch.Tensor(self.identity_params, device=params.device),
-                data_shape,
-                stack_dim=0,
-            ).mul(params.isnan())
-        )
 
     def _forward(
         self, x: torch.Tensor, params: torch.Tensor
@@ -133,12 +136,19 @@ class Transformer:
         .. code-block::
 
             self.context = context
-            params = self._nan_to_identity(params, x.shape[1:])
+            params = stacked_nan_to_num(
+                params, self.identity_params, dim=1
+            )
             return self._forward(x, params)
 
         """
         self.context = context
-        return self._forward(x, self._nan_to_identity(params, x.shape[1:]))
+        params = stacked_nan_to_num(
+            params,
+            self.identity_params.to(params.device),
+            dim=1,
+        )
+        return self._forward(x, params)
 
     def inverse(
         self, y: torch.Tensor, params: torch.Tensor, context: dict = {}
@@ -147,7 +157,12 @@ class Transformer:
         Inverse of :meth:`forward`.
         """
         self.context = context
-        return self._inverse(y, self._nan_to_identity(params, y.shape[1:]))
+        params = stacked_nan_to_num(
+            params,
+            self.identity_params.to(params.device),
+            dim=1,
+        )
+        return self._inverse(y, params)
 
     def __call__(
         self, x: torch.Tensor, params: torch.Tensor, context: dict = {}
@@ -158,7 +173,7 @@ class Transformer:
         return self.forward(x, params, context)
 
 
-class Translation(Transformer):
+class Translation(_Transformer):
     r"""Performs a pointwise translation of the input tensor.
 
     The forward and inverse transformations are, respectively
@@ -185,8 +200,8 @@ class Translation(Transformer):
         return 1
 
     @property
-    def identity_params(self) -> list[float]:
-        return [0]
+    def identity_params(self) -> torch.Tensor:
+        return torch.tensor([0])
 
     def _forward(
         self, x: torch.Tensor, params: torch.Tensor
@@ -206,7 +221,7 @@ class Translation(Transformer):
         return x, ldj
 
 
-class Rescaling(Transformer):
+class Rescaling(_Transformer):
     r"""Performs a pointwise rescaling of the input tensor.
 
     The forward and inverse transformations are, respectively,
@@ -234,15 +249,15 @@ class Rescaling(Transformer):
         return 1
 
     @property
-    def identity_params(self) -> list[float]:
-        return [0]
+    def identity_params(self) -> torch.Tensor:
+        return torch.tensor([0])
 
     def _forward(
         self, x: torch.Tensor, params: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor]:
         log_scale = params.view_as(x)
         y = x.mul(log_scale.neg().exp())
-        ldj = torchnf.utils.sum_except_batch(log_scale.neg())
+        ldj = sum_except_batch(log_scale.neg())
         return y, ldj
 
     def _inverse(
@@ -250,11 +265,11 @@ class Rescaling(Transformer):
     ) -> tuple[torch.Tensor, torch.Tensor]:
         log_scale = params.view_as(y)
         x = y.mul(log_scale.exp())
-        ldj = torchnf.utils.sum_except_batch(log_scale)
+        ldj = sum_except_batch(log_scale)
         return x, ldj
 
 
-class AffineTransform(Transformer):
+class AffineTransform(_Transformer):
     r"""Performs a pointwise affine transformation of the input tensor.
 
     The forward and inverse transformations are, respectively,
@@ -289,15 +304,15 @@ class AffineTransform(Transformer):
         return 2
 
     @property
-    def identity_params(self) -> list[float]:
-        return [0, 0]
+    def identity_params(self) -> torch.Tensor:
+        return torch.tensor([0, 0])
 
     def _forward(
         self, x: torch.Tensor, params: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor]:
         log_scale, shift = [p.view_as(x) for p in params.split(1, dim=1)]
         y = x.mul(log_scale.neg().exp()).add(shift)
-        ldj = torchnf.utils.sum_except_batch(log_scale.neg())
+        ldj = sum_except_batch(log_scale.neg())
         return y, ldj
 
     def _inverse(
@@ -305,11 +320,11 @@ class AffineTransform(Transformer):
     ) -> tuple[torch.Tensor, torch.Tensor]:
         log_scale, shift = [p.view_as(y) for p in params.split(1, dim=1)]
         x = y.sub(shift).mul(log_scale.exp())
-        ldj = torchnf.utils.sum_except_batch(log_scale)
+        ldj = sum_except_batch(log_scale)
         return x, ldj
 
 
-class RQSplineTransform(Transformer):
+class RQSplineTransform(_Transformer):
     r"""
     Pointwise rational quadratic spline transformation.
     """
@@ -324,17 +339,6 @@ class RQSplineTransform(Transformer):
         self._n_segments = n_segments
         self._interval = interval
 
-        self._identity_params = torch.cat(
-            (
-                torch.full(
-                    size=(2 * self._n_segments,),
-                    fill_value=1 / self._n_segments,
-                ),
-                (torch.ones(self._n_knots).exp() - 1).log(),
-            ),
-            dim=0,
-        ).tolist()
-
     @property
     def _n_knots(self) -> PositiveInt:
         return self._n_segments - 1
@@ -344,8 +348,17 @@ class RQSplineTransform(Transformer):
         return 2 * self._n_segments + self._n_knots
 
     @property
-    def identity_params(self) -> list[float]:
-        return self._identity_params
+    def identity_params(self) -> torch.Tensor:
+        return torch.cat(
+            (
+                torch.full(
+                    size=(2 * self._n_segments,),
+                    fill_value=1 / self._n_segments,
+                ),
+                (torch.ones(self._n_knots).exp() - 1).log(),
+            ),
+            dim=0,
+        )
 
     def handle_inputs_outside_interval(
         self, outside_interval_mask: torch.BoolTensor
@@ -501,7 +514,7 @@ Numerical Analysis, 1983, 3, 141-152
 
         y[outside_interval_mask] = x[outside_interval_mask]
 
-        ldj = torchnf.utils.sum_except_batch(gradient.log())
+        ldj = sum_except_batch(gradient.log())
 
         return y, ldj
 
@@ -567,7 +580,7 @@ Numerical Analysis, 1983, 3, 141-152
             * denominator_recip.pow(2)
         )
 
-        ldj = torchnf.utils.sum_except_batch(gradient_fwd.log().neg())
+        ldj = sum_except_batch(gradient_fwd.log().neg())
 
         return x, ldj
 
