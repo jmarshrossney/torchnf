@@ -2,15 +2,8 @@ from hypothesis import given, strategies as st
 import pytest
 import torch
 
-from torchnf.transformers import (
-    Translation,
-    Rescaling,
-    AffineTransform,
-    # RQSplineTransform,
-    # RQSplineTransformIntervalDomain,
-    # RQSplineTransformCircularDomain,
-)
-from torchnf.utils import expand_elements
+from torchnf.transformers import *
+from torchnf.utils.tensor import expand_elements
 
 _shapes = st.lists(st.integers(1, 10), min_size=2, max_size=5)
 
@@ -23,7 +16,7 @@ def _test_call(transformer, x, params):
 
 def _test_identity(transformer, x):
     params = expand_elements(
-        torch.Tensor(transformer.identity_params),
+        transformer.identity_params,
         x.shape,
         stack_dim=1,
     )

@@ -8,21 +8,7 @@ import torch
 import torchnf.utils
 
 
-class Conditioner(torch.nn.Module):
-    """
-    Alias of :py:class:`torch.nn.Module`, to be inherited by all conditioners.
-    """
-
-    def forward(
-        self, inputs: torch.Tensor, context: dict = {}
-    ) -> torch.Tensor:
-        """
-        Returns a set of parameters, optionally conditioned on the inputs.
-        """
-        raise NotImplementedError
-
-
-class SimpleConditioner(Conditioner):
+class SimpleConditioner(torch.nn.Module):
     """
     Conditioner in which the parameters are independent of the input.
 
@@ -60,7 +46,7 @@ class SimpleConditioner(Conditioner):
         return params.expand([batch_size, -1, *data_shape])
 
 
-class MaskedConditioner(Conditioner):
+class MaskedConditioner(torch.nn.Module):
     r"""
     Masked conditioner.
 
@@ -172,21 +158,18 @@ class MaskedConditioner(Conditioner):
         return self._apply_mask_to_input(x, self.mask, self.context)
 
     def apply_mask_to_output(self, params: torch.Tensor) -> torch.Tensor:
-        """
+        r"""
         Applies mask to the output parameters.
 
-        The output parameters must be either
-
-        1. A tensor of dimension 3 or more, where the dimensions are
-           ``(batch_size, n_params, *data_shape)``
-
-        2. A tensor of dimension 2, where the dimensions are
-           ``(batch_size, n_params * n_masked_elements)``
+        The output parameters must be either (a) a tensor of dimension >2
+        where the dimensions are ``(batch_size, n_params, *data_shape)``,
+        or (b) a tensor of dimension 2, where the dimensions are
+        ``(batch_size, n_params * n_masked_elements)``.
 
         Returns:
-            A tensor with dimensions ``(batch_size, n_params, *data_shape)``
+            A tensor with dimensions ``(batch_size, n_params, *data_shape)``,
             where the elements corresponding to input data that was *not*
-            masked are ``NaN``s.
+            masked are ``NaN``
         """
         mask = self.mask
 
@@ -246,7 +229,7 @@ class MaskedConditioner(Conditioner):
         return params
 
 
-class AutoregressiveConditioner(Conditioner):
+class AutoregressiveConditioner(torch.nn.Module):
     """
     TODO
 

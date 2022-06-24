@@ -1,20 +1,21 @@
 import itertools
-import jsonargparse
-from jsonargparse.typing import PositiveInt
 import pathlib
-import torch
-import pytorch_lightning as pl
-import matplotlib.pyplot as plt
 import types
 
-import torchnf.models
-import torchnf.distributions
-import torchnf.flow
+import jsonargparse
+from jsonargparse.typing import PositiveInt
+import matplotlib.pyplot as plt
+import pytorch_lightning as pl
+import torch
 
-from torchnf.models import OptimizerConfig
-from torchnf.transformers import Transformer
-from torchnf.data.toy_datasets import Moons
+from torchnf.abc import Transformer
+from torchnf.conditioners import MaskedConditioner
+from torchnf.models import BijectiveAutoEncoder, OptimizerConfig
 from torchnf.networks import DenseNet
+from torchnf.flow import FlowLayer, Composition
+from torchnf.utils.datasets import Moons
+from torchnf.utils.distribution import diagonal_gaussian
+
 
 default_config = (
     pathlib.Path(__file__)
@@ -27,20 +28,18 @@ def make_flow(
     transformer: Transformer,
     net: DenseNet,
     flow_depth: PositiveInt,
-) -> torchnf.flow.Flow:
+) -> Composition:
     mask = torch.tensor([True, False], dtype=bool)
 
-    conditioner = (
-        lambda mask_: torchnf.conditioners.MaskedConditioner(  # noqa: E731
-            net(1, transformer.n_params), mask_
-        )
+    conditioner = lambda mask_: MaskedConditioner(  # noqa: E731
+        net(1, transformer.n_params), mask_
     )
 
     layers = [
-        torchnf.flow.FlowLayer(transformer, conditioner(m))
+        FlowLayer(transformer, conditioner(m))
         for _, m in zip(range(flow_depth), itertools.cycle([mask, ~mask]))
     ]
-    return torchnf.flow.Flow(*layers)
+    return Composition(*layers)
 
 
 Flow = jsonargparse.class_from_function(make_flow)
@@ -71,10 +70,8 @@ def main(config: dict = {}):
     )
 
     # Build model - a bijective auto-encoder
-    prior = torchnf.distributions.expand_dist(
-        torch.distributions.Normal(0, 1), [2]
-    )
-    model = torchnf.models.BijectiveAutoEncoder(flow, prior)
+    prior = diagonal_gaussian([2])
+    model = BijectiveAutoEncoder(flow, prior)
 
     # Add an extra method which collects all of the data generated
     # during validation and plots a scatter
@@ -96,10 +93,8 @@ def main(config: dict = {}):
 
     (metrics,) = trainer.test(model, datamodule=moons)
 
-    print(metrics)
-
     return metrics
 
 
 if __name__ == "__main__":
-    main()
+    print(main())

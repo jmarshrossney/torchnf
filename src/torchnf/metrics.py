@@ -1,11 +1,21 @@
 """
+Metrics for validating and testing trained models.
 """
 from typing import Optional
 
 import torch
 import torchmetrics
 
-import torchnf.utils
+from torchnf.utils.mcmc import metropolis_test
+
+__all__ = [
+    "ShiftedKLDivergence",
+    "EffectiveSampleSize",
+    "IntegratedAutocorrelation",
+    "AcceptanceRate",
+    "LongestRejectionRun",
+    "LogStatWeightMetricCollection",
+]
 
 
 class LogStatWeightMetric(torchmetrics.Metric):
@@ -56,6 +66,8 @@ class LogStatWeightMetric(torchmetrics.Metric):
 class LogStatWeightMetricMCMC(LogStatWeightMetric):
     """
     Base class for metrics arising from a Metropolis-Hastings simulation.
+
+    .. seealso: :py:func:`torchnf.utils.mcmc.metropolis_test`
     """
 
     is_differentiable: Optional[bool] = False
@@ -74,7 +86,7 @@ class LogStatWeightMetricMCMC(LogStatWeightMetric):
         """
         super().update(log_weights)
 
-        indices = torchnf.utils.metropolis_test(log_weights)
+        indices = metropolis_test(log_weights)
         history = [indices[0] == 1] + [
             indices[i + 1] != indices[i] for i in range(len(indices) - 1)
         ]

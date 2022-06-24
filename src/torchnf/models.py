@@ -1,9 +1,4 @@
 """
-Alternative implementations of the models from :mod:`torchnf.models`, based
-on :py:class:`pytorch_lightning.LightningModule` rather than the standard
-:py:class:`torch.nn.Module`.
-
-.. attention:: This is a work in progress. Do not use.
 """
 import dataclasses
 import functools
@@ -12,11 +7,36 @@ from typing import Optional, Union
 
 from jsonargparse.typing import PositiveInt
 import torch
+from torch.distributions import Distribution
 import pytorch_lightning as pl
 
-from torchnf.distributions import Target, Prior
+from torchnf.abc import DensityTransform, TargetDistribution
 import torchnf.flow
 import torchnf.metrics
+from torchnf.utils.distribution import IterableDistribution
+
+__all__ = [
+    "OptimizerConfig",
+    "FlowBasedModel",
+    "BijectiveAutoEncoder",
+    "BoltzmannGenerator",
+]
+
+
+def eval_mode(meth):
+    """
+    Decorator which sets a model to eval mode for the duration of the method.
+    """
+
+    @functools.wraps(meth)
+    def wrapper(model: torch.nn.Module, *args, **kwargs):
+        original_state = model.training
+        model.eval()
+        out = meth(model, *args, **kwargs)
+        model.train(original_state)
+        return out
+
+    return wrapper
 
 
 @dataclasses.dataclass
@@ -122,7 +142,7 @@ class FlowBasedModel(pl.LightningModule):
             overridden to implement the flow.
     """
 
-    def __init__(self, flow: torchnf.flow.Flow) -> None:
+    def __init__(self, flow: DensityTransform) -> None:
         super().__init__()
         self.flow = flow
         self.configure_metrics()
@@ -171,8 +191,8 @@ class BijectiveAutoEncoder(FlowBasedModel):
 
     def __init__(
         self,
-        flow: torchnf.flow.Flow,
-        prior: Prior,
+        flow: DensityTransform,
+        prior: Distribution,
         *,
         forward_is_encode: bool = True,
     ) -> None:
@@ -341,9 +361,9 @@ class BoltzmannGenerator(BijectiveAutoEncoder):
 
     def __init__(
         self,
-        flow: torchnf.flow.Flow,
-        prior: Prior,
-        target: Target,
+        flow: DensityTransform,
+        prior: Distribution,
+        target: TargetDistribution,
     ) -> None:
         super().__init__(flow, prior, forward_is_encode=False)
         self.target = target
@@ -427,32 +447,44 @@ class BoltzmannGenerator(BijectiveAutoEncoder):
 
     def _prior_as_dataloader(
         self, batch_size: PositiveInt, epoch_length: PositiveInt
-    ) -> torchnf.distributions.IterablePrior:
+    ) -> IterableDistribution:
         """
         Returns an iterable version of the prior distribution.
         """
         if not hasattr(self, "batch_size"):
             raise Exception("First, run 'configure_training'")
-        return torchnf.distributions.IterablePrior(
+        return IterableDistribution(
             self.prior,
             batch_size,
             epoch_length,
         )
 
-    def train_dataloader(self) -> torchnf.distributions.IterablePrior:
+    def train_dataloader(self) -> IterableDistribution:
+        """
+        An iterable version of the prior distribution.
+        """
         return self._prior_as_dataloader(self.batch_size, self.epoch_length)
 
-    def val_dataloader(self) -> torchnf.distributions.IterablePrior:
+    def val_dataloader(self) -> IterableDistribution:
+        """
+        An iterable version of the prior distribution.
+        """
         return self._prior_as_dataloader(
             self.val_batch_size, self.val_epoch_length
         )
 
-    def test_dataloader(self) -> torchnf.distributions.IterablePrior:
+    def test_dataloader(self) -> IterableDistribution:
+        """
+        An iterable version of the prior distribution.
+        """
         return self._prior_as_dataloader(
             self.test_batch_size, self.test_epoch_length
         )
 
-    def predict_dataloader(self) -> torchnf.distributions.IterablePrior:
+    def predict_dataloader(self) -> IterableDistribution:
+        """
+        An iterable version of the prior distribution.
+        """
         return self._prior_as_dataloader(
             self.pred_batch_size, self.pred_epoch_length
         )
@@ -509,6 +541,7 @@ class BoltzmannGenerator(BijectiveAutoEncoder):
         self.metrics.reset()
 
     @torch.no_grad()
+    @eval_mode
     def weighted_sample(
         self, batch_size: PositiveInt, batches: PositiveInt = 1
     ) -> tuple[torch.Tensor, torch.Tensor]:
@@ -519,12 +552,12 @@ class BoltzmannGenerator(BijectiveAutoEncoder):
 
         .. code:: python
 
-        for _ in range(batches):
-            z = self.prior.sample([batch_size])
-            x, log_prob_x = self.decode(z)
-            log_prob_target = self.target.log_prob(x)
-            log_stat_weight = log_prob_target - log_prob_x
-            ...
+            for _ in range(batches):
+                z = self.prior.sample([batch_size])
+                x, log_prob_x = self.decode(z)
+                log_prob_target = self.target.log_prob(x)
+                log_stat_weight = log_prob_target - log_prob_x
+                ...
 
         The returned tuple ``(x, log_stat_weight)`` contains the
         concatenation of all of the batches.
