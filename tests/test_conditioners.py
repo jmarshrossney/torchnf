@@ -2,6 +2,7 @@ import torch
 
 from torchnf.conditioners import *
 
+
 def test_simple_conditioner():
     conditioner = SimpleConditioner([0])
     data = torch.empty(100, 4, 4)
