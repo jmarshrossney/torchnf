@@ -21,7 +21,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="torchnf.models" href="torchnf.models.html" />
-    <link rel="prev" title="torchnf.flow" href="torchnf.flow.html" /> 
+    <link rel="prev" title="torchnf.layers" href="torchnf.layers.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -48,7 +48,7 @@
 <li class="toctree-l1 current"><a class="reference internal" href="torchnf.html">torchnf</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="torchnf.abc.html">torchnf.abc</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.conditioners.html">torchnf.conditioners</a></li>
-<li class="toctree-l2"><a class="reference internal" href="torchnf.flow.html">torchnf.flow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="torchnf.layers.html">torchnf.layers</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">torchnf.metrics</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.models.html">torchnf.models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="torchnf.networks.html">torchnf.networks</a></li>
@@ -101,7 +101,7 @@ accepted with a probability</p>
 between the model and the target densities is larger.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="torchnf.metrics.AcceptanceRate.compute">
-<span class="sig-name descname"><span class="pre">compute</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></span><a class="headerlink" href="#torchnf.metrics.AcceptanceRate.compute" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">compute</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)"><span class="pre">Tensor</span></a></span></span><a class="headerlink" href="#torchnf.metrics.AcceptanceRate.compute" title="Permalink to this definition"></a></dt>
 <dd><p>Override this method to compute the final metric value from state variables synchronized across the
 distributed backend.</p>
 </dd></dl>
@@ -130,7 +130,7 @@ distributed backend.</p>
 <p><a class="reference external" href="https://arxiv.org/abs/2101.08176">arxiv:2101.08176</a></p>
 <dl class="py method">
 <dt class="sig sig-object py" id="torchnf.metrics.EffectiveSampleSize.compute">
-<span class="sig-name descname"><span class="pre">compute</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></span><a class="headerlink" href="#torchnf.metrics.EffectiveSampleSize.compute" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">compute</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)"><span class="pre">Tensor</span></a></span></span><a class="headerlink" href="#torchnf.metrics.EffectiveSampleSize.compute" title="Permalink to this definition"></a></dt>
 <dd><p>Override this method to compute the final metric value from state variables synchronized across the
 distributed backend.</p>
 </dd></dl>
@@ -162,7 +162,7 @@ of Markov chain steps.</p>
 <p><a class="reference external" href="https://arxiv.org/abs/1904.12072">arxiv:1904.12072</a></p>
 <dl class="py method">
 <dt class="sig sig-object py" id="torchnf.metrics.IntegratedAutocorrelation.compute">
-<span class="sig-name descname"><span class="pre">compute</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></span><a class="headerlink" href="#torchnf.metrics.IntegratedAutocorrelation.compute" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">compute</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)"><span class="pre">Tensor</span></a></span></span><a class="headerlink" href="#torchnf.metrics.IntegratedAutocorrelation.compute" title="Permalink to this definition"></a></dt>
 <dd><p>Override this method to compute the final metric value from state variables synchronized across the
 distributed backend.</p>
 </dd></dl>
@@ -198,7 +198,7 @@ additional metrics based on the accept/reject history.</p>
 mean can be computed without additional casting.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="torchnf.metrics.LongestRejectionRun.compute">
-<span class="sig-name descname"><span class="pre">compute</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></span><a class="headerlink" href="#torchnf.metrics.LongestRejectionRun.compute" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">compute</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)"><span class="pre">Tensor</span></a></span></span><a class="headerlink" href="#torchnf.metrics.LongestRejectionRun.compute" title="Permalink to this definition"></a></dt>
 <dd><p>Override this method to compute the final metric value from state variables synchronized across the
 distributed backend.</p>
 </dd></dl>
@@ -219,7 +219,7 @@ distributed backend.</p>
 \[\tilde{D}_{KL} = \frac{1}{N} \sum_{\{y\}} - \log w(y)\]</div>
 <dl class="py method">
 <dt class="sig sig-object py" id="torchnf.metrics.ShiftedKLDivergence.compute">
-<span class="sig-name descname"><span class="pre">compute</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.11.0)"><span class="pre">Tensor</span></a></span></span><a class="headerlink" href="#torchnf.metrics.ShiftedKLDivergence.compute" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">compute</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)"><span class="pre">Tensor</span></a></span></span><a class="headerlink" href="#torchnf.metrics.ShiftedKLDivergence.compute" title="Permalink to this definition"></a></dt>
 <dd><p>Computes the shifted KL.</p>
 </dd></dl>
 
@@ -236,7 +236,7 @@ distributed backend.</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="torchnf.flow.html" class="btn btn-neutral float-left" title="torchnf.flow" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="torchnf.layers.html" class="btn btn-neutral float-left" title="torchnf.layers" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="torchnf.models.html" class="btn btn-neutral float-right" title="torchnf.models" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

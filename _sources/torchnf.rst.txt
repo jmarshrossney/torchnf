@@ -7,7 +7,7 @@ torchnf
 
    torchnf.abc
    torchnf.conditioners
-   torchnf.flow
+   torchnf.layers
    torchnf.metrics
    torchnf.models
    torchnf.networks
