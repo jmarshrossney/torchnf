@@ -560,7 +560,7 @@ Numerical Analysis, 1983, 3, 141-152
         # assert torch.all(y < y0 + h + eps)
 
         s = h / w
-        beta = (y - y0) / w
+        beta = (y - y0) / h
         beta.clamp_(0, 1)
 
         b = d0 - (d1 + d0 - 2 * s) * beta
@@ -623,4 +623,6 @@ class RQSplineTransformCircularDomain(RQSplineTransform):
 
     @staticmethod
     def _pad_derivs(derivs: torch.Tensor) -> torch.Tensor:
-        return F.pad(derivs, (0, 1), "circular")
+        return F.pad(derivs.flatten(1, -2), (0, 1), "circular").view(
+            *derivs.shape[:-1], -1
+        )
