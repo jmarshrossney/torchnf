@@ -8,7 +8,7 @@ from torchnf.models import BoltzmannGenerator, OptimizerConfig
 from torchnf.distributions import PriorDataModule, expand_dist
 from torchnf.transformers import Translation
 from torchnf.conditioners import SimpleConditioner
-from torchnf.flow import Flow, FlowLayer
+from torchnf.layers import FlowLayer, Composition
 
 TRAIN_STEPS = 1000
 
@@ -36,7 +36,7 @@ def test_shifted_gauss(trainer_args):
     target = expand_dist(torch.distributions.Normal(1, 1), [36])
     transformer = Translation()
     conditioner = SimpleConditioner(transformer.identity_params)
-    flow = Flow(FlowLayer(transformer, conditioner))
+    flow = Composition(FlowLayer(transformer, conditioner))
     model = BoltzmannGenerator(flow, prior, target)
     model.configure_training(batch_size=1000, epoch_length=1000)
 
@@ -66,7 +66,7 @@ def test_override_dataloader(trainer_args):
     target = expand_dist(torch.distributions.Normal(1, 1), [36])
     transformer = Translation()
     conditioner = SimpleConditioner(transformer.identity_params)
-    flow = Flow(FlowLayer(transformer, conditioner))
+    flow = Composition(FlowLayer(transformer, conditioner))
     model = BoltzmannGenerator(flow, prior, target)
 
     # Instead of configure_training, we pass a datamodule to trainer

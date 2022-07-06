@@ -1,7 +1,7 @@
 import torch
 
 from torchnf.abc import *
-from torchnf.flow import *
+from torchnf.layers import *
 
 
 def test_isinstance_custom_densitytransform():

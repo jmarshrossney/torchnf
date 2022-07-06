@@ -11,7 +11,6 @@ from torch.distributions import Distribution
 import pytorch_lightning as pl
 
 from torchnf.abc import DensityTransform, TargetDistribution
-import torchnf.flow
 import torchnf.metrics
 from torchnf.utils.distribution import IterableDistribution
 
