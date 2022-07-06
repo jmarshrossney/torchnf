@@ -112,9 +112,12 @@ def test_spline(transformer_cls, x_shape):
     """
     transformer = transformer_cls(n_segments=8, interval=[-PI, PI])
 
-    x = torch.empty(x_shape).uniform_(-PI + 1e-3, PI - 1e-3)
+    x = torch.empty(x_shape).uniform_(-PI, PI)
+
+    # NOTE: Draw params from [0, 1] not Gaussian, since tiny bin widths/heights
+    # can lead to instability which causes round-tripping to fail
     params = torch.stack(
-        [torch.empty(x_shape).normal_() for _ in range(transformer.n_params)],
+        [torch.empty(x_shape).uniform_() for _ in range(transformer.n_params)],
         dim=1,
     )
 
@@ -133,16 +136,6 @@ def test_spline(transformer_cls, x_shape):
     # Reverse transformation
     z, ldj_inv = transformer.inverse(y, params)
 
-    def reveal():
-        k = (x - z).flatten().abs().argmax()
-        print("w:", w.flatten(0, -2)[k])
-        print("h:", h.flatten(0, -2)[k])
-        print("d:", d.flatten(0, -2)[k])
-        print("kx:", kx.flatten(0, -2)[k])
-        print("ky:", ky.flatten(0, -2)[k])
-
-
     # Test round trip
-    # NOTE: These tolerances are terrible. Some edge cases are not working well..
-    assert torch.allclose(x, z, atol=1e-1), reveal()
-    assert torch.allclose(ldj, ldj_inv.neg(), atol=1e-1)
+    assert torch.allclose(x, z, atol=1e-5)
+    assert torch.allclose(ldj, ldj_inv.neg(), atol=1e-5)
