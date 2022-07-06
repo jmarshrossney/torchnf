@@ -424,7 +424,7 @@ Numerical Analysis, 1983, 3, 141-152
 
         # Let the derivatives be positive definite
         derivs = F.softplus(derivs)
-        derivs = self.pad_derivs(derivs)
+        derivs = self._pad_derivs(derivs)
 
         # Just a convenient way to ensure it's on the correct device
         zeros = torch.zeros_like(widths).sum(dim=-1, keepdim=True)
@@ -449,13 +449,12 @@ Numerical Analysis, 1983, 3, 141-152
     def _forward(
         self, x: torch.Tensor, params: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        # TODO: transpose 1 -> -1 using movedim or tranpose
-        # Why: torch.nn.functional.pad, dims start from -1
-        # Also, torch.searchsorted requires bins dim = -q
-        # One possibility: flatten dim 2, and restore structure at end
+        params = torch.movedim(
+            params, 1, -1
+        )  # searchsorted requires bins dim = -1
         widths, heights, derivs = params.split(
             (self._n_segments, self._n_segments, self._n_knots),
-            dim=1,
+            dim=-1,
         )
         (
             widths,
@@ -472,15 +471,15 @@ Numerical Analysis, 1983, 3, 141-152
         self.handle_inputs_outside_interval(outside_interval_mask)
 
         segment_idx = torch.searchsorted(knots_xcoords, x) - 1
-        segment_idx.clamp_(0, widths.shape[-1])
+        segment_idx.clamp_(0, self._n_segments - 1)
 
         # Get parameters of the segments that x falls in
-        w = torch.gather(widths, -1, segment_idx)
-        h = torch.gather(heights, -1, segment_idx)
-        d0 = torch.gather(derivs, -1, segment_idx)
-        d1 = torch.gather(derivs, -1, segment_idx + 1)
-        x0 = torch.gather(knots_xcoords, -1, segment_idx)
-        y0 = torch.gather(knots_ycoords, -1, segment_idx)
+        w = torch.gather(widths, -1, segment_idx).squeeze(-1)
+        h = torch.gather(heights, -1, segment_idx).squeeze(-1)
+        d0 = torch.gather(derivs, -1, segment_idx).squeeze(-1)
+        d1 = torch.gather(derivs, -1, segment_idx + 1).squeeze(-1)
+        x0 = torch.gather(knots_xcoords, -1, segment_idx).squeeze(-1)
+        y0 = torch.gather(knots_ycoords, -1, segment_idx).squeeze(-1)
 
         # NOTE: these will fail because some x are outside interval
         # Hence, alpha.clamp_(0, 1) will silently hide bugs
@@ -521,9 +520,12 @@ Numerical Analysis, 1983, 3, 141-152
     def _inverse(
         self, y: torch.Tensor, params: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor]:
+        params = torch.movedim(
+            params, 1, -1
+        )  # searchsorted requires bins dim = -1
         widths, heights, derivs = params.split(
             (self._n_segments, self._n_segments, self._n_knots),
-            dim=self._params_dim,
+            dim=-1,
         )
         (
             widths,
@@ -543,15 +545,15 @@ Numerical Analysis, 1983, 3, 141-152
             )
 
         segment_idx = torch.searchsorted(knots_ycoords, y) - 1
-        segment_idx.clamp_(0, widths.shape[-1])
+        segment_idx.clamp_(0, self._n_segments - 1)
 
         # Get parameters of the segments that x falls in
-        w = torch.gather(widths, -1, segment_idx)
-        h = torch.gather(heights, -1, segment_idx)
-        d0 = torch.gather(derivs, -1, segment_idx)
-        d1 = torch.gather(derivs, -1, segment_idx + 1)
-        x0 = torch.gather(knots_xcoords, -1, segment_idx)
-        y0 = torch.gather(knots_ycoords, -1, segment_idx)
+        w = torch.gather(widths, -1, segment_idx).squeeze(-1)
+        h = torch.gather(heights, -1, segment_idx).squeeze(-1)
+        d0 = torch.gather(derivs, -1, segment_idx).squeeze(-1)
+        d1 = torch.gather(derivs, -1, segment_idx + 1).squeeze(-1)
+        x0 = torch.gather(knots_xcoords, -1, segment_idx).squeeze(-1)
+        y0 = torch.gather(knots_ycoords, -1, segment_idx).squeeze(-1)
 
         # eps = 1e-5
         # assert torch.all(y > y0 - eps)
