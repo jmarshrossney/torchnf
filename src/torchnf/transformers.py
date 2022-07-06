@@ -470,7 +470,7 @@ Numerical Analysis, 1983, 3, 141-152
         )
         self.handle_inputs_outside_interval(outside_interval_mask)
 
-        segment_idx = torch.searchsorted(knots_xcoords, x) - 1
+        segment_idx = torch.searchsorted(knots_xcoords, x.unsqueeze(-1)) - 1
         segment_idx.clamp_(0, self._n_segments - 1)
 
         # Get parameters of the segments that x falls in
@@ -544,7 +544,7 @@ Numerical Analysis, 1983, 3, 141-152
                 "More than 1/1000 inputs fell outside the spline interval"
             )
 
-        segment_idx = torch.searchsorted(knots_ycoords, y) - 1
+        segment_idx = torch.searchsorted(knots_ycoords, y.unsqueeze(-1)) - 1
         segment_idx.clamp_(0, self._n_segments - 1)
 
         # Get parameters of the segments that x falls in
