@@ -2,10 +2,17 @@
 The :code:`forward` method should return a set of parameters upon which the
 transformer should be conditioned.
 """
+from collections.abc import Iterable
 from typing import Callable, Optional, Union
 import torch
 
-import torchnf.utils
+import torchnf.utils.tensor
+
+__all__ = [
+    "SimpleConditioner",
+    "MaskedConditioner",
+    "AutoregressiveConditioner",
+]
 
 
 class SimpleConditioner(torch.nn.Module):
@@ -23,10 +30,13 @@ class SimpleConditioner(torch.nn.Module):
 
     def __init__(
         self,
-        init_params: Union[torch.Tensor, list[float]],
+        init_params: Union[torch.Tensor, Iterable[float]],
     ) -> None:
         super().__init__()
-        self.params = torch.nn.Parameter(torch.Tensor(init_params))
+
+        if not isinstance(init_params, torch.Tensor):
+            init_params = torch.tensor([*init_params])
+        self.params = torch.nn.Parameter(init_params.float())
 
     def forward(
         self, inputs: torch.Tensor, context: dict = {}
@@ -36,7 +46,7 @@ class SimpleConditioner(torch.nn.Module):
         """
         batch_size, *data_shape = inputs.shape
         if self.params.dim() == 1:
-            params = torchnf.utils.expand_elements(
+            params = torchnf.utils.tensor.expand_elements(
                 self.params,
                 data_shape,
                 stack_dim=0,
@@ -82,7 +92,6 @@ class MaskedConditioner(torch.nn.Module):
         self,
         net: Optional[torch.nn.Sequential],
         mask: Optional[torch.BoolTensor],
-        *,
         mask_mode: Union[
             str, Callable[[torch.Tensor, torch.BoolTensor, dict], torch.Tensor]
         ] = "auto",
