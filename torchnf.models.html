@@ -88,8 +88,8 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="torchnf.models.BijectiveAutoEncoder">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchnf.models.</span></span><span class="sig-name descname"><span class="pre">BijectiveAutoEncoder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">flow</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="torchnf.abc.html#torchnf.abc.DensityTransform" title="torchnf.abc.DensityTransform"><span class="pre">DensityTransform</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch.org/docs/stable/distributions.html#torch.distributions.distribution.Distribution" title="(in PyTorch v1.12)"><span class="pre">Distribution</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forward_is_encode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchnf.models.BijectiveAutoEncoder" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#torchnf.models.FlowBasedModel" title="torchnf.models.FlowBasedModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">FlowBasedModel</span></code></a></p>
-<p>Latent variables model based on a Normalizing Flow.</p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_FlowBasedModel</span></code></p>
+<p>Base LightningModule for flow-based latent variable models.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -155,7 +155,7 @@ under the model</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="torchnf.models.BijectiveAutoEncoder.test_step">
 <span class="sig-name descname"><span class="pre">test_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)"><span class="pre">Tensor</span></a></span></span><a class="headerlink" href="#torchnf.models.BijectiveAutoEncoder.test_step" title="Permalink to this definition"></a></dt>
-<dd><p>Performs a single test step.</p>
+<dd><p>Performs a single test step, returning the encoded data.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -266,19 +266,6 @@ statistical weights.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="torchnf.models.BoltzmannGenerator.test_epoch_end">
-<span class="sig-name descname"><span class="pre">test_epoch_end</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">val_outputs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchnf.models.BoltzmannGenerator.test_epoch_end" title="Permalink to this definition"></a></dt>
-<dd><p>Compute and log metrics at the end of an epoch.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="torchnf.models.BoltzmannGenerator.test_step">
-<span class="sig-name descname"><span class="pre">test_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)"><span class="pre">Tensor</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#torchnf.models.BoltzmannGenerator.test_step" title="Permalink to this definition"></a></dt>
-<dd><p>Single test step.</p>
-<p>Unless overridden, this simply calls <a class="reference internal" href="#torchnf.models.BoltzmannGenerator.validation_step" title="torchnf.models.BoltzmannGenerator.validation_step"><code class="xref py py-meth docutils literal notranslate"><span class="pre">validation_step()</span></code></a>.</p>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="torchnf.models.BoltzmannGenerator.train_dataloader">
 <span class="sig-name descname"><span class="pre">train_dataloader</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="torchnf.utils.distribution.html#torchnf.utils.distribution.IterableDistribution" title="torchnf.utils.distribution.IterableDistribution"><span class="pre">IterableDistribution</span></a></span></span><a class="headerlink" href="#torchnf.models.BoltzmannGenerator.train_dataloader" title="Permalink to this definition"></a></dt>
 <dd><p>An iterable version of the prior distribution.</p>
@@ -372,116 +359,6 @@ concatenation of all of the batches.</p>
 <p>This calls <a class="reference internal" href="#torchnf.models.BoltzmannGenerator.forward" title="torchnf.models.BoltzmannGenerator.forward"><code class="xref py py-meth docutils literal notranslate"><span class="pre">forward()</span></code></a>.</p>
 </div>
 </dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="torchnf.models.FlowBasedModel">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchnf.models.</span></span><span class="sig-name descname"><span class="pre">FlowBasedModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">flow</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="torchnf.abc.html#torchnf.abc.DensityTransform" title="torchnf.abc.DensityTransform"><span class="pre">DensityTransform</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchnf.models.FlowBasedModel" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference external" href="https://pytorch-lightning.readthedocs.io/en/stable/api/pytorch_lightning.core.LightningModule.html#pytorch_lightning.core.LightningModule" title="(in PyTorch Lightning v1.6.5)"><code class="xref py py-class docutils literal notranslate"><span class="pre">LightningModule</span></code></a></p>
-<p>Base LightningModule for Normalizing Flows.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>flow</strong> – A Normalizing Flow. If this is not provided then
-<a class="reference internal" href="#torchnf.models.FlowBasedModel.flow_forward" title="torchnf.models.FlowBasedModel.flow_forward"><code class="xref py py-meth docutils literal notranslate"><span class="pre">flow_forward()</span></code></a> and <a class="reference internal" href="#torchnf.models.FlowBasedModel.flow_inverse" title="torchnf.models.FlowBasedModel.flow_inverse"><code class="xref py py-meth docutils literal notranslate"><span class="pre">flow_inverse()</span></code></a> should be
-overridden to implement the flow.</p>
-</dd>
-</dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="torchnf.models.FlowBasedModel.configure_metrics">
-<span class="sig-name descname"><span class="pre">configure_metrics</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#torchnf.models.FlowBasedModel.configure_metrics" title="Permalink to this definition"></a></dt>
-<dd><p>Instantiate metrics (called in constructor).</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="torchnf.models.FlowBasedModel.flow_forward">
-<span class="sig-name descname"><span class="pre">flow_forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)"><span class="pre">Tensor</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#torchnf.models.FlowBasedModel.flow_forward" title="Permalink to this definition"></a></dt>
-<dd><p>Forward pass of the Normalizing Flow.</p>
-<p>Unless overridden, this simply returns <code class="docutils literal notranslate"><span class="pre">self.flow(x)</span></code>.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="torchnf.models.FlowBasedModel.flow_inverse">
-<span class="sig-name descname"><span class="pre">flow_inverse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)"><span class="pre">Tensor</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#torchnf.models.FlowBasedModel.flow_inverse" title="Permalink to this definition"></a></dt>
-<dd><p>Inverse pass of the Normalizing Flow.</p>
-<p>Unless overridden, this simply returns <code class="docutils literal notranslate"><span class="pre">self.flow.inverse(y)</span></code>.</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="torchnf.models.FlowBasedModel.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#torchnf.models.FlowBasedModel.training" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="torchnf.models.OptimizerConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchnf.models.</span></span><span class="sig-name descname"><span class="pre">OptimizerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">optimizer:</span> <span class="pre">~typing.Union[str,</span> <span class="pre">type[torch.optim.optimizer.Optimizer]],</span> <span class="pre">optimizer_init:</span> <span class="pre">dict</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;,</span> <span class="pre">scheduler:</span> <span class="pre">~typing.Optional[~typing.Union[str,</span> <span class="pre">type[torch.optim.lr_scheduler._LRScheduler]]]</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">scheduler_init:</span> <span class="pre">dict</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;,</span> <span class="pre">submodule:</span> <span class="pre">~typing.Optional[str]</span> <span class="pre">=</span> <span class="pre">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchnf.models.OptimizerConfig" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Dataclass representing a single optimizer with optional lr scheduler.</p>
-<p>This class provides, via the <code class="xref py py-meth docutils literal notranslate"><span class="pre">add_to`()</span></code> method, an alternative
-way to configure an optimizer and lr scheduler, as opposed to
-defining <code class="docutils literal notranslate"><span class="pre">configure_optimizers</span></code> in the <code class="docutils literal notranslate"><span class="pre">LightningModule</span></code> itself.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>optimizer</strong> – The optimizer class</p></li>
-<li><p><strong>optimizer_init</strong> – Keyword args to instantiate optimizer</p></li>
-<li><p><strong>scheduler</strong> – The lr scheduler class</p></li>
-<li><p><strong>scheduler_init</strong> – Keyword args to instantiate scheduelr</p></li>
-<li><p><strong>submodule</strong> – Optionally specify a submodule whose <code class="docutils literal notranslate"><span class="pre">parameters()</span></code>
-will be passed to the optimizer.</p></li>
-</ul>
-</dd>
-</dl>
-<p class="rubric">Example</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">optimizer_config</span> <span class="o">=</span> <span class="n">OptimizerConfig</span><span class="p">(</span>
-<span class="go">        &quot;Adam&quot;,</span>
-<span class="go">        {&quot;lr&quot;: 0.001},</span>
-<span class="go">        &quot;CosineAnnealingLR&quot;,</span>
-<span class="go">        {&quot;T_max&quot;: 1000},</span>
-<span class="go">    )</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1"># MyModel does not override configure_optimizers</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">MyModel</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">optimizer_config</span><span class="o">.</span><span class="n">add_to</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
-</pre></div>
-</div>
-<dl class="py method">
-<dt class="sig sig-object py" id="torchnf.models.OptimizerConfig.add_to">
-<span class="sig-name descname"><span class="pre">add_to</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch-lightning.readthedocs.io/en/stable/api/pytorch_lightning.core.LightningModule.html#pytorch_lightning.core.LightningModule" title="(in PyTorch Lightning v1.6.5)"><span class="pre">LightningModule</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#torchnf.models.OptimizerConfig.add_to" title="Permalink to this definition"></a></dt>
-<dd><p>Add the optimizer and scheduler to an existing <code class="docutils literal notranslate"><span class="pre">LightningModule</span></code>.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="torchnf.models.OptimizerConfig.configure_optimizers">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">configure_optimizers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch-lightning.readthedocs.io/en/stable/api/pytorch_lightning.core.LightningModule.html#pytorch_lightning.core.LightningModule" title="(in PyTorch Lightning v1.6.5)"><span class="pre">LightningModule</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optimizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">_LRScheduler</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchnf.models.OptimizerConfig.configure_optimizers" title="Permalink to this definition"></a></dt>
-<dd><p>Simple function used to override <code class="docutils literal notranslate"><span class="pre">configure_optimizers</span></code>.</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="torchnf.models.OptimizerConfig.optimizer">
-<span class="sig-name descname"><span class="pre">optimizer</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">type</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.optim.optimizer.Optimizer</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#torchnf.models.OptimizerConfig.optimizer" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="torchnf.models.OptimizerConfig.optimizer_init">
-<span class="sig-name descname"><span class="pre">optimizer_init</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#torchnf.models.OptimizerConfig.optimizer_init" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="torchnf.models.OptimizerConfig.scheduler">
-<span class="sig-name descname"><span class="pre">scheduler</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">type</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.optim.lr_scheduler._LRScheduler</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#torchnf.models.OptimizerConfig.scheduler" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="torchnf.models.OptimizerConfig.scheduler_init">
-<span class="sig-name descname"><span class="pre">scheduler_init</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#torchnf.models.OptimizerConfig.scheduler_init" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="torchnf.models.OptimizerConfig.submodule">
-<span class="sig-name descname"><span class="pre">submodule</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#torchnf.models.OptimizerConfig.submodule" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
 
 </dd></dl>
 

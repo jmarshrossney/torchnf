@@ -8,4 +8,5 @@ torchnf.utils
    torchnf.utils.datasets
    torchnf.utils.distribution
    torchnf.utils.mcmc
+   torchnf.utils.optim
    torchnf.utils.tensor
