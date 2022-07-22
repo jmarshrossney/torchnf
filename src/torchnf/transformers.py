@@ -67,10 +67,11 @@ class _Transformer(Transformer):
 
     Derived classes should override the following methods
     and properties:
-    - :code:`n_params()`
-    - :code:`identity_params()`
-    - :code:`_forward()`
-    - :code:`_inverse()`
+
+    * :code:`n_params()`
+    * :code:`identity_params()`
+    * :code:`_forward()`
+    * :code:`_inverse()`
 
     .. attention:: Do **not** override :meth:`forward()` or :meth:`inverse()`!
 

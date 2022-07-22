@@ -10,11 +10,12 @@ import torch
 
 from torchnf.abc import Transformer
 from torchnf.conditioners import MaskedConditioner
-from torchnf.models import BijectiveAutoEncoder, OptimizerConfig
+from torchnf.models import BijectiveAutoEncoder
 from torchnf.networks import DenseNet
 from torchnf.layers import FlowLayer, Composition
 from torchnf.utils.datasets import Moons
 from torchnf.utils.distribution import diagonal_gaussian
+from torchnf.utils.optim import OptimizerConfig
 
 
 default_config = (

@@ -1,10 +1,8 @@
 """
 """
 from collections.abc import Iterator
-import dataclasses
 import functools
-import types
-from typing import Optional, Union
+from typing import Optional
 
 from jsonargparse.typing import PositiveInt
 import torch
@@ -16,8 +14,6 @@ import torchnf.metrics
 from torchnf.utils.distribution import IterableDistribution
 
 __all__ = [
-    "OptimizerConfig",
-    "FlowBasedModel",
     "BijectiveAutoEncoder",
     "BoltzmannGenerator",
 ]
@@ -39,99 +35,7 @@ def eval_mode(meth):
     return wrapper
 
 
-@dataclasses.dataclass
-class OptimizerConfig:
-    """
-    Dataclass representing a single optimizer with optional lr scheduler.
-
-    This class provides, via the :meth:`add_to`` method, an alternative
-    way to configure an optimizer and lr scheduler, as opposed to
-    defining ``configure_optimizers`` in the ``LightningModule`` itself.
-
-    Args:
-        optimizer:
-            The optimizer class
-        optimizer_init:
-            Keyword args to instantiate optimizer
-        scheduler:
-            The lr scheduler class
-        scheduler_init:
-            Keyword args to instantiate scheduelr
-        submodule:
-            Optionally specify a submodule whose ``parameters()``
-            will be passed to the optimizer.
-
-    Example:
-
-        >>> optimizer_config = OptimizerConfig(
-                "Adam",
-                {"lr": 0.001},
-                "CosineAnnealingLR",
-                {"T_max": 1000},
-            )
-        >>> # MyModel does not override configure_optimizers
-        >>> model = MyModel(...)
-        >>> optimizer_config.add_to(model)
-    """
-
-    optimizer: Union[str, type[torch.optim.Optimizer]]
-    optimizer_init: dict = dataclasses.field(default_factory=dict)
-    scheduler: Optional[
-        Union[str, type[torch.optim.lr_scheduler._LRScheduler]]
-    ] = None
-    scheduler_init: dict = dataclasses.field(default_factory=dict)
-    submodule: Optional[str] = None
-
-    def __post_init__(self) -> None:
-        if isinstance(self.optimizer, str):
-            self.optimizer = getattr(torch.optim, self.optimizer)
-        if isinstance(self.scheduler, str):
-            self.scheduler = getattr(torch.optim.lr_scheduler, self.scheduler)
-
-    @staticmethod
-    def configure_optimizers(
-        model: pl.LightningModule,
-        optimizer: torch.optim.Optimizer,
-        scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
-    ):
-        """
-        Simple function used to override ``configure_optimizers``.
-        """
-        if scheduler is None:
-            return optimizer
-        return [optimizer], [scheduler]
-
-    def add_to(self, model: pl.LightningModule) -> None:
-        """
-        Add the optimizer and scheduler to an existing ``LightningModule``.
-        """
-        module = getattr(model, self.submodule) if self.submodule else model
-        optimizer = self.optimizer(module.parameters(), **self.optimizer_init)
-        scheduler = (
-            self.scheduler(optimizer, **self.scheduler_init)
-            if self.scheduler is not None
-            else self.scheduler
-        )
-
-        configure_optimizers = functools.partial(
-            self.configure_optimizers,
-            optimizer=optimizer,
-            scheduler=scheduler,
-        )
-
-        # Adds __wrapped__ attribute to partial fn, required for
-        # PyTorch Lightning to regard configure_optimizers as overridden
-        # (see pytorch_lightning.utilities.model_helpers.is_overridden)
-        functools.update_wrapper(
-            configure_optimizers, self.configure_optimizers
-        )
-
-        model.configure_optimizers = types.MethodType(
-            configure_optimizers, model
-        )
-
-
-class FlowBasedModel(pl.LightningModule):
+class _FlowBasedModel(pl.LightningModule):
     """
     Base LightningModule for Normalizing Flows.
 
@@ -140,6 +44,8 @@ class FlowBasedModel(pl.LightningModule):
             A Normalizing Flow. If this is not provided then
             :meth:`flow_forward` and :meth:`flow_inverse` should be
             overridden to implement the flow.
+
+    :meta public:
     """
 
     def __init__(self, flow: DensityTransform) -> None:
@@ -174,9 +80,9 @@ class FlowBasedModel(pl.LightningModule):
         ...
 
 
-class BijectiveAutoEncoder(FlowBasedModel):
+class BijectiveAutoEncoder(_FlowBasedModel):
     """
-    Latent variables model based on a Normalizing Flow.
+    Base LightningModule for flow-based latent variable models.
 
     Args:
         flow:
@@ -303,12 +209,13 @@ class BijectiveAutoEncoder(FlowBasedModel):
         self, batch: list[torch.Tensor], batch_idx: int
     ) -> torch.Tensor:
         """
-        Performs a single test step.
+        Performs a single test step, returning the encoded data.
         """
         (x,) = batch
         z, log_prob_x = self.encode(x)
         loss = log_prob_x.mean().neg()  # forward KL
         self.log("Test/loss", loss, on_step=False, on_epoch=True)
+        return z
 
     @torch.no_grad()
     def sample(
@@ -322,6 +229,8 @@ class BijectiveAutoEncoder(FlowBasedModel):
         return x
 
 
+# TODO: should inherit from common parent which does not implement _step
+# methods, not BijectiveAutoEncoder itself
 class BoltzmannGenerator(BijectiveAutoEncoder):
     r"""
     Latent Variable Model whose target distribution is a known functional.
@@ -521,23 +430,7 @@ class BoltzmannGenerator(BijectiveAutoEncoder):
         Compute and log metrics at the end of an epoch.
         """
         metrics = self.metrics.compute()
-        self.log("Validation", metrics)
-        self.metrics.reset()
-
-    def test_step(self, batch: torch.Tensor, batch_idx: int) -> None:
-        """
-        Single test step.
-
-        Unless overridden, this simply calls :meth:`validation_step`.
-        """
-        return self.validation_step(batch, batch_idx)
-
-    def test_epoch_end(self, val_outputs):
-        """
-        Compute and log metrics at the end of an epoch.
-        """
-        metrics = self.metrics.compute()
-        self.log("Test", metrics)
+        self.log_dict(metrics)
         self.metrics.reset()
 
     @torch.no_grad()
