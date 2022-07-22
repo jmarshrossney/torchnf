@@ -1,5 +1,6 @@
 """
 """
+from collections.abc import Iterator
 import dataclasses
 import functools
 import types
@@ -568,3 +569,21 @@ class BoltzmannGenerator(BijectiveAutoEncoder):
             z = self.prior.sample([batch_size])
             out.append(self(z))
         return torchnf.utils.tuple_concat(*out)
+
+    def __iter__(self) -> Iterator:
+        return self.generator()
+
+    @torch.no_grad()
+    @eval_mode
+    def generator(
+        self, batch_size: PositiveInt = 64
+    ) -> Iterator[tuple[torch.Tensor, torch.Tensor]]:
+        """
+        Returns an infinite iterator over states drawn from the model.
+        """
+        batch = zip(*self([batch_size]))
+        while True:
+            try:
+                yield next(batch)
+            except StopIteration:
+                batch = zip(*self([batch_size]))

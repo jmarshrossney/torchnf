@@ -1,7 +1,18 @@
+from collections.abc import Iterator, Sized
+import logging
 import math
 import random
+from typing import Optional
 
+from jsonargparse.typing import PositiveInt
 import torch
+
+log = logging.getLogger(__name__)
+
+__all__ = [
+    "metropolis_test",
+    "metropolis_hastings",
+]
 
 
 def metropolis_test(log_weights: torch.Tensor) -> list:
@@ -56,3 +67,39 @@ def metropolis_test(log_weights: torch.Tensor) -> list:
         indices.append(idx)
 
     return indices
+
+
+def metropolis_hastings(
+    generator: Iterator[tuple[torch.Tensor, torch.Tensor]],
+    steps: Optional[PositiveInt] = None,
+    init_state: Optional[tuple[torch.Tensor, torch.Tensor]] = None,
+) -> None:
+    """
+    Builds a Markov chain using the Metropolis Hastings algorithm.
+    """
+    current = init_state or next(generator)
+
+    if isinstance(generator, Sized):  # i.e. hasattr __len__
+        generator_length = len(generator)
+        if steps is not None:
+            if generator_length < steps:
+                log.warning("`steps` is larger than the generator size")
+        else:
+            steps = generator_length
+    else:
+        if steps is None:
+            raise ValueError("Require `steps` for infinite iterators")
+
+    chain = []
+    for step in range(steps):
+        proposal = next(generator)
+
+        log_delta_weight = float(proposal[1] - current[1])
+        if log_delta_weight > 0:
+            current = proposal
+        elif random.random() < min(1, math.exp(log_delta_weight)):
+            current = proposal
+
+        chain.append(current[0])
+
+    return torch.cat(chain)
