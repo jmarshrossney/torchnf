@@ -24,7 +24,8 @@ class OptimizerConfig:
         scheduler:
             The lr scheduler class
         scheduler_init:
-            Keyword args to instantiate scheduelr
+            Keyword args to instantiate scheduler
+        scheduler_
         submodule:
             Optionally specify a submodule whose ``parameters()``
             will be passed to the optimizer.
@@ -45,9 +46,14 @@ class OptimizerConfig:
     optimizer: Union[str, type[torch.optim.Optimizer]]
     optimizer_init: dict = dataclasses.field(default_factory=dict)
     scheduler: Optional[
-        Union[str, type[torch.optim.lr_scheduler._LRScheduler]]
+        Union[
+            str,
+            type[torch.optim.lr_scheduler._LRScheduler],
+            type[torch.optim.lr_scheduler.ReduceLROnPlateau],
+        ]
     ] = None
     scheduler_init: dict = dataclasses.field(default_factory=dict)
+    scheduler_extra_config: dict = dataclasses.field(default_factory=dict)
     submodule: Optional[str] = None
 
     def __post_init__(self) -> None:
@@ -60,14 +66,25 @@ class OptimizerConfig:
     def configure_optimizers(
         model: pl.LightningModule,
         optimizer: torch.optim.Optimizer,
-        scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
+        scheduler: Union[
+            torch.optim.lr_scheduler._LRScheduler,
+            torch.optim.lr_scheduler.ReduceLROnPlateau,
+            None,
+        ],
+        scheduler_extra_config: dict,
     ):
         """
         Simple function used to override ``configure_optimizers``.
         """
-        if scheduler is None:
-            return optimizer
-        return [optimizer], [scheduler]
+        return (
+            optimizer
+            if scheduler is None
+            else {
+                "optimizer": optimizer,
+                "lr_scheduler": {"scheduler": scheduler}
+                | scheduler_extra_config,
+            }
+        )
 
     def add_to(self, model: pl.LightningModule) -> None:
         """
@@ -85,6 +102,7 @@ class OptimizerConfig:
             self.configure_optimizers,
             optimizer=optimizer,
             scheduler=scheduler,
+            scheduler_extra_config=self.scheduler_extra_config,
         )
 
         # Adds __wrapped__ attribute to partial fn, required for
