@@ -1,6 +1,7 @@
 import math
 from typing import Optional
 
+
 from jsonargparse.typing import (
     PositiveInt,
     PositiveFloat,
@@ -16,29 +17,6 @@ __all__ = [
 ]
 
 PI = math.pi
-
-
-def _generate_moons(
-    sample_size: PositiveInt,
-    *,
-    noise: Optional[PositiveFloat] = None,
-    seed: PositiveInt = None,
-) -> torch.Tensor:
-    if seed is not None:
-        torch.random.manual_seed(seed)
-
-    u = torch.empty(sample_size).uniform_(0, PI)
-    x = torch.stack([u.cos(), u.sin()]).T
-
-    # transform ~ 1/2 by a y-axis reflection and shift
-    k = torch.randint(0, 2, [sample_size]).bool()
-    x[k, 0] = 1 - x[k, 0]
-    x[k, 1] = 1 - x[k, 1] - 0.5
-
-    if noise is not None:
-        x.add_(torch.empty_like(x).normal_(mean=0, std=noise))
-
-    return x
 
 
 class _ToyDataModule(pl.LightningDataModule):
@@ -76,31 +54,54 @@ class _ToyDataModule(pl.LightningDataModule):
         """
         Returns a dataloader with the training set.
         """
-        return DataLoader(self._train_dataset, self.batch_size)
+        return DataLoader(self._train_dataset, self.batch_size, num_workers=1)
 
     def val_dataloader(self) -> DataLoader:
         """
         Returns a dataloader with the validation set.
         """
-        return DataLoader(self._val_dataset, self.batch_size)
+        return DataLoader(self._val_dataset, self.batch_size, num_workers=1)
 
     def test_dataloader(self) -> DataLoader:
         """
         Returns a dataloader with the test set.
         """
-        return DataLoader(self._test_dataset, self.batch_size)
+        return DataLoader(self._test_dataset, self.batch_size, num_workers=1)
 
     def predict_dataloader(self) -> DataLoader:
         """
         Returns a dataloader with the test set.
         """
-        return DataLoader(self._test_dataset, self.batch_size)
+        return DataLoader(self._test_dataset, self.batch_size, num_workers=1)
 
     def generate_data(self) -> torch.Tensor:
         """
         Generates the dataset. Called in :meth:`setup`.
         """
         raise NotImplementedError
+
+
+def _generate_moons(
+    sample_size: PositiveInt,
+    *,
+    noise: Optional[PositiveFloat] = None,
+    seed: PositiveInt = None,
+) -> torch.Tensor:
+    if seed is not None:
+        torch.random.manual_seed(seed)
+
+    u = torch.empty(sample_size).uniform_(0, PI)
+    x = torch.stack([u.cos(), u.sin()]).T
+
+    # transform ~ 1/2 by a y-axis reflection and shift
+    k = torch.randint(0, 2, [sample_size]).bool()
+    x[k, 0] = 1 - x[k, 0]
+    x[k, 1] = 1 - x[k, 1] - 0.5
+
+    if noise is not None:
+        x.add_(torch.empty_like(x).normal_(mean=0, std=noise))
+
+    return x
 
 
 class Moons(_ToyDataModule):
