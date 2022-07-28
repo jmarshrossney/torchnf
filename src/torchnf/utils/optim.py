@@ -12,7 +12,7 @@ class OptimizerConfig:
     """
     Dataclass representing a single optimizer with optional lr scheduler.
 
-    This class provides, via the :meth:`add_to`` method, an alternative
+    This class provides, via the :meth:`add_to` method, an alternative
     way to configure an optimizer and lr scheduler, as opposed to
     defining ``configure_optimizers`` in the ``LightningModule`` itself.
 
@@ -25,7 +25,8 @@ class OptimizerConfig:
             The lr scheduler class
         scheduler_init:
             Keyword args to instantiate scheduler
-        scheduler_
+        scheduler_extra_config:
+            Extra scheduler config
         submodule:
             Optionally specify a submodule whose ``parameters()``
             will be passed to the optimizer.

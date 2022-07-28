@@ -1,6 +1,7 @@
 import torch
 
 from torchnf.abc import Conditioner, Transformer, DensityTransform
+import torchnf.utils.flow
 
 __all__ = [
     "FlowLayer",
@@ -35,6 +36,14 @@ class FlowLayer(DensityTransform):
         super().__init__()
         self.transformer = transformer
         self.conditioner = conditioner
+
+    @classmethod
+    def inverted(
+        cls,
+        transformer: Transformer,
+        conditioner: Conditioner,
+    ) -> "FlowLayer":
+        return torchnf.utils.flow.inverted(cls)(transformer, conditioner)
 
     def conditioner_forward(self, xy: torch.Tensor) -> torch.Tensor:
         """Forward pass of the conditioner.
@@ -132,6 +141,13 @@ class Composition(torch.nn.Sequential):
 
     def __init__(self, *transforms: DensityTransform) -> None:
         super().__init__(*transforms)
+
+    @classmethod
+    def inverted(
+        cls,
+        *transforms: DensityTransform,
+    ) -> "Composition":
+        return torchnf.utils.flow.inverted(cls)(*transforms)
 
     def forward(
         self, x: torch.Tensor, context: dict = {}

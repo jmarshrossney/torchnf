@@ -215,28 +215,30 @@ class DistributionDataModule(pl.LightningDataModule):
         self,
         distribution: Distribution,
         batch_size: PositiveInt,
-        epoch_length: Optional[PositiveInt] = None,
+        *,
+        train_epoch: Optional[PositiveInt] = None,
         val_batch_size: Optional[PositiveInt] = None,
+        val_epoch: PositiveInt = 1,
         test_batch_size: Optional[PositiveInt] = None,
-        val_epoch_length: Optional[PositiveInt] = None,
-        test_epoch_length: Optional[PositiveInt] = None,
+        test_epoch: PositiveInt = 1,
+        predict_batch_size: Optional[PositiveInt] = None,
     ) -> None:
         super().__init__()
         self.distribution = distribution
         self.batch_size = batch_size
-        self.epoch_length = epoch_length
-
+        self.train_epoch = train_epoch
         self.val_batch_size = val_batch_size or batch_size
+        self.val_epoch = val_epoch
         self.test_batch_size = test_batch_size or batch_size
-        self.val_epoch_length = val_epoch_length or epoch_length
-        self.test_epoch_length = test_epoch_length or epoch_length
+        self.test_epoch = test_epoch
+        self.predict_batch_size = predict_batch_size or batch_size
 
     def train_dataloader(self) -> IterableDistribution:
         """
         Returns an iterable version of the prior distribution.
         """
         return IterableDistribution(
-            self.distribution, self.batch_size, self.epoch_length
+            self.distribution, self.batch_size, self.train_epoch
         )
 
     def val_dataloader(self) -> IterableDistribution:
@@ -244,7 +246,7 @@ class DistributionDataModule(pl.LightningDataModule):
         Returns an iterable version of the prior distribution.
         """
         return IterableDistribution(
-            self.distribution, self.val_batch_size, self.val_epoch_length
+            self.distribution, self.val_batch_size, self.val_epoch
         )
 
     def test_dataloader(self) -> IterableDistribution:
@@ -252,5 +254,13 @@ class DistributionDataModule(pl.LightningDataModule):
         Returns an iterable version of the prior distribution.
         """
         return IterableDistribution(
-            self.distribution, self.test_batch_size, self.test_epoch_length
+            self.distribution, self.test_batch_size, self.test_epoch
+        )
+
+    def predict_dataloader(self) -> IterableDistribution:
+        """
+        Returns an iterable version of the prior distribution.
+        """
+        return IterableDistribution(
+            self.distribution, self.predict_batch_size, None
         )
