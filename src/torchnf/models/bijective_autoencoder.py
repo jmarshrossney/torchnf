@@ -32,17 +32,10 @@ class BijectiveAutoencoder(pl.LightningModule):
         self,
         flow: DensityTransform,
         latent_dist: Distribution,
-        forward_is_encode: bool = True,
     ) -> None:
         super().__init__()
         self.flow = flow
         self.latent_dist = latent_dist
-
-        self._encode, self._decode = (
-            (self.flow.forward, self.flow.inverse)
-            if forward_is_encode
-            else (self.flow.inverse, self.flow.forward)
-        )
 
     def encode(self, x: torch.Tensor) -> torch.Tensor:
         r"""
@@ -67,7 +60,7 @@ class BijectiveAutoencoder(pl.LightningModule):
             Tuple containing the encoded data and the log likelihood
             under the model
         """
-        z, log_det_jacob = self._encode(x)
+        z, log_det_jacob = self.flow.forward(x)  # TODO: self.flow_forward?
         log_prob_z = self.latent_dist.log_prob(z)
         log_prob_x = log_prob_z + log_det_jacob
         return z, log_prob_x
@@ -97,12 +90,12 @@ class BijectiveAutoencoder(pl.LightningModule):
             under the model
         """
         log_prob_z = self.latent_dist.log_prob(z)
-        x, log_det_jacob = self._decode(z)
+        x, log_det_jacob = self.flow.inverse(z)
         log_prob_x = log_prob_z - log_det_jacob
         return x, log_prob_x
 
     def forward(
-        self, batch: list[torch.Tensor], *args, **kwargs
+        self, batch: list[torch.Tensor], *_, **__
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Calls :meth:`encode` on the input batch.
@@ -160,9 +153,7 @@ class BijectiveAutoencoder(pl.LightningModule):
     @torch.no_grad()
     @eval_mode
     def sample(
-        self,
-        batch_size: PositiveInt,
-        batches: PositiveInt = 1,
+        self, batch_size: PositiveInt, batches: PositiveInt = 1
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Generate synthetic data by sampling from the model.

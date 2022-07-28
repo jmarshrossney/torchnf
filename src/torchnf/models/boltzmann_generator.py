@@ -12,6 +12,7 @@ import pytorch_lightning as pl
 from torchnf.abc import DensityTransform, TargetDistribution
 import torchnf.metrics
 from torchnf.utils.distribution import IterableDistribution
+from torchnf.utils.tensor import tuple_concat
 
 
 def eval_mode(meth):
@@ -67,28 +68,112 @@ class BoltzmannGenerator(pl.LightningModule):
     which allows for (asymptotically) unbiased inference.
     """
 
-    def __init__(
-        self,
-        flow: DensityTransform,
-        prior: Distribution,
-        target: TargetDistribution,
-        *,
-        batch_size: PositiveInt,
-        val_batch_size: Optional[PositiveInt] = None,
-        val_batches: PositiveInt = 1,
-        test_batch_size: Optional[PositiveInt] = None,
-        test_batches: PositiveInt = 1,
-        epoch_length: Optional[PositiveInt] = None,
-    ) -> None:
-        super().__init__(flow, prior, forward_is_encode=False)
-        self.target = target
+    def __init__(self, flow: DensityTransform) -> None:
+        super().__init__()
+        self.flow = flow
 
-        self.batch_size = batch_size
-        self.val_batch_size = val_batch_size or batch_size
-        self.val_batches = val_batches
-        self.test_batch_size = test_batch_size or batch_size
-        self.test_batches = test_batches
-        self.epoch_length = epoch_length
+    @property
+    def prior(self) -> Distribution:
+        try:
+            return self._prior
+        except AttributeError:
+            raise AttributeError("prior has not been defined")
+
+    @prior.setter
+    def prior(self, new: Distribution) -> None:
+        self._prior = new
+
+    @property
+    def target(self) -> TargetDistribution:
+        try:
+            return self._target
+        except AttributeError:
+            raise AttributeError("target has not been defined")
+
+    @target.setter
+    def target(self, new: TargetDistribution) -> None:
+        self._target = new
+
+    def setup(self, stage) -> None:
+        """
+        Sets up the model for training, validation, testing or prediction.
+
+        Crucially, if a datamodule has been passed to the trainer, the model's
+        `prior` and `target` attributes are set to point to those of the
+        datamodule.
+
+        If no datamodule is provided, the `prior` and `target` attributes
+        must be set manually.
+        """
+        try:
+            prior = self.trainer.datamodule.prior
+        except AttributeError:
+            pass
+        else:
+            self.prior = prior
+        try:
+            target = self.trainer.datamodule.target
+        except AttributeError:
+            pass
+        else:
+            self.target = target
+
+    def encode(self, x: torch.Tensor) -> torch.Tensor:
+        r"""
+        Encodes the input data and computes the log likelihood.
+
+        The log likelihood of the point :math:`x` under the model is
+
+        .. math::
+
+            \log \ell(x) = \log q(z)
+            + \log \left\lvert \frac{\partial z}{\partial x} \right\rvert
+
+        where :math:`z` is the corresponding point in latent space,
+        :math:`q` is the latent distribution, and the Jacobian is that
+        of the encoding transformation.
+
+        Args:
+            x:
+                A batch of data drawn from the target distribution
+
+        Returns:
+            Tuple containing the encoded data and the log likelihood
+            under the model
+        """
+        z, log_det_jacob = self.flow.inverse(x)
+        log_prob_z = self.prior.log_prob(z)
+        log_prob_x = log_prob_z + log_det_jacob
+        return z, log_prob_x
+
+    def decode(self, z: torch.Tensor) -> torch.Tensor:
+        r"""
+        Decodes the latent data and computes the log statistical weights.
+
+        The log likelihood of the point :math:`x` under the model is
+
+        .. math::
+
+            \log \ell(x) = \log q(z)
+            - \log \left\lvert \frac{\partial x}{\partial z} \right\rvert
+
+        where :math:`z` is the corresponding point in latent space,
+        :math:`q` is the latent distribution, and the Jacobian is that
+        of the decoding transformation.
+
+        Args:
+            z:
+                A batch of latent variables drawn from the latent
+                distribution
+
+        Returns:
+            Tuple containing the decoded data and the log likelihood
+            under the model
+        """
+        log_prob_z = self.prior.log_prob(z)
+        x, log_det_jacob = self.flow.forward(z)
+        log_prob_x = log_prob_z - log_det_jacob
+        return x, log_prob_x
 
     def forward(self, z: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         r"""
@@ -110,7 +195,12 @@ class BoltzmannGenerator(pl.LightningModule):
         log_stat_weight = log_prob_target - log_prob_x
         return x, log_stat_weight
 
-    def training_step_rev_kl(self, z: torch.Tensor) -> torch.Tensor:
+    def reverse_kl_step(self, z: torch.Tensor) -> torch.Tensor:
+        x, log_stat_weight = self(z)
+        loss = log_stat_weight.mean().neg()
+        return loss
+
+    def training_step(self, batch: torch.Tensor, *_, **__) -> torch.Tensor:
         r"""
         Performs a single 'reverse' KL step.
 
@@ -137,69 +227,39 @@ class BoltzmannGenerator(pl.LightningModule):
 
         .. note:: This relies on :meth:`forward`.
         """
-        x, log_stat_weight = self(z)
+        x, log_stat_weight = self(batch)
         loss = log_stat_weight.mean().neg()
+        self.log("loss/train", loss, on_step=True)
         return loss
 
-    def _prior_as_dataloader(
-        self, batch_size: PositiveInt, epoch_length: Union[PositiveInt, None]
-    ) -> IterableDistribution:
-        """
-        Returns an iterable version of the prior distribution.
-        """
-        if not hasattr(self, "batch_size"):
-            raise Exception("First, run 'configure_training'")
-        return IterableDistribution(
-            self.prior,
-            batch_size,
-            epoch_length,
-        )
-
-    def train_dataloader(self) -> IterableDistribution:
-        """
-        An iterable version of the prior distribution.
-        """
-        return self._prior_as_dataloader(self.batch_size, self.epoch_length)
-
-    def val_dataloader(self) -> IterableDistribution:
-        """
-        An iterable version of the prior distribution.
-        """
-        return self._prior_as_dataloader(self.val_batch_size, self.val_batches)
-
-    def test_dataloader(self) -> IterableDistribution:
-        """
-        An iterable version of the prior distribution.
-        """
-        return self._prior_as_dataloader(
-            self.test_batch_size, self.test_batches
-        )
-
-    def training_step(
-        self, batch: torch.Tensor, batch_idx: int
-    ) -> torch.Tensor:
-        """
-        Single training step.
-
-        Unless overridden, this just calls :meth:`training_step_rev_kl`.
-        """
-        # TODO: flag to switch to forward KL training?
-        loss = self.training_step_rev_kl(batch)
-        return loss
-
-    def validation_step(self, batch: torch.Tensor, batch_idx: int) -> None:
+    def validation_step(
+        self, batch: torch.Tensor, *_, **__
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Single validation step.
-
-        Unless overridden, this just calls :meth:`training_step_rev_kl`.
         """
-        loss = self.training_step_rev_kl(batch)
-        self.log("Validation/loss", loss, on_step=False, on_epoch=True)
-        return loss
+        x, log_stat_weight = self(batch)
+        loss = log_stat_weight.mean().neg()
+        self.log("loss/validation", loss, on_step=False, on_epoch=True)
+        return x, log_stat_weight
+
+    def test_step(
+        self, batch: torch.Tensor, *_, **__
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        return self(batch)
+
+    def test_epoch_end(
+        self, test_outputs: list[tuple[torch.Tensor, torch.Tensor]]
+    ) -> None:
+        x, log_stat_weight = tuple_concat(**test_outputs)
+        loss = log_stat_weight.mean().neg()
+        self.logger.log_hyperparams(
+            dict(self.hparams) or {"_": -1}, {"loss/test": loss}
+        )
 
     @torch.no_grad()
     @eval_mode
-    def weighted_sample(
+    def sample(
         self, batch_size: PositiveInt, batches: PositiveInt = 1
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """
@@ -225,7 +285,7 @@ class BoltzmannGenerator(pl.LightningModule):
         for _ in range(batches):
             z = self.prior.sample([batch_size])
             out.append(self(z))
-        return torchnf.utils.tuple_concat(*out)
+        return tuple_concat(*out)
 
     def __iter__(self) -> Iterator:
         return self.generator()
@@ -242,31 +302,3 @@ class BoltzmannGenerator(pl.LightningModule):
                 yield next(batch)
             except StopIteration:
                 batch = zip(*self([self.batch_size]))
-
-    def setup(self, stage) -> None:
-        """
-        Sets up the model for training, validation, testing or prediction.
-
-        Crucially, if a datamodule has been passed to the trainer, the model's
-        `prior` attribute is set to point to that of the datamodule.
-
-        If no datamodule is provided, the `prior` attribute must be set
-        manually.
-        """
-        # stage == "fit", "validate", "test", "predict"
-        prior = None
-        try:
-            prior = self.prior
-        except AttributeError:
-            pass
-
-        if self.trainer.datamodule is not None:
-            try:
-                prior = self.trainer.datamodule.prior
-            except AttributeError:
-                pass
-
-        if prior is None:
-            raise Exception("no prior defined")  # todo
-
-        self.prior = prior
