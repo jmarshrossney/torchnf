@@ -35,37 +35,38 @@ ConvDim = restricted_number_type(
 )
 
 # So the help isn't flooded with all available nn.Modules
-ACTIVATIONS = Union[
-    tuple(
-        getattr(torch.nn, a)
-        for a in [
-            "ELU",
-            "Hardshrink",
-            "Hardsigmoid",
-            "Hardtanh",
-            "Hardswish",
-            "LeakyReLU",
-            "LogSigmoid",
-            "PReLU",
-            "ReLU",
-            "ReLU6",
-            "RReLU",
-            "SELU",
-            "CELU",
-            "GELU",
-            "Sigmoid",
-            "SiLU",
-            "Mish",
-            "Softplus",
-            "Softshrink",
-            "Softsign",
-            "Tanh",
-            "Tanhshrink",
-            "Threshold",
-            "GLU",
-        ]
-    )
-]
+# NOTE: torch master branch has __all__ attribute. When that is merged replace
+# explicit list with torch.nn.modules.activations.__all__
+_ACTIVATIONS = tuple(
+    getattr(torch.nn, a)
+    for a in [
+        "ELU",
+        "Hardshrink",
+        "Hardsigmoid",
+        "Hardtanh",
+        "Hardswish",
+        "LeakyReLU",
+        "LogSigmoid",
+        "PReLU",
+        "ReLU",
+        "ReLU6",
+        "RReLU",
+        "SELU",
+        "CELU",
+        "GELU",
+        "Sigmoid",
+        "SiLU",
+        "Mish",
+        "Softplus",
+        "Softshrink",
+        "Softsign",
+        "Tanh",
+        "Tanhshrink",
+        "Threshold",
+        "GLU",
+    ]
+)
+ACTIVATIONS = Union[_ACTIVATIONS]
 
 
 def raise_(exc: Exception):
