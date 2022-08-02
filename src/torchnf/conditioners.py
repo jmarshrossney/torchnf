@@ -90,18 +90,18 @@ class MaskedConditioner(torch.nn.Module):
 
     def __init__(
         self,
-        net: Optional[torch.nn.Sequential],
-        mask: Optional[torch.BoolTensor],
+        net: Optional[torch.nn.Sequential] = None,
+        mask: Optional[torch.BoolTensor] = None,
         mask_mode: Union[
             str, Callable[[torch.Tensor, torch.BoolTensor, dict], torch.Tensor]
         ] = "auto",
         create_channel_dim: bool = False,
     ) -> None:
         super().__init__()
-        self.net = net
-
+        if net is not None:
+            self.net = net
         if mask is not None:
-            self.register_buffer("_mask", mask)
+            self.register_buffer("mask", mask)
 
         if mask_mode == "index":
             self._apply_mask_to_input = self.index_with_mask
@@ -124,7 +124,7 @@ class MaskedConditioner(torch.nn.Module):
         """
         assert hasattr(
             self, "net"
-        ), "Cannot auto-choose mask mode without a 'net' attribute"
+        ), "Cannot auto-choose mask mode: require `net` attribute"
         Conv = torch.nn.modules.conv._ConvNd
         Linear = torch.nn.modules.linear.Linear
         # Look for first layer that is either a Conv or Linear
@@ -138,13 +138,12 @@ class MaskedConditioner(torch.nn.Module):
             "Net has no Linear or Convolutional layers. Unable to auto-decide mask func"  # noqa: E501
         )
 
-    @property
-    def mask(self) -> torch.BoolTensor:
+    def get_mask(self) -> torch.BoolTensor:
         """
         Returns the mask that delineates the partitions of the coupling layer.
         """
         # NOTE: for variable shaped inputs, use self.context to get shape
-        return self._mask
+        return self.mask
 
     @staticmethod
     def index_with_mask(x: torch.Tensor, mask: torch.Tensor, context: dict):
@@ -164,7 +163,7 @@ class MaskedConditioner(torch.nn.Module):
         """
         Applies mask to the input tensor.
         """
-        return self._apply_mask_to_input(x, self.mask, self.context)
+        return self._apply_mask_to_input(x, self.get_mask(), self.context)
 
     def apply_mask_to_output(self, params: torch.Tensor) -> torch.Tensor:
         r"""
@@ -180,7 +179,7 @@ class MaskedConditioner(torch.nn.Module):
             where the elements corresponding to input data that was *not*
             masked are ``NaN``
         """
-        mask = self.mask
+        mask = self.get_mask()
 
         # If output has dims (n_batch, n_params, ...)
         if params.dim() > 2:

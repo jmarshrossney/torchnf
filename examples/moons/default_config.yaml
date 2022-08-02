@@ -1,0 +1,15 @@
+epochs: 10
+
+flow:
+    transformer: torchnf.transformers.AffineTransform
+    net:
+        hidden_shape: [100]
+        activation: Tanh
+        skip_final_activation: false
+    depth: 12
+
+moons:
+    total_size: 6400
+    batch_size: 32
+    noise: 0.1
+    train_frac: 0.75

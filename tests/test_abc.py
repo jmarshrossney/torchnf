@@ -7,23 +7,23 @@ from torchnf.layers import *
 def test_isinstance_custom_densitytransform():
     class MyTransform:
         def forward(
-            self, x: torch.Tensor, context: dict = {}
+            self, x: torch.Tensor, ldj: torch.Tensor, context: dict = {}
         ) -> tuple[torch.Tensor, torch.Tensor]:
             ...
 
         def inverse(
-            self, x: torch.Tensor, context: dict = {}
+            self, x: torch.Tensor, ldj: torch.Tensor, context: dict = {}
         ) -> tuple[torch.Tensor, torch.Tensor]:
             ...
 
     class MyTransformModule(MyTransform, torch.nn.Module):
         def forward(
-            self, x: torch.Tensor, context: dict = {}
+            self, x: torch.Tensor, ldj: torch.Tensor, context: dict = {}
         ) -> tuple[torch.Tensor, torch.Tensor]:
             ...
 
         def inverse(
-            self, x: torch.Tensor, context: dict = {}
+            self, x: torch.Tensor, ldj: torch.Tensor, context: dict = {}
         ) -> tuple[torch.Tensor, torch.Tensor]:
             ...
 

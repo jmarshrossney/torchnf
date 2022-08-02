@@ -9,6 +9,7 @@ import torch
 __all__ = [
     "Conditioner",
     "DensityTransform",
+    "NetBuilder",
     "TargetDistribution",
     "Transformer",
 ]
@@ -34,7 +35,7 @@ def _check_methods_match(cls: type[abc.ABC], C: type, *methods: str) -> bool:
         if len(method.parameters) != len(reference.parameters):
             return False
 
-        # NOTE: seems to strict to demand matching type annotations...
+        # NOTE: seems too strict to demand matching type annotations...
 
     return True
 
@@ -65,7 +66,7 @@ class DensityTransform(torch.nn.Module, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def forward(
-        self, x: torch.Tensor, context: dict = {}
+        self, x: torch.Tensor, ldj: torch.Tensor, context: dict = {}
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Computes and returns the forward transformation and log det Jacobian.
@@ -74,7 +75,7 @@ class DensityTransform(torch.nn.Module, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def inverse(
-        self, y: torch.Tensor, context: dict = {}
+        self, y: torch.Tensor, ldj: torch.Tensor, context: dict = {}
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Computes and returns the inverse transformation and log det Jacobian.

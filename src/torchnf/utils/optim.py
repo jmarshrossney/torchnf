@@ -4,7 +4,6 @@ import types
 from typing import Optional, Union
 
 import torch
-import pytorch_lightning as pl
 
 
 @dataclasses.dataclass
@@ -12,7 +11,7 @@ class OptimizerConfig:
     """
     Dataclass representing a single optimizer with optional lr scheduler.
 
-    This class provides, via the :meth:`add_to`` method, an alternative
+    This class provides, via the :meth:`add_to` method, an alternative
     way to configure an optimizer and lr scheduler, as opposed to
     defining ``configure_optimizers`` in the ``LightningModule`` itself.
 
@@ -25,7 +24,8 @@ class OptimizerConfig:
             The lr scheduler class
         scheduler_init:
             Keyword args to instantiate scheduler
-        scheduler_
+        scheduler_extra_config:
+            Extra scheduler config
         submodule:
             Optionally specify a submodule whose ``parameters()``
             will be passed to the optimizer.
@@ -64,7 +64,7 @@ class OptimizerConfig:
 
     @staticmethod
     def configure_optimizers(
-        model: pl.LightningModule,
+        model: torch.nn.Module,
         optimizer: torch.optim.Optimizer,
         scheduler: Union[
             torch.optim.lr_scheduler._LRScheduler,
@@ -86,7 +86,7 @@ class OptimizerConfig:
             }
         )
 
-    def add_to(self, model: pl.LightningModule) -> None:
+    def add_to(self, model: torch.nn.Module) -> None:
         """
         Add the optimizer and scheduler to an existing ``LightningModule``.
         """
