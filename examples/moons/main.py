@@ -12,7 +12,7 @@ from torchnf.abc import Transformer
 from torchnf.conditioners import MaskedConditioner, SimpleConditioner
 from torchnf.model import FlowBasedModel
 from torchnf.networks import DenseNetBuilder
-from torchnf.layers import FlowLayer, Flow
+from torchnf.flow import FlowLayer, Flow
 from torchnf.transformers import Rescaling
 from torchnf.utils.datasets import Moons
 from torchnf.utils.distribution import diagonal_gaussian

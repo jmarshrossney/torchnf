@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "torchnf"
-version = "0.1.0"
+version = "0.2.0"
 description = "A library containing building blocks for normalising flows, implemented in PyTorch"
 authors = ["marshrossney <17361029+marshrossney@users.noreply.github.com>"]
 license = "GPLv3"
