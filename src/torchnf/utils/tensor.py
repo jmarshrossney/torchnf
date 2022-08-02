@@ -1,5 +1,7 @@
 """
 """
+from collections.abc import Iterable
+
 from jsonargparse.typing import PositiveInt, NonNegativeInt
 import torch
 
@@ -93,7 +95,7 @@ def sum_except_batch(x: torch.Tensor) -> torch.Tensor:
     return x.flatten(start_dim=1).sum(dim=1)
 
 
-def tuple_concat(*tuples: tuple[torch.Tensor]) -> tuple[torch.Tensor]:
+def tuple_concat(tuples: Iterable[tuple[torch.Tensor]]) -> tuple[torch.Tensor]:
     """
     Dim 0 concatenation of tuples of torch.Tensors.
 
@@ -103,9 +105,46 @@ def tuple_concat(*tuples: tuple[torch.Tensor]) -> tuple[torch.Tensor]:
                 (torch.rand(1), torch.rand(10), torch.rand(1, 10))
                 for _ in range(3)
         )
-        >>> x, y, z = tuple_concat(a, b, c)
+        >>> x, y, z = tuple_concat([a, b, c])
         >>> x.shape, y.shape, z.shape
         (torch.Size([3]), torch.Size([30]), torch.Size([3, 10]))
 
     """
     return (torch.cat(tensors) for tensors in map(list, zip(*tuples)))
+
+
+def dict_concat(
+    dicts: Iterable[dict[str, torch.Tensor]], strict: bool = True
+) -> dict[str, torch.Tensor]:
+    """
+    Dim-zero concatenation of dicts of torch.Tensors.
+
+    Examples:
+
+        Dicts with matching keys:
+
+        >>> a, b, c = (
+                {"x": torch.rand(1), "y": torch.rand(10), z: torch.rand(1, 10)}
+                for _ in range(3)
+        )
+        >>> out = dict_concat(a, b, c)
+        >>> out["x"].shape, out["y"].shape, out["z"].shape
+        (torch.Size([3]), torch.Size([30]), torch.Size([3, 10]))
+
+        Dicts without matching keys:
+
+        >>> d = {"x": torch.rand(1), "w": torch.rand(100)}
+        >>> dict_concat(a, b, c, d)
+        KeyError: 'y'
+        >>> out = dict_concat(a, b, c, d, strict=False)
+        >>> out["x"].shape, out["y"].shape, out["z"].shape, out["w"].shape
+        (torch.Size([4]), torch.Size([30]), torch.Size([3, 10]), torch.Size([100]))  # noqa: E501
+    """
+    keys = set([k for d in dicts for k in d.keys()])
+    if strict:
+        return {k: torch.cat([d[k] for d in dicts]) for k in keys}
+    else:
+        return {
+            k: torch.cat([d.get(k, torch.tensor([])) for d in dicts])
+            for k in keys
+        }

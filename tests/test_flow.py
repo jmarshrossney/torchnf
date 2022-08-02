@@ -15,7 +15,8 @@ def test_identity_simple(transformer):
     layer = FlowLayer(transformer, conditioner)
 
     x = torch.empty(100, 4, 4).normal_()
-    y, ldj = layer(x)
+    ldj = torch.zeros(100)
+    y, ldj = layer(x, ldj)
 
     assert torch.allclose(x, y)
     assert torch.allclose(ldj, torch.zeros_like(ldj))

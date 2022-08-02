@@ -1,3 +1,6 @@
+from collections import OrderedDict
+from typing import Union
+
 import torch
 
 from torchnf.abc import Conditioner, Transformer, DensityTransform
@@ -6,6 +9,7 @@ import torchnf.utils.flow
 __all__ = [
     "FlowLayer",
     "Composition",
+    "Flow",
 ]
 
 
@@ -80,7 +84,7 @@ class FlowLayer(DensityTransform):
         return self.transformer.inverse(y, params, self.context)
 
     def forward(
-        self, x: torch.Tensor, context: dict = {}
+        self, x: torch.Tensor, ldj: torch.Tensor, context: dict = {}
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Forward pass of the density transformation.
@@ -91,16 +95,18 @@ class FlowLayer(DensityTransform):
 
             self.context = context
             params = self.conditioner_forward(x)
-            y, ldj = self.transformer_forward(x, params)
+            y, ldj_this = self.transformer_forward(x, params)
+            ldj += ldj_this
             return y, ldj
         """
         self.context = context
         params = self.conditioner_forward(x)
-        y, ldj = self.transformer_forward(x, params)
+        y, ldj_this = self.transformer_forward(x, params)
+        ldj.add_(ldj_this)
         return y, ldj
 
     def inverse(
-        self, y: torch.Tensor, context: dict = {}
+        self, y: torch.Tensor, ldj: torch.Tensor, context: dict = {}
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         The inverse of :meth:`forward`.
@@ -111,12 +117,14 @@ class FlowLayer(DensityTransform):
 
             self.context = context
             params = self.conditioner_forward(y)
-            x, ldj = self.transformer_inverse(y, params)
+            x, ldj_this = self.transformer_inverse(y, params)
+            ldj += ldj_this
             return x, ldj
         """
         self.context = context
         params = self.conditioner_forward(y)
-        x, ldj = self.transformer_inverse(y, params)
+        x, ldj_this = self.transformer_inverse(y, params)
+        ldj.add_(ldj_this)
         return x, ldj
 
     def freeze(self) -> None:
@@ -136,53 +144,65 @@ class FlowLayer(DensityTransform):
 
 class Composition(torch.nn.Sequential):
     """
-    Composes density transformations and aggregates log det Jacobians.
+    Composes density transformations.
     """
 
-    def __init__(self, *transforms: DensityTransform) -> None:
+    def __init__(
+        self,
+        *transforms: Union[
+            DensityTransform, OrderedDict[str, DensityTransform]
+        ],
+    ) -> None:
         super().__init__(*transforms)
 
     @classmethod
     def inverted(
         cls,
-        *transforms: DensityTransform,
+        *transforms: Union[
+            DensityTransform, OrderedDict[str, DensityTransform]
+        ],
     ) -> "Composition":
         return torchnf.utils.flow.inverted(cls)(*transforms)
 
     def forward(
-        self, x: torch.Tensor, context: dict = {}
+        self,
+        x: torch.Tensor,
+        ldj: torch.Tensor,
+        context: dict = {},
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Forward pass of the density transformation.
         """
-        log_det_jacob = torch.zeros(x.shape[0], device=x.device)
         y = x
         for transform in self:
-            y, ldj = transform(y, context)
-            log_det_jacob = log_det_jacob.add(ldj)
-        return y, log_det_jacob
+            y, ldj = transform(y, ldj, context)
+        return y, ldj
 
     def inverse(
-        self, y: torch.Tensor, context: dict = {}
+        self, y: torch.Tensor, ldj: torch.Tensor, context: dict = {}
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Inverse of :meth:`forward`.
         """
-        log_det_jacob = torch.zeros(y.shape[0], device=y.device)
         x = y
         for transform in reversed(self):
-            x, ldj = transform.inverse(x, context)
-            log_det_jacob = log_det_jacob.add(ldj)
-        return x, log_det_jacob
+            x, ldj = transform.inverse(x, ldj, context)
+        return x, ldj
 
-    def step_forward(self, x: torch.Tensor, context: dict = {}):
-        """
-        WIP
-        """
-        # TODO maybe replace this
-        log_det_jacob = torch.zeros(x.shape[0]).type_as(x)
-        y = x
-        for transform in self:
-            y, ldj = transform(y)
-            log_det_jacob.add_(ldj)
-            yield y, log_det_jacob
+
+class Flow(Composition):
+    """
+    Composes density transformations, initalising the ldj with zeros.
+    """
+
+    def forward(
+        self, x: torch.Tensor, context: dict = {}
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        ldj = torch.zeros(x.shape[0], device=x.device)
+        return super().forward(x, ldj, context)
+
+    def inverse(
+        self, y: torch.Tensor, context: dict = {}
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        ldj = torch.zeros(y.shape[0], device=y.device)
+        return super().inverse(y, ldj, context)

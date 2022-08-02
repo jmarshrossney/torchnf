@@ -334,8 +334,8 @@ class RQSplineTransform(_Transformer):
 
     def __init__(
         self,
-        n_segments: int,
-        interval: tuple[float],
+        n_segments: PositiveInt,
+        interval: tuple[float, float],
     ) -> None:
         self._n_segments = n_segments
         self._interval = interval
@@ -591,8 +591,8 @@ Numerical Analysis, 1983, 3, 141-152
 class RQSplineTransformIntervalDomain(RQSplineTransform):
     def __init__(
         self,
-        n_segments: int,
-        interval: tuple[float],
+        n_segments: PositiveInt,
+        interval: tuple[float, float],
     ):
         super().__init__(n_segments, interval)
         self.domain = interval
@@ -611,7 +611,7 @@ class RQSplineTransformCircularDomain(RQSplineTransform):
     def __init__(
         self,
         n_segments: PositiveInt,
-        interval: tuple[float],
+        interval: tuple[float, float],
     ):
         super().__init__(n_segments, interval)
         assert math.isclose(interval[1] - interval[0], 2 * PI)

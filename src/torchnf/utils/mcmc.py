@@ -2,7 +2,7 @@ from collections.abc import Iterator, Sized
 import logging
 import math
 import random
-from typing import Optional
+from typing import Callable, Optional
 
 from jsonargparse.typing import PositiveInt
 import torch
@@ -103,3 +103,15 @@ def metropolis_hastings(
         chain.append(current[0])
 
     return torch.cat(chain)
+
+
+def sample_generator(
+    sampler: Callable[PositiveInt, tuple[torch.Tensor, torch.Tensor]],
+    batch_size: PositiveInt = 64,
+) -> Iterator[tuple[torch.Tensor, torch.Tensor]]:
+    batch = zip(*sampler(batch_size))
+    while True:
+        try:
+            yield next(batch)
+        except StopIteration:
+            batch = zip(*sampler(batch_size))

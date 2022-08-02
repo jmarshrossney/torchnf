@@ -6,15 +6,7 @@ flow:
         hidden_shape: [100]
         activation: Tanh
         skip_final_activation: false
-    flow_depth: 12
-
-optimizer:
-    optimizer: Adam
-    optimizer_init:
-        lr: 0.001
-    scheduler: CosineAnnealingLR
-    scheduler_init:
-        T_max: 10 # should be same as epochs
+    depth: 12
 
 moons:
     total_size: 6400

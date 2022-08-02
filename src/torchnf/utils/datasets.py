@@ -27,7 +27,8 @@ class _ToyDataModule(pl.LightningDataModule):
     ) -> None:
         self.batch_size = batch_size
         self.train_frac = train_frac
-        self._log_hyperparams = False
+
+        self.prepare_data_per_node = False
 
     def setup(self, stage: Optional[str] = None) -> None:
         """
@@ -45,34 +46,34 @@ class _ToyDataModule(pl.LightningDataModule):
         n_test = n_total - n_val - n_train
 
         (
-            self._train_dataset,
-            self._val_dataset,
-            self._test_dataset,
+            self.train_dataset,
+            self.val_dataset,
+            self.test_dataset,
         ) = random_split(dataset, [n_train, n_val, n_test])
 
     def train_dataloader(self) -> DataLoader:
         """
         Returns a dataloader with the training set.
         """
-        return DataLoader(self._train_dataset, self.batch_size, num_workers=1)
+        return DataLoader(self.train_dataset, self.batch_size, num_workers=1)
 
     def val_dataloader(self) -> DataLoader:
         """
         Returns a dataloader with the validation set.
         """
-        return DataLoader(self._val_dataset, self.batch_size, num_workers=1)
+        return DataLoader(self.val_dataset, self.batch_size, num_workers=1)
 
     def test_dataloader(self) -> DataLoader:
         """
         Returns a dataloader with the test set.
         """
-        return DataLoader(self._test_dataset, self.batch_size, num_workers=1)
+        return DataLoader(self.test_dataset, self.batch_size, num_workers=1)
 
     def predict_dataloader(self) -> DataLoader:
         """
         Returns a dataloader with the test set.
         """
-        return DataLoader(self._test_dataset, self.batch_size, num_workers=1)
+        return DataLoader(self.test_dataset, self.batch_size, num_workers=1)
 
     def generate_data(self) -> torch.Tensor:
         """
@@ -116,10 +117,10 @@ class Moons(_ToyDataModule):
         noise: OpenUnitInterval = 0,
         train_frac: ClosedUnitInterval = 0.7,
     ) -> None:
-        self.prepare_data_per_node = False
         super().__init__(batch_size, train_frac)
-        self.total_size = total_size
-        self.noise = noise
+        self.save_hyperparameters()
 
     def generate_data(self) -> torch.Tensor:
-        return _generate_moons(self.total_size, noise=self.noise)
+        return _generate_moons(
+            self.hparams.total_size, noise=self.hparams.noise
+        )
