@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchnf.utils.tensor &mdash; torchnf 0.1.0 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html" class="icon icon-home"> torchnf
+          </a>
+              <div class="version">
+                0.1.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../torchnf.html">torchnf</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">torchnf</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      <li>torchnf.utils.tensor</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchnf.utils.tensor</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Iterable</span>
+
+<span class="kn">from</span> <span class="nn">jsonargparse.typing</span> <span class="kn">import</span> <span class="n">PositiveInt</span><span class="p">,</span> <span class="n">NonNegativeInt</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;expand_elements&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;stacked_nan_to_num&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;sum_except_batch&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;tuple_concat&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="expand_elements"><a class="viewcode-back" href="../../../torchnf.utils.tensor.html#torchnf.utils.tensor.expand_elements">[docs]</a><span class="k">def</span> <span class="nf">expand_elements</span><span class="p">(</span>
+    <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">data_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span> <span class="n">stack_dim</span><span class="p">:</span> <span class="n">NonNegativeInt</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Expands and stacks each element of a one-dimensional tensor.</span>
+
+<span class="sd">    The input tensor is split into chunks of size 1 along the zeroth</span>
+<span class="sd">    dimension, each element expanded, and then the result stacked.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        x</span>
+<span class="sd">            One-dimensional input tensor</span>
+<span class="sd">        data_shape</span>
+<span class="sd">            Shape that each element will be expanded to</span>
+<span class="sd">        stack_dim</span>
+<span class="sd">            Dimension that the resulting expanded elements will be</span>
+<span class="sd">            stacked on</span>
+
+<span class="sd">    Effectively this does the following:</span>
+
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">        elements = x.split(1)</span>
+<span class="sd">        elements = [el.expand(data_shape) for el in elements]</span>
+<span class="sd">        out = torch.stack(elements, dim=stack_dim)</span>
+<span class="sd">        return out</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">el</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">data_shape</span><span class="p">)</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">x</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="mi">1</span><span class="p">)],</span>
+        <span class="n">dim</span><span class="o">=</span><span class="n">stack_dim</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="stacked_nan_to_num"><a class="viewcode-back" href="../../../torchnf.utils.tensor.html#torchnf.utils.tensor.stacked_nan_to_num">[docs]</a><span class="k">def</span> <span class="nf">stacked_nan_to_num</span><span class="p">(</span>
+    <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">dim</span><span class="p">:</span> <span class="n">PositiveInt</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Vector-wise replacement of NaNs.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        x:</span>
+<span class="sd">            The tensor with NaN values</span>
+<span class="sd">        y:</span>
+<span class="sd">            One-dimensional tensor to replace the NaNs with</span>
+<span class="sd">        dim:</span>
+<span class="sd">            Dimension of ``x`` to fill with ``y``</span>
+
+<span class="sd">    Example:</span>
+
+<span class="sd">        &gt;&gt;&gt; x = torch.rand(10, 2, 2)</span>
+<span class="sd">        &gt;&gt;&gt; x[x &lt; 0.5] = float(&#39;nan&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; y = torch.tensor([10, 20])</span>
+<span class="sd">        &gt;&gt;&gt; out = stacked_nan_to_num(x, y, dim=1)</span>
+<span class="sd">        &gt;&gt;&gt; x[0], out[0]</span>
+<span class="sd">        (tensor([[nan, nan],</span>
+<span class="sd">                 [nan, nan]]),</span>
+<span class="sd">         tensor([[10., 10.],</span>
+<span class="sd">                 [20., 20.]]))</span>
+<span class="sd">        &gt;&gt;&gt; x[1], out[1]</span>
+<span class="sd">        (tensor([[nan, 0.9123],</span>
+<span class="sd">                 [0.5999, nan]]),</span>
+<span class="sd">         tensor([[10.0000, 0.9213.],</span>
+<span class="sd">                 [0.5999., 20.0000]]))</span>
+<span class="sd">        &gt;&gt;&gt; out = stacked_nan_to_num(x, y, dim=2)</span>
+<span class="sd">        &gt;&gt;&gt; out[0]</span>
+<span class="sd">        tensor([[10., 20.],</span>
+<span class="sd">                [10., 20.]])</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="n">y</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Only one-dimensional replacements supported&quot;</span>
+    <span class="c1"># Expand y to make x &amp; y broadcastable</span>
+    <span class="k">if</span> <span class="o">-</span><span class="mi">1</span> <span class="o">&lt;</span> <span class="n">dim</span> <span class="o">&lt;</span> <span class="n">x</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>  <span class="c1"># anything but last dim</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">expand_elements</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">dim</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:],</span> <span class="n">stack_dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># noqa: E203</span>
+    <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">isnan</span><span class="p">()))</span></div>
+
+
+<div class="viewcode-block" id="sum_except_batch"><a class="viewcode-back" href="../../../torchnf.utils.tensor.html#torchnf.utils.tensor.sum_except_batch">[docs]</a><span class="k">def</span> <span class="nf">sum_except_batch</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Sum over all but the first dimension of the input tensor.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">start_dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="tuple_concat"><a class="viewcode-back" href="../../../torchnf.utils.tensor.html#torchnf.utils.tensor.tuple_concat">[docs]</a><span class="k">def</span> <span class="nf">tuple_concat</span><span class="p">(</span><span class="n">tuples</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Dim 0 concatenation of tuples of torch.Tensors.</span>
+
+<span class="sd">    Example:</span>
+
+<span class="sd">        &gt;&gt;&gt; a, b, c = (</span>
+<span class="sd">                (torch.rand(1), torch.rand(10), torch.rand(1, 10))</span>
+<span class="sd">                for _ in range(3)</span>
+<span class="sd">        )</span>
+<span class="sd">        &gt;&gt;&gt; x, y, z = tuple_concat([a, b, c])</span>
+<span class="sd">        &gt;&gt;&gt; x.shape, y.shape, z.shape</span>
+<span class="sd">        (torch.Size([3]), torch.Size([30]), torch.Size([3, 10]))</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">tensors</span><span class="p">)</span> <span class="k">for</span> <span class="n">tensors</span> <span class="ow">in</span> <span class="nb">map</span><span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">tuples</span><span class="p">)))</span></div>
+
+
+<span class="k">def</span> <span class="nf">dict_concat</span><span class="p">(</span>
+    <span class="n">dicts</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]],</span> <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Dim-zero concatenation of dicts of torch.Tensors.</span>
+
+<span class="sd">    Examples:</span>
+
+<span class="sd">        Dicts with matching keys:</span>
+
+<span class="sd">        &gt;&gt;&gt; a, b, c = (</span>
+<span class="sd">                {&quot;x&quot;: torch.rand(1), &quot;y&quot;: torch.rand(10), z: torch.rand(1, 10)}</span>
+<span class="sd">                for _ in range(3)</span>
+<span class="sd">        )</span>
+<span class="sd">        &gt;&gt;&gt; out = dict_concat(a, b, c)</span>
+<span class="sd">        &gt;&gt;&gt; out[&quot;x&quot;].shape, out[&quot;y&quot;].shape, out[&quot;z&quot;].shape</span>
+<span class="sd">        (torch.Size([3]), torch.Size([30]), torch.Size([3, 10]))</span>
+
+<span class="sd">        Dicts without matching keys:</span>
+
+<span class="sd">        &gt;&gt;&gt; d = {&quot;x&quot;: torch.rand(1), &quot;w&quot;: torch.rand(100)}</span>
+<span class="sd">        &gt;&gt;&gt; dict_concat(a, b, c, d)</span>
+<span class="sd">        KeyError: &#39;y&#39;</span>
+<span class="sd">        &gt;&gt;&gt; out = dict_concat(a, b, c, d, strict=False)</span>
+<span class="sd">        &gt;&gt;&gt; out[&quot;x&quot;].shape, out[&quot;y&quot;].shape, out[&quot;z&quot;].shape, out[&quot;w&quot;].shape</span>
+<span class="sd">        (torch.Size([4]), torch.Size([30]), torch.Size([3, 10]), torch.Size([100]))  # noqa: E501</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="n">k</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dicts</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">keys</span><span class="p">()])</span>
+    <span class="k">if</span> <span class="n">strict</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dicts</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">}</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="n">k</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([]))</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dicts</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span>
+        <span class="p">}</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Joe Marsh Rossney.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

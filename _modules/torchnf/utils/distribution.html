@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchnf.utils.distribution &mdash; torchnf 0.1.0 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html" class="icon icon-home"> torchnf
+          </a>
+              <div class="version">
+                0.1.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../torchnf.html">torchnf</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">torchnf</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      <li>torchnf.utils.distribution</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchnf.utils.distribution</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">A collection of utils for constructing objects based on distributions.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Iterable</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">from</span> <span class="nn">jsonargparse.typing</span> <span class="kn">import</span> <span class="n">PositiveInt</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">torch.distributions</span> <span class="kn">import</span> <span class="n">Distribution</span>
+<span class="kn">import</span> <span class="nn">pytorch_lightning</span> <span class="k">as</span> <span class="nn">pl</span>
+
+<span class="kn">from</span> <span class="nn">torchnf.utils.tensor</span> <span class="kn">import</span> <span class="n">sum_except_batch</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;expand_dist&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;diagonal_gaussian&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;DistributionLazyShape&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;IterableDistribution&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;DistributionDataModule&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="expand_dist"><a class="viewcode-back" href="../../../torchnf.utils.distribution.html#torchnf.utils.distribution.expand_dist">[docs]</a><span class="k">def</span> <span class="nf">expand_dist</span><span class="p">(</span>
+    <span class="n">distribution</span><span class="p">:</span> <span class="n">Distribution</span><span class="p">,</span>
+    <span class="n">event_shape</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">PositiveInt</span><span class="p">],</span>
+    <span class="n">batch_shape</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">PositiveInt</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([]),</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">distributions</span><span class="o">.</span><span class="n">Independent</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Constructs a multivariate distribution with iid components.</span>
+
+<span class="sd">    The components of the resulting distribution are independent and</span>
+<span class="sd">    identically distributed according to the input distribution. The</span>
+<span class="sd">    resulting distribution has an event shape that is the concatenation</span>
+<span class="sd">    of ``event_shape`` with the shape(s) of the original distribution,</span>
+<span class="sd">    and a batch shape given by ``batch_shape``.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        distribution:</span>
+<span class="sd">            The distribution of the iid components</span>
+<span class="sd">        event_shape:</span>
+<span class="sd">            The event shape of the resulting multivariate distribution,</span>
+<span class="sd">            not including the shape(s) of the original distribution</span>
+<span class="sd">        batch_shape:</span>
+<span class="sd">            The batch shape of the resulting distribution</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A multivariate distibution with independent components</span>
+
+<span class="sd">    Example:</span>
+
+<span class="sd">        This will create a multivariate Gaussian with diagonal covariance:</span>
+
+<span class="sd">        &gt;&gt;&gt; # Create a univariate Gaussian distribution</span>
+<span class="sd">        &gt;&gt;&gt; uv_gauss = torch.distributions.Normal(0, 1)</span>
+<span class="sd">        &gt;&gt;&gt; uv_gauss.batch_shape, uv_gauss.event_shape</span>
+<span class="sd">        (torch.Size([]), torch.Size([]))</span>
+<span class="sd">        &gt;&gt;&gt; uv_gauss.sample().shape</span>
+<span class="sd">        torch.Size([])</span>
+<span class="sd">        &gt;&gt;&gt;</span>
+<span class="sd">        &gt;&gt;&gt; # Create a multivariate Gaussian with diagonal covariance</span>
+<span class="sd">        &gt;&gt;&gt; mv_gauss = expand_independent(uv_gauss, [6, 6])</span>
+<span class="sd">        &gt;&gt;&gt; mv_gauss.batch_shape, mv_gauss.event_shape</span>
+<span class="sd">        (torch.Size([]), torch.Size([6, 6]))</span>
+<span class="sd">        &gt;&gt;&gt; mv_gauss.sample().shape</span>
+<span class="sd">        torch.Size([6, 6])</span>
+<span class="sd">        &gt;&gt;&gt;</span>
+<span class="sd">        &gt;&gt;&gt; # What happens when we compute the log-prob?</span>
+<span class="sd">        &gt;&gt;&gt; uv_gauss.log_prob(mv_gauss.sample()).shape</span>
+<span class="sd">        torch.Size([6, 6])</span>
+<span class="sd">        &gt;&gt;&gt; mv_gauss.log_prob(mv_gauss.sample()).shape</span>
+<span class="sd">        torch.Size([])</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Expand original distribution by &#39;event_shape&#39;</span>
+    <span class="n">distribution</span> <span class="o">=</span> <span class="n">distribution</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">event_shape</span><span class="p">)</span>
+    <span class="c1"># Register the components as being part of one distribution</span>
+    <span class="n">distribution</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">distributions</span><span class="o">.</span><span class="n">Independent</span><span class="p">(</span>
+        <span class="n">distribution</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">distribution</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="c1"># Expand to the batch shape</span>
+    <span class="n">distribution</span> <span class="o">=</span> <span class="n">distribution</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">batch_shape</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">distribution</span></div>
+
+
+<div class="viewcode-block" id="diagonal_gaussian"><a class="viewcode-back" href="../../../torchnf.utils.distribution.html#torchnf.utils.distribution.diagonal_gaussian">[docs]</a><span class="k">def</span> <span class="nf">diagonal_gaussian</span><span class="p">(</span>
+    <span class="n">event_shape</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">PositiveInt</span><span class="p">],</span>
+    <span class="n">batch_shape</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">PositiveInt</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([]),</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">distributions</span><span class="o">.</span><span class="n">Normal</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates a Gaussian with null mean and unit diagonal covariance.</span>
+
+<span class="sd">    This is equivalent to calling :func:`expand_dist` with</span>
+<span class="sd">    ``distribution=torch.distributions.Normal(0, 1)``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">expand_dist</span><span class="p">(</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">distributions</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">event_shape</span><span class="p">,</span> <span class="n">batch_shape</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="DistributionLazyShape"><a class="viewcode-back" href="../../../torchnf.utils.distribution.html#torchnf.utils.distribution.DistributionLazyShape">[docs]</a><span class="k">class</span> <span class="nc">DistributionLazyShape</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Wraps a distribution to allow sampling various shapes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">distribution</span><span class="p">:</span> <span class="n">Distribution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span> <span class="o">=</span> <span class="n">distribution</span>
+
+    <span class="k">def</span> <span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DistributionLazyShape.log_prob"><a class="viewcode-back" href="../../../torchnf.utils.distribution.html#torchnf.utils.distribution.DistributionLazyShape.log_prob">[docs]</a>    <span class="k">def</span> <span class="nf">log_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sample</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">logp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">sample</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">sum_except_batch</span><span class="p">(</span><span class="n">logp</span><span class="p">)</span> <span class="k">if</span> <span class="n">logp</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">logp</span></div></div>
+
+
+<div class="viewcode-block" id="IterableDistribution"><a class="viewcode-back" href="../../../torchnf.utils.distribution.html#torchnf.utils.distribution.IterableDistribution">[docs]</a><span class="k">class</span> <span class="nc">IterableDistribution</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">IterableDataset</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Wraps a distribution to allow sampling to be iterated over.</span>
+
+<span class="sd">    The motivation for this is that an instance of IterableDistribution</span>
+<span class="sd">    may be used as a ``DataLoader`` in PyTorch Lightning.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        distribution:</span>
+<span class="sd">            The distribution, whose ``sample`` method will be called at</span>
+<span class="sd">            each iteration step</span>
+<span class="sd">        batch_size:</span>
+<span class="sd">            Batch size or shape returned by each iteration step</span>
+<span class="sd">        length:</span>
+<span class="sd">            Optionally specify a length for the generator, which is</span>
+<span class="sd">            interpreted by PyTorch Lightning as the number of steps in</span>
+<span class="sd">            a single &#39;epoch&#39;</span>
+
+<span class="sd">    Example:</span>
+
+<span class="sd">        &gt;&gt;&gt; # Create a prior distribution using expand_independent</span>
+<span class="sd">        &gt;&gt;&gt; uv_gauss = torch.distributions.Normal(0, 1)</span>
+<span class="sd">        &gt;&gt;&gt; prior = expand_independent(uv_gauss, [6, 6])</span>
+<span class="sd">        &gt;&gt;&gt; prior.sample().shape</span>
+<span class="sd">        torch.Size([6, 6])</span>
+<span class="sd">        &gt;&gt;&gt;</span>
+<span class="sd">        &gt;&gt;&gt; # Make an iterable prior with batch size 100</span>
+<span class="sd">        &gt;&gt;&gt; iprior = IterableDistribution(prior, 100)</span>
+<span class="sd">        &gt;&gt;&gt; next(iter(iprior)).shape</span>
+<span class="sd">        torch.Size([100, 6, 6])</span>
+<span class="sd">        &gt;&gt;&gt;</span>
+<span class="sd">        &gt;&gt;&gt; # iprior has the same attributes as prior</span>
+<span class="sd">        &gt;&gt;&gt; iprior.mean()</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">distribution</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">distributions</span><span class="o">.</span><span class="n">Distribution</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">PositiveInt</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">PositiveInt</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[],</span>
+        <span class="n">length</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PositiveInt</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">distribution</span><span class="p">,</span> <span class="n">Distribution</span><span class="p">)</span>
+        <span class="n">batch_shape</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">batch_size</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">)</span> <span class="k">else</span> <span class="p">[</span><span class="n">batch_size</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span> <span class="o">=</span> <span class="n">distribution</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">batch_shape</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="n">length</span>
+
+    <span class="k">def</span> <span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="fm">__next__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PositiveInt</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span>
+
+<div class="viewcode-block" id="IterableDistribution.sample"><a class="viewcode-back" href="../../../torchnf.utils.distribution.html#torchnf.utils.distribution.IterableDistribution.sample">[docs]</a>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">sample_shape</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">PositiveInt</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([])</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+        <span class="c1"># NOTE: define these explicitly rather than relying on getattr, since</span>
+        <span class="c1"># otherwise does not register as instance of Prior</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">sample_shape</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="IterableDistribution.log_prob"><a class="viewcode-back" href="../../../torchnf.utils.distribution.html#torchnf.utils.distribution.IterableDistribution.log_prob">[docs]</a>    <span class="k">def</span> <span class="nf">log_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sample</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">sample</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="DistributionDataModule"><a class="viewcode-back" href="../../../torchnf.utils.distribution.html#torchnf.utils.distribution.DistributionDataModule">[docs]</a><span class="k">class</span> <span class="nc">DistributionDataModule</span><span class="p">(</span><span class="n">pl</span><span class="o">.</span><span class="n">LightningDataModule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Wraps a distribution in a DataModule.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        distribution:</span>
+<span class="sd">            The distribution serving as the prior for a Normalizing Flow</span>
+<span class="sd">        batch_size:</span>
+<span class="sd">            Size of each batch drawn from the distribution</span>
+<span class="sd">        epoch_length:</span>
+<span class="sd">            Number of batches constituting an &#39;epoch&#39;</span>
+<span class="sd">        val/test/pred_batch_size:</span>
+<span class="sd">            Batch sizes for the validation, test, predict steps, if they</span>
+<span class="sd">            should be different than the training ``batch_size``</span>
+<span class="sd">        val/test/pred_epoch_length:</span>
+<span class="sd">            Epoch lengths for validation, test, predict steps, if they</span>
+<span class="sd">            should be different than the training ``epoch_length``</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        The epoch length has no significance whatsoever, since batches</span>
+<span class="sd">        are generated on demand and never recycled. However, since Pytorch</span>
+<span class="sd">        Lightning has lots of hooks which execute at the start and end of</span>
+<span class="sd">        an epoch, it can be convenient to define an epoch in terms of a</span>
+<span class="sd">        fixed number of batches.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">distribution</span><span class="p">:</span> <span class="n">Distribution</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="p">:</span> <span class="n">PositiveInt</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">train_epoch</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PositiveInt</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">val_batch_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PositiveInt</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">val_epoch</span><span class="p">:</span> <span class="n">PositiveInt</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">test_batch_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PositiveInt</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">test_epoch</span><span class="p">:</span> <span class="n">PositiveInt</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">predict_batch_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PositiveInt</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span> <span class="o">=</span> <span class="n">distribution</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">train_epoch</span> <span class="o">=</span> <span class="n">train_epoch</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">val_batch_size</span> <span class="o">=</span> <span class="n">val_batch_size</span> <span class="ow">or</span> <span class="n">batch_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">val_epoch</span> <span class="o">=</span> <span class="n">val_epoch</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_batch_size</span> <span class="o">=</span> <span class="n">test_batch_size</span> <span class="ow">or</span> <span class="n">batch_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_epoch</span> <span class="o">=</span> <span class="n">test_epoch</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">predict_batch_size</span> <span class="o">=</span> <span class="n">predict_batch_size</span> <span class="ow">or</span> <span class="n">batch_size</span>
+
+<div class="viewcode-block" id="DistributionDataModule.train_dataloader"><a class="viewcode-back" href="../../../torchnf.utils.distribution.html#torchnf.utils.distribution.DistributionDataModule.train_dataloader">[docs]</a>    <span class="k">def</span> <span class="nf">train_dataloader</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">IterableDistribution</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns an iterable version of the prior distribution.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">IterableDistribution</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_epoch</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="DistributionDataModule.val_dataloader"><a class="viewcode-back" href="../../../torchnf.utils.distribution.html#torchnf.utils.distribution.DistributionDataModule.val_dataloader">[docs]</a>    <span class="k">def</span> <span class="nf">val_dataloader</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">IterableDistribution</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns an iterable version of the prior distribution.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">IterableDistribution</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">val_batch_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">val_epoch</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="DistributionDataModule.test_dataloader"><a class="viewcode-back" href="../../../torchnf.utils.distribution.html#torchnf.utils.distribution.DistributionDataModule.test_dataloader">[docs]</a>    <span class="k">def</span> <span class="nf">test_dataloader</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">IterableDistribution</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns an iterable version of the prior distribution.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">IterableDistribution</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">test_batch_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">test_epoch</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="DistributionDataModule.predict_dataloader"><a class="viewcode-back" href="../../../torchnf.utils.distribution.html#torchnf.utils.distribution.DistributionDataModule.predict_dataloader">[docs]</a>    <span class="k">def</span> <span class="nf">predict_dataloader</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">IterableDistribution</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns an iterable version of the prior distribution.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">IterableDistribution</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">distribution</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">predict_batch_size</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="p">)</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Joe Marsh Rossney.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

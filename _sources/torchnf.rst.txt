@@ -9,7 +9,7 @@ torchnf
    torchnf.conditioners
    torchnf.layers
    torchnf.metrics
-   torchnf.models
+   torchnf.model
    torchnf.networks
    torchnf.transformers
 

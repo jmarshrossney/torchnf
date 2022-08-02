@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchnf.networks &mdash; torchnf 0.1.0 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> torchnf
+          </a>
+              <div class="version">
+                0.1.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../torchnf.html">torchnf</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">torchnf</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      <li>torchnf.networks</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchnf.networks</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Module containing convenience classes which generate neural networks for</span>
+<span class="sd">use in conditioners.</span>
+
+<span class="sd">Specifically, classes defined herein implement a :code:`__call__()` method</span>
+<span class="sd">which returns an instance of :py:class:`torch.nn.Sequential` instance</span>
+<span class="sd">representing the neural network. This allows one to easily generate multiple</span>
+<span class="sd">independent network (e.g. one for each flow layer) using the same spec.</span>
+
+<span class="sd">TODO: document a convenient way of creating new class with identical</span>
+<span class="sd">parameters except for some user-specified changes E.g. dataclasses.replace</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">dataclasses</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">from</span> <span class="nn">jsonargparse.typing</span> <span class="kn">import</span> <span class="n">PositiveInt</span><span class="p">,</span> <span class="n">restricted_number_type</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+
+<span class="c1"># TODO: &#39;block builder&#39; where user defines a custom block, e.g.</span>
+<span class="c1"># Linear -&gt; ReLU -&gt; BatchNorm, that has a __call__(size_in, size_out)</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;DenseNetBuilder&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ConvNetBuilder&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;CircularConvNetBuilder&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;GenericNetBuilder&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">ConvDim</span> <span class="o">=</span> <span class="n">restricted_number_type</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;ConvDim&quot;</span><span class="p">,</span>
+    <span class="n">base_type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+    <span class="n">restrictions</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;&gt;&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;&lt;&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)],</span>
+    <span class="n">join</span><span class="o">=</span><span class="s2">&quot;and&quot;</span><span class="p">,</span>
+    <span class="n">docstring</span><span class="o">=</span><span class="s2">&quot;Convolution dimension: {1, 2, 3} are supported.&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># So the help isn&#39;t flooded with all available nn.Modules</span>
+<span class="c1"># NOTE: torch master branch has __all__ attribute. When that is merged replace</span>
+<span class="c1"># explicit list with torch.nn.modules.activations.__all__</span>
+<span class="n">_ACTIVATIONS</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+    <span class="nb">getattr</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="p">[</span>
+        <span class="s2">&quot;ELU&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Hardshrink&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Hardsigmoid&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Hardtanh&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Hardswish&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;LeakyReLU&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;LogSigmoid&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;PReLU&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;ReLU&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;ReLU6&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;RReLU&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;SELU&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;CELU&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;GELU&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Sigmoid&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;SiLU&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Mish&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Softplus&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Softshrink&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Softsign&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Tanh&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Tanhshrink&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Threshold&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;GLU&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+<span class="n">ACTIVATIONS</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">_ACTIVATIONS</span><span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">raise_</span><span class="p">(</span><span class="n">exc</span><span class="p">:</span> <span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">raise</span> <span class="ne">Exception</span>
+
+
+<div class="viewcode-block" id="DenseNetBuilder"><a class="viewcode-back" href="../../torchnf.networks.html#torchnf.networks.DenseNetBuilder">[docs]</a><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span>
+<span class="k">class</span> <span class="nc">DenseNetBuilder</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Fully-connected feed-forward neural network.</span>
+
+<span class="sd">    See :py:class:`torch.nn.Linear`.</span>
+
+<span class="sd">    .. note:: ``in_features`` and ``out_features`` are specified in</span>
+<span class="sd">    ``__call__`` rather than ``__init__``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">hidden_shape</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">PositiveInt</span><span class="p">]</span>
+    <span class="n">activation</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ACTIVATIONS</span><span class="p">]</span>
+    <span class="n">skip_final_activation</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">bias</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">activation</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="c1"># Instantiate with no arguments</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">activation</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">activation</span><span class="p">)()</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">in_features</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PositiveInt</span><span class="p">],</span>  <span class="c1"># can pass None, but explicit</span>
+        <span class="n">out_features</span><span class="p">:</span> <span class="n">PositiveInt</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">:</span>
+        <span class="n">in_features</span> <span class="o">=</span> <span class="n">in_features</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_features</span>
+        <span class="n">out_features</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">out_features</span>
+            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">out_features</span>
+            <span class="ow">or</span> <span class="n">raise_</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;&#39;out_features&#39; must be provided&quot;</span><span class="p">))</span>
+        <span class="p">)</span>
+
+        <span class="n">net_shape</span> <span class="o">=</span> <span class="p">[</span><span class="n">in_features</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">hidden_shape</span><span class="p">,</span> <span class="n">out_features</span><span class="p">]</span>
+        <span class="n">activations</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">activation</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hidden_shape</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Identity</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">skip_final_activation</span>
+            <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">activation</span>
+        <span class="p">]</span>
+        <span class="n">layers</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">f_in</span><span class="p">,</span> <span class="n">f_out</span><span class="p">,</span> <span class="n">activation</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+            <span class="n">net_shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">net_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">activations</span>
+        <span class="p">):</span>
+            <span class="n">linear</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">LazyLinear</span><span class="p">(</span><span class="n">f_out</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bias</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">f_in</span> <span class="ow">is</span> <span class="kc">None</span>
+                <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">f_in</span><span class="p">,</span> <span class="n">f_out</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bias</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">layers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">linear</span><span class="p">)</span>
+            <span class="n">layers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">activation</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span><span class="o">*</span><span class="n">layers</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ConvNetBuilder"><a class="viewcode-back" href="../../torchnf.networks.html#torchnf.networks.ConvNetBuilder">[docs]</a><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span>
+<span class="k">class</span> <span class="nc">ConvNetBuilder</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convolutional neural network.</span>
+
+<span class="sd">    See :py:class:`torch.nn.Conv2d`, and 1d/3d versions.</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        ``in_channels`` and ``out_channels`` are specified in</span>
+<span class="sd">        ``__call__`` rather than ``__init__``</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">dim</span><span class="p">:</span> <span class="n">ConvDim</span>
+    <span class="n">hidden_shape</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">PositiveInt</span><span class="p">]</span>
+    <span class="n">activation</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ACTIVATIONS</span><span class="p">]</span>
+    <span class="n">kernel_size</span><span class="p">:</span> <span class="n">PositiveInt</span>
+    <span class="n">skip_final_activation</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">conv_kwargs</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">activation</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="c1"># Instantiate with no arguments</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">activation</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">activation</span><span class="p">)()</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">in_channels</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PositiveInt</span><span class="p">],</span>
+        <span class="n">out_channels</span><span class="p">:</span> <span class="n">PositiveInt</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">:</span>
+
+        <span class="n">in_channels</span> <span class="o">=</span> <span class="n">in_channels</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_channels</span>
+        <span class="n">out_channels</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">out_channels</span>
+            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">out_channels</span>
+            <span class="ow">or</span> <span class="n">raise_</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;&#39;out_channels&#39; must be provided&quot;</span><span class="p">))</span>
+        <span class="p">)</span>
+
+        <span class="n">net_shape</span> <span class="o">=</span> <span class="p">[</span><span class="n">in_channels</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">hidden_shape</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">]</span>
+        <span class="n">activations</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">activation</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hidden_shape</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Identity</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">skip_final_activation</span>
+            <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">activation</span>
+        <span class="p">]</span>
+        <span class="n">Conv</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="mi">1</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Conv1d</span><span class="p">,</span>
+            <span class="mi">2</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">,</span>
+            <span class="mi">3</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Conv3d</span><span class="p">,</span>
+        <span class="p">}</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">)</span>
+        <span class="n">LazyConv</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="mi">1</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">LazyConv1d</span><span class="p">,</span>
+            <span class="mi">2</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">LazyConv2d</span><span class="p">,</span>
+            <span class="mi">3</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">LazyConv3d</span><span class="p">,</span>
+        <span class="p">}</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">)</span>
+
+        <span class="n">layers</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">c_in</span><span class="p">,</span> <span class="n">c_out</span><span class="p">,</span> <span class="n">activation</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+            <span class="n">net_shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">net_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">activations</span>
+        <span class="p">):</span>
+            <span class="n">conv</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">LazyConv</span><span class="p">(</span><span class="n">c_out</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">kernel_size</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">conv_kwargs</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">c_in</span> <span class="ow">is</span> <span class="kc">None</span>
+                <span class="k">else</span> <span class="n">Conv</span><span class="p">(</span><span class="n">c_in</span><span class="p">,</span> <span class="n">c_out</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">kernel_size</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">conv_kwargs</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">layers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">conv</span><span class="p">)</span>
+            <span class="n">layers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">activation</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span><span class="o">*</span><span class="n">layers</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CircularConvNetBuilder"><a class="viewcode-back" href="../../torchnf.networks.html#torchnf.networks.CircularConvNetBuilder">[docs]</a><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span>
+<span class="k">class</span> <span class="nc">CircularConvNetBuilder</span><span class="p">(</span><span class="n">ConvNetBuilder</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convolutional neural network with circular padding.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">conv_kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+            <span class="n">padding</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel_size</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="n">padding_mode</span><span class="o">=</span><span class="s2">&quot;circular&quot;</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GenericNetBuilder"><a class="viewcode-back" href="../../torchnf.networks.html#torchnf.networks.GenericNetBuilder">[docs]</a><span class="k">class</span> <span class="nc">GenericNetBuilder</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    General-purpose network builder.</span>
+
+<span class="sd">    .. warning:: Untested! Work in progress.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spec</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spec</span> <span class="o">=</span> <span class="n">spec</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">:</span>
+        <span class="c1"># TODO: augment namespace with custom modules to allow user</span>
+        <span class="c1"># to request custom layers?</span>
+
+        <span class="n">layers</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">layer_spec</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="p">:</span>
+
+            <span class="bp">cls</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="p">,</span> <span class="n">layer_spec</span><span class="p">[</span><span class="s2">&quot;class&quot;</span><span class="p">])</span>
+            <span class="n">args</span> <span class="o">=</span> <span class="n">layer_spec</span><span class="p">[</span><span class="s2">&quot;args&quot;</span><span class="p">]</span>
+            <span class="n">layer</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="o">**</span><span class="n">args</span><span class="p">)</span>
+            <span class="n">layers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span><span class="o">*</span><span class="n">layers</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Joe Marsh Rossney.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

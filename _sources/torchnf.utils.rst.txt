@@ -6,7 +6,10 @@ torchnf.utils
    :maxdepth: 4
 
    torchnf.utils.datasets
+   torchnf.utils.decorators
    torchnf.utils.distribution
+   torchnf.utils.flow
+   torchnf.utils.hooks
    torchnf.utils.mcmc
    torchnf.utils.optim
    torchnf.utils.tensor

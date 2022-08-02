@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchnf.model &mdash; torchnf 0.1.0 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> torchnf
+          </a>
+              <div class="version">
+                0.1.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../torchnf.html">torchnf</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">torchnf</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      <li>torchnf.model</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchnf.model</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">jsonargparse.typing</span> <span class="kn">import</span> <span class="n">PositiveInt</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+
+<span class="kn">from</span> <span class="nn">torchnf.utils.flow</span> <span class="kn">import</span> <span class="n">eval_mode</span>
+
+
+<div class="viewcode-block" id="FlowBasedModel"><a class="viewcode-back" href="../../torchnf.model.html#torchnf.model.FlowBasedModel">[docs]</a><span class="k">class</span> <span class="nc">FlowBasedModel</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<div class="viewcode-block" id="FlowBasedModel.flow_forward"><a class="viewcode-back" href="../../torchnf.model.html#torchnf.model.FlowBasedModel.flow_forward">[docs]</a>    <span class="k">def</span> <span class="nf">flow_forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Forward transformation of the Normalizing Flow.</span>
+
+<span class="sd">        By default, this returns ``self.flow(inputs)``.</span>
+
+<span class="sd">        .. admonition:: Requires Attribute</span>
+
+<span class="sd">            ``flow`` - A :class:`torchnf.layers.Flow` or another ``Module``</span>
+<span class="sd">            that implements a ``forward`` method.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">flow</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="FlowBasedModel.flow_inverse"><a class="viewcode-back" href="../../torchnf.model.html#torchnf.model.FlowBasedModel.flow_inverse">[docs]</a>    <span class="k">def</span> <span class="nf">flow_inverse</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Inverse transformation of the Normalizing Flow.</span>
+
+<span class="sd">        By default, this returns ``self.flow.inverse(inputs)``.</span>
+
+<span class="sd">        .. admonition:: Requires Attribute</span>
+
+<span class="sd">            ``flow`` - A :class:`torchnf.layers.Flow` or another ``Module``</span>
+<span class="sd">            that implements an ``inverse`` method.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">flow</span><span class="o">.</span><span class="n">inverse</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="FlowBasedModel.encode"><a class="viewcode-back" href="../../torchnf.model.html#torchnf.model.FlowBasedModel.encode">[docs]</a>    <span class="k">def</span> <span class="nf">encode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Encoding transformation.</span>
+
+<span class="sd">        By default, this just passes the inputs to :meth:`flow_forward`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">flow_forward</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="FlowBasedModel.decode"><a class="viewcode-back" href="../../torchnf.model.html#torchnf.model.FlowBasedModel.decode">[docs]</a>    <span class="k">def</span> <span class="nf">decode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">noise</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Decoding transformation.</span>
+
+<span class="sd">        By default, this just passes the inputs to :meth:`flow_inverse`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">flow_inverse</span><span class="p">(</span><span class="n">noise</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="FlowBasedModel.prior_sample"><a class="viewcode-back" href="../../torchnf.model.html#torchnf.model.FlowBasedModel.prior_sample">[docs]</a>    <span class="k">def</span> <span class="nf">prior_sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sample_size</span><span class="p">:</span> <span class="n">PositiveInt</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Samples from the prior (latent) distribution.</span>
+
+<span class="sd">        By default, this calls ``self.prior.sample([sample_size])``.</span>
+
+<span class="sd">        .. admonition:: Requires Attribute</span>
+
+<span class="sd">            ``prior`` - A :py:class:`torch.distributions.Distribution`,</span>
+<span class="sd">            or another object that implements a ``log_prob`` method.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">prior</span><span class="o">.</span><span class="n">sample</span><span class="p">([</span><span class="n">sample_size</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="FlowBasedModel.prior_log_prob"><a class="viewcode-back" href="../../torchnf.model.html#torchnf.model.FlowBasedModel.prior_log_prob">[docs]</a>    <span class="k">def</span> <span class="nf">prior_log_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sample</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the log-probability density of the prior distribution.</span>
+
+<span class="sd">        By default, this returns ``self.prior.log_prob(sample)``.</span>
+
+<span class="sd">        .. admonition:: Requires Attribute</span>
+
+<span class="sd">            ``prior`` - A :py:class:`torch.distributions.Distribution`,</span>
+<span class="sd">            or another object that implements a ``log_prob`` method.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">prior</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">sample</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="FlowBasedModel.target_log_prob"><a class="viewcode-back" href="../../torchnf.model.html#torchnf.model.FlowBasedModel.target_log_prob">[docs]</a>    <span class="k">def</span> <span class="nf">target_log_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sample</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the log-probability density of the target distribution.</span>
+
+<span class="sd">        By default, this returns ``self.target.log_prob(sample)``.</span>
+
+<span class="sd">        .. admonition:: Requires Attribute</span>
+
+<span class="sd">            ``target`` - A :py:class`torch.distributions.Distribution`,</span>
+<span class="sd">            or another object that implements a ``log_prob`` method.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">sample</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="FlowBasedModel.inference_step"><a class="viewcode-back" href="../../torchnf.model.html#torchnf.model.FlowBasedModel.inference_step">[docs]</a>    <span class="k">def</span> <span class="nf">inference_step</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Encodes the data and computes the density under the model.</span>
+
+<span class="sd">        *Encoding step:*</span>
+
+<span class="sd">        First, :meth:`encode` is called to transform the data :math:`x`</span>
+<span class="sd">        to :math:`z = \mathrm{encode}(x)`, and compute the log Jacobian</span>
+<span class="sd">        determinant :math:`\log \lvert \partial z / \partial x \rvert`</span>
+<span class="sd">        of the transformation.</span>
+
+<span class="sd">        *Density estimation:*</span>
+
+<span class="sd">        Computes an estimate of the log probability density of the input data.</span>
+
+<span class="sd">        This estimate is the log probability density of the data under the</span>
+<span class="sd">        model, :math:`q(x)`. That is, the push-forward of :math:`q(z)` by the</span>
+<span class="sd">        decoding transformation. Since the encoder/decoder is invertible, this</span>
+<span class="sd">        can be calculated as follows:</span>
+
+<span class="sd">        .. math::</span>
+
+<span class="sd">            \log q(x) = \log q(z) + \log</span>
+<span class="sd">            \left\lvert \frac{\partial z}{\partial x} \right\rvert</span>
+
+<span class="sd">        *Log likelihood:*</span>
+
+<span class="sd">        The log-likelihood of the input data with respect to the model</span>
+<span class="sd">        is given by</span>
+
+<span class="sd">        .. math::</span>
+
+<span class="sd">            \log \ell(\{x\}) = \frac{1}{n} \sum_{\{x\}}</span>
+<span class="sd">            - \log q(x) \, .</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            data: the input data, :math:`x`</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict[str, torch.Tensor]:</span>
+
+<span class="sd">            * **sample** -- the encoded sample, :math:`z`</span>
+<span class="sd">            * **log_prob** -- the log probability density, :math:`\log q(x)`</span>
+<span class="sd">            * **loss** -- the negative log-likelihood, :math:`\log \ell(\{x\})`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="n">z</span><span class="p">,</span> <span class="n">log_dzdx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">log_q_z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prior_log_prob</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+        <span class="n">log_q_x</span> <span class="o">=</span> <span class="n">log_q_z</span> <span class="o">+</span> <span class="n">log_dzdx</span>
+        <span class="n">log_likelihood</span> <span class="o">=</span> <span class="n">log_q_x</span><span class="o">.</span><span class="n">negative</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">outputs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">sample</span><span class="o">=</span><span class="n">z</span><span class="p">,</span> <span class="n">log_prob</span><span class="o">=</span><span class="n">log_q_x</span><span class="p">,</span> <span class="n">loss</span><span class="o">=</span><span class="n">log_likelihood</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">outputs</span></div>
+
+<div class="viewcode-block" id="FlowBasedModel.sampling_step"><a class="viewcode-back" href="../../torchnf.model.html#torchnf.model.FlowBasedModel.sampling_step">[docs]</a>    <span class="k">def</span> <span class="nf">sampling_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">noise</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Decodes the latents and computes the density under the model.</span>
+
+<span class="sd">        *Decoding step:*</span>
+
+<span class="sd">        First, :meth:`decode` is called to transform the latent variables</span>
+<span class="sd">        :math:`z` to :math:`x = \mathrm{decode}(z)`, and compute the log</span>
+<span class="sd">        Jacobian determinant of the transformation,</span>
+<span class="sd">        :math:`\log\lvert\partial x/\partial z\rvert`</span>
+
+<span class="sd">        *Push-forward:*</span>
+
+<span class="sd">        The probability density at point :math:`x = \mathrm{decode}(z)`</span>
+<span class="sd">        is the push-forward of :math:`q(z)` by the decoding transform:</span>
+
+<span class="sd">        .. math::</span>
+
+<span class="sd">            \log q(x) = \log q(z)</span>
+<span class="sd">            - \log \left\lvert \frac{\partial x}{\partial z} \right\rvert</span>
+
+
+<span class="sd">        Args:</span>
+<span class="sd">            noise: A batch of variables :math:`z` drawn from the latent</span>
+<span class="sd">            (prior) distribution</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict[str, torch.Tensor]:</span>
+
+<span class="sd">            * **sample** -- the decoded sample, :math:`x`</span>
+<span class="sd">            * **log_prob** -- the log probability density, :math:`\log q(x)`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">noise</span>
+        <span class="n">log_q_z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prior_log_prob</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">log_dxdz</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+        <span class="n">log_q_x</span> <span class="o">=</span> <span class="n">log_q_z</span> <span class="o">-</span> <span class="n">log_dxdz</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">sample</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">log_prob</span><span class="o">=</span><span class="n">log_q_x</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="FlowBasedModel.importance_sampling_step"><a class="viewcode-back" href="../../torchnf.model.html#torchnf.model.FlowBasedModel.importance_sampling_step">[docs]</a>    <span class="k">def</span> <span class="nf">importance_sampling_step</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">noise</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Decodes the latents and computes importance weights.</span>
+
+<span class="sd">        *Sampling:*</span>
+
+<span class="sd">        See documentation for :meth:`sampling_step`.</span>
+
+<span class="sd">        *Importance weights:*</span>
+
+<span class="sd">        The importance weights allow us to compute expectation values</span>
+<span class="sd">        for the target distribution by sampling from the model.</span>
+
+<span class="sd">        .. math::</span>
+
+<span class="sd">            \log w(x) := \log \frac{p(x)}{q(x)}</span>
+<span class="sd">            = \log p(x) - \log q(x)</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            noise: A batch of variables :math:`z` drawn from the latent</span>
+<span class="sd">            (prior) distribution</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict[str, torch.Tensor]:</span>
+
+<span class="sd">            * **sample** -- the encoded sample, :math:`z`</span>
+<span class="sd">            * **log_prob** -- the log probability density, :math:`\log q(x)`</span>
+<span class="sd">            * **log_weight** -- the importance weights, :math:`\log w(x)`</span>
+<span class="sd">            * **loss** -- the KL divergence estimate</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">noise</span>
+        <span class="n">outputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampling_step</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+        <span class="n">log_p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_p</span><span class="p">(</span><span class="n">outputs</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">])</span>
+        <span class="n">log_w</span> <span class="o">=</span> <span class="n">log_p</span> <span class="o">-</span> <span class="n">outputs</span><span class="p">[</span><span class="s2">&quot;log_q&quot;</span><span class="p">]</span>
+        <span class="n">kl_div</span> <span class="o">=</span> <span class="n">log_w</span><span class="o">.</span><span class="n">negative</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">outputs</span> <span class="o">|=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">log_weight</span><span class="o">=</span><span class="n">log_w</span><span class="p">,</span> <span class="n">loss</span><span class="o">=</span><span class="n">kl_div</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">outputs</span></div>
+
+<div class="viewcode-block" id="FlowBasedModel.sample"><a class="viewcode-back" href="../../torchnf.model.html#torchnf.model.FlowBasedModel.sample">[docs]</a>    <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+    <span class="nd">@eval_mode</span>
+    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">sample_size</span><span class="p">:</span> <span class="n">PositiveInt</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generates synthetic data by sampling from the model.</span>
+
+<span class="sd">        The sample is generated by first sampling a set of latent variables</span>
+<span class="sd">        using :meth:`prior_sample`, and then calling :meth:`sampling_step`.</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            sample_size: Size of the sample.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            torch.Tensor: A sample drawn from the model.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prior_sample</span><span class="p">(</span><span class="n">sample_size</span><span class="p">)</span>
+        <span class="n">sampling_outputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampling_step</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">sampling_outputs</span><span class="p">[</span><span class="s2">&quot;sample&quot;</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="FlowBasedModel.weighted_sample"><a class="viewcode-back" href="../../torchnf.model.html#torchnf.model.FlowBasedModel.weighted_sample">[docs]</a>    <span class="nd">@torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">()</span>
+    <span class="nd">@eval_mode</span>
+    <span class="k">def</span> <span class="nf">weighted_sample</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">sample_size</span><span class="p">:</span> <span class="n">PositiveInt</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generates synthetic data along with importance weights.</span>
+
+<span class="sd">        The sample is generated by first sampling a set of latent variables</span>
+<span class="sd">        using :meth:`prior_sample`, and then calling</span>
+<span class="sd">        :meth:`importance_sampling_step`.</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            sample_size: Size of the sample.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            tuple[torch.Tensor, torch.Tensor]:</span>
+
+<span class="sd">            A sample drawn from the model, along with its importance</span>
+<span class="sd">            weight with respect to the target distribution defined by</span>
+<span class="sd">            :meth:`target_log_prob`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prior_sample</span><span class="p">(</span><span class="n">sample_size</span><span class="p">)</span>
+        <span class="n">sampling_outputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">importance_sampling_step</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">sampling_outputs</span><span class="p">[</span><span class="s2">&quot;sample&quot;</span><span class="p">],</span> <span class="n">sampling_outputs</span><span class="p">[</span><span class="s2">&quot;log_weight&quot;</span><span class="p">]</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Joe Marsh Rossney.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

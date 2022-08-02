@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchnf.transformers &mdash; torchnf 0.1.0 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> torchnf
+          </a>
+              <div class="version">
+                0.1.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../torchnf.html">torchnf</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">torchnf</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      <li>torchnf.transformers</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchnf.transformers</h1><div class="highlight"><pre>
+<span></span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Module containing parametrised bijective transformations and their inverses.</span>
+
+<span class="sd">Transformation functions take an input tensor and one or more tensors that</span>
+<span class="sd">parametrise the transformation, and return the transformed inputs along</span>
+<span class="sd">with the logarithm of the Jacobian determinant of the transformation. They</span>
+<span class="sd">should be called as</span>
+
+<span class="sd">.. code-block:: python</span>
+
+<span class="sd">    output, log_det_jacob = transform(input, params, context)</span>
+
+<span class="sd">In maths, the transformations do</span>
+
+<span class="sd">.. math::</span>
+
+<span class="sd">    x, \{\lambda\} \longrightarrow y = f(x ; \{\lambda\}),</span>
+<span class="sd">    \log \left\lvert\frac{\partial y}{\partial x} \right\rvert</span>
+
+<span class="sd">The inverse of these transformations are</span>
+
+<span class="sd">.. math::</span>
+
+<span class="sd">    y, \{\lambda\} \longrightarrow x = f^{-1}(y ; \{\lambda\}),</span>
+<span class="sd">    \log \left\lvert\frac{\partial x}{\partial y} \right\rvert</span>
+
+<span class="sd">Thanks to the inverse function theorem, the log-Jacobian-determinants</span>
+<span class="sd">for the forward and inverse transformations are related by</span>
+
+<span class="sd">.. math::</span>
+
+<span class="sd">    \log \left\lvert \frac{\partial x}{\partial y} \right\rvert</span>
+<span class="sd">    = -\log \left\lvert \frac{\partial y}{\partial x} \right\rvert</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">ClassVar</span>
+
+<span class="kn">from</span> <span class="nn">jsonargparse.typing</span> <span class="kn">import</span> <span class="n">PositiveInt</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">torch.nn.functional</span> <span class="k">as</span> <span class="nn">F</span>
+
+<span class="kn">from</span> <span class="nn">torchnf.abc</span> <span class="kn">import</span> <span class="n">Transformer</span>
+<span class="kn">from</span> <span class="nn">torchnf.utils.tensor</span> <span class="kn">import</span> <span class="n">stacked_nan_to_num</span><span class="p">,</span> <span class="n">sum_except_batch</span>
+
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">INF</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">)</span>
+<span class="n">REALS</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="n">INF</span><span class="p">,</span> <span class="n">INF</span><span class="p">)</span>
+<span class="n">PI</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;Translation&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Rescaling&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;AffineTransform&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;RQSplineTransform&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;RQSplineTransformIntervalDomain&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;RQSplineTransformCircularDomain&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<span class="k">class</span> <span class="nc">_Transformer</span><span class="p">(</span><span class="n">Transformer</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base class that should be inherited by all transformers.</span>
+
+<span class="sd">    Derived classes should override the following methods</span>
+<span class="sd">    and properties:</span>
+
+<span class="sd">    * :code:`n_params()`</span>
+<span class="sd">    * :code:`identity_params()`</span>
+<span class="sd">    * :code:`_forward()`</span>
+<span class="sd">    * :code:`_inverse()`</span>
+
+<span class="sd">    .. attention:: Do **not** override :meth:`forward()` or :meth:`inverse()`!</span>
+
+<span class="sd">    :meta public:</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">domain</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span>
+    <span class="n">codomain</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">n_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PositiveInt</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Number of parameters specifying how to transform a single element.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">NotImplemented</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">identity_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The parameters which result in an identity transformation.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">NotImplemented</span>
+
+    <span class="k">def</span> <span class="nf">_forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Forward pass of the transformer.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            x</span>
+<span class="sd">                The input tensor, shape `(batch_size, *data_shape)`</span>
+<span class="sd">            params</span>
+<span class="sd">                Parameters upon which the transformation is conditioned,</span>
+<span class="sd">                shape `(batch_size, n_params, *data_shape)`</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of tensors containing (1) the transformed inputs, and</span>
+<span class="sd">            (2) the logarithm of the Jacobian determinant</span>
+
+<span class="sd">        :meta public:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="k">def</span> <span class="nf">_inverse</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Inverse of :meth:`_forward`.</span>
+
+<span class="sd">        :meta public:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Wrapper around the forward pass of the transformer.</span>
+
+<span class="sd">        This does the following:</span>
+
+<span class="sd">        .. code-block::</span>
+
+<span class="sd">            self.context = context</span>
+<span class="sd">            params = stacked_nan_to_num(</span>
+<span class="sd">                params, self.identity_params, dim=1</span>
+<span class="sd">            )</span>
+<span class="sd">            return self._forward(x, params)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">context</span> <span class="o">=</span> <span class="n">context</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="n">stacked_nan_to_num</span><span class="p">(</span>
+            <span class="n">params</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">identity_params</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">device</span><span class="p">),</span>
+            <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_forward</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">inverse</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Inverse of :meth:`forward`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">context</span> <span class="o">=</span> <span class="n">context</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="n">stacked_nan_to_num</span><span class="p">(</span>
+            <span class="n">params</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">identity_params</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">device</span><span class="p">),</span>
+            <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inverse</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Alias for :meth:`forward`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">context</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Translation"><a class="viewcode-back" href="../../torchnf.transformers.html#torchnf.transformers.Translation">[docs]</a><span class="k">class</span> <span class="nc">Translation</span><span class="p">(</span><span class="n">_Transformer</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;Performs a pointwise translation of the input tensor.</span>
+
+<span class="sd">    The forward and inverse transformations are, respectively</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        x \mapsto y = x + t \, ,</span>
+
+<span class="sd">        y \mapsto x = y - t \, .</span>
+
+<span class="sd">    There is no change in the volume element, i.e.</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \log \left\lvert \frac{\partial y}{\partial x} \right\rvert</span>
+<span class="sd">        \log \left\lvert \frac{\partial x}{\partial y} \right\rvert</span>
+<span class="sd">        = 0</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">domain</span> <span class="o">=</span> <span class="n">REALS</span>
+    <span class="n">codomain</span> <span class="o">=</span> <span class="n">REALS</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">n_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PositiveInt</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mi">1</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">identity_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mi">0</span><span class="p">])</span>
+
+<div class="viewcode-block" id="Translation._forward"><a class="viewcode-back" href="../../torchnf.transformers.html#torchnf.transformers.Translation._forward">[docs]</a>    <span class="k">def</span> <span class="nf">_forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="n">shift</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">view_as</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">shift</span><span class="p">)</span>
+        <span class="n">ldj</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">y</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">y</span><span class="p">,</span> <span class="n">ldj</span></div>
+
+    <span class="k">def</span> <span class="nf">_inverse</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Performs a pointwise translation of the input tensor.&quot;&quot;&quot;</span>
+        <span class="n">shift</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">view_as</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="n">shift</span><span class="p">)</span>
+        <span class="n">ldj</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">ldj</span></div>
+
+
+<div class="viewcode-block" id="Rescaling"><a class="viewcode-back" href="../../torchnf.transformers.html#torchnf.transformers.Rescaling">[docs]</a><span class="k">class</span> <span class="nc">Rescaling</span><span class="p">(</span><span class="n">_Transformer</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;Performs a pointwise rescaling of the input tensor.</span>
+
+<span class="sd">    The forward and inverse transformations are, respectively,</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        x \mapsto y = x \odot e^{-s} \, ,</span>
+
+<span class="sd">        y \mapsto x = y \odot e^{s} \, .</span>
+
+<span class="sd">    The logarithm of the Jacobian determinant is</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \log \left\lvert \frac{\partial y}{\partial x} \right\rvert</span>
+<span class="sd">        = \sum_i -s_i</span>
+
+<span class="sd">    where :math:`i` runs over the degrees of freedom being transformed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">domain</span> <span class="o">=</span> <span class="n">REALS</span>
+    <span class="n">codomain</span> <span class="o">=</span> <span class="n">REALS</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">n_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PositiveInt</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mi">1</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">identity_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mi">0</span><span class="p">])</span>
+
+<div class="viewcode-block" id="Rescaling._forward"><a class="viewcode-back" href="../../torchnf.transformers.html#torchnf.transformers.Rescaling._forward">[docs]</a>    <span class="k">def</span> <span class="nf">_forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="n">log_scale</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">view_as</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="n">log_scale</span><span class="o">.</span><span class="n">neg</span><span class="p">()</span><span class="o">.</span><span class="n">exp</span><span class="p">())</span>
+        <span class="n">ldj</span> <span class="o">=</span> <span class="n">sum_except_batch</span><span class="p">(</span><span class="n">log_scale</span><span class="o">.</span><span class="n">neg</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">y</span><span class="p">,</span> <span class="n">ldj</span></div>
+
+<div class="viewcode-block" id="Rescaling._inverse"><a class="viewcode-back" href="../../torchnf.transformers.html#torchnf.transformers.Rescaling._inverse">[docs]</a>    <span class="k">def</span> <span class="nf">_inverse</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="n">log_scale</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">view_as</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="n">log_scale</span><span class="o">.</span><span class="n">exp</span><span class="p">())</span>
+        <span class="n">ldj</span> <span class="o">=</span> <span class="n">sum_except_batch</span><span class="p">(</span><span class="n">log_scale</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">ldj</span></div></div>
+
+
+<div class="viewcode-block" id="AffineTransform"><a class="viewcode-back" href="../../torchnf.transformers.html#torchnf.transformers.AffineTransform">[docs]</a><span class="k">class</span> <span class="nc">AffineTransform</span><span class="p">(</span><span class="n">_Transformer</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;Performs a pointwise affine transformation of the input tensor.</span>
+
+<span class="sd">    The forward and inverse transformations are, respectively,</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        x \mapsto y = x \odot e^{-s} + t</span>
+
+<span class="sd">        y \mapsto x = (y - t) \odot e^{s}</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \log \left\lvert \frac{\partial y}{\partial x} \right\rvert</span>
+<span class="sd">        = \sum_i -s_i</span>
+
+<span class="sd">    where :math:`i` runs over the degrees of freedom being transformed.</span>
+
+<span class="sd">    The :code:`params` argument to :meth:`forward` and :meth:`inverse`</span>
+<span class="sd">    should be a tensor with :math:`s` and :math:`t` stacked, in that</span>
+<span class="sd">    order, on the `1` dimension. The parameters will be split as</span>
+
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">        s = params[:, 0]</span>
+<span class="sd">        t = parmas[:, 1]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">domain</span> <span class="o">=</span> <span class="n">REALS</span>
+    <span class="n">codomain</span> <span class="o">=</span> <span class="n">REALS</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">n_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PositiveInt</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mi">2</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">identity_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+
+<div class="viewcode-block" id="AffineTransform._forward"><a class="viewcode-back" href="../../torchnf.transformers.html#torchnf.transformers.AffineTransform._forward">[docs]</a>    <span class="k">def</span> <span class="nf">_forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="n">log_scale</span><span class="p">,</span> <span class="n">shift</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">view_as</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)]</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="n">log_scale</span><span class="o">.</span><span class="n">neg</span><span class="p">()</span><span class="o">.</span><span class="n">exp</span><span class="p">())</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">shift</span><span class="p">)</span>
+        <span class="n">ldj</span> <span class="o">=</span> <span class="n">sum_except_batch</span><span class="p">(</span><span class="n">log_scale</span><span class="o">.</span><span class="n">neg</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">y</span><span class="p">,</span> <span class="n">ldj</span></div>
+
+<div class="viewcode-block" id="AffineTransform._inverse"><a class="viewcode-back" href="../../torchnf.transformers.html#torchnf.transformers.AffineTransform._inverse">[docs]</a>    <span class="k">def</span> <span class="nf">_inverse</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="n">log_scale</span><span class="p">,</span> <span class="n">shift</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">view_as</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)]</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="n">shift</span><span class="p">)</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="n">log_scale</span><span class="o">.</span><span class="n">exp</span><span class="p">())</span>
+        <span class="n">ldj</span> <span class="o">=</span> <span class="n">sum_except_batch</span><span class="p">(</span><span class="n">log_scale</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">ldj</span></div></div>
+
+
+<div class="viewcode-block" id="RQSplineTransform"><a class="viewcode-back" href="../../torchnf.transformers.html#torchnf.transformers.RQSplineTransform">[docs]</a><span class="k">class</span> <span class="nc">RQSplineTransform</span><span class="p">(</span><span class="n">_Transformer</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Pointwise rational quadratic spline transformation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">domain</span> <span class="o">=</span> <span class="n">REALS</span>
+    <span class="n">codomain</span> <span class="o">=</span> <span class="n">REALS</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">n_segments</span><span class="p">:</span> <span class="n">PositiveInt</span><span class="p">,</span>
+        <span class="n">interval</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_n_segments</span> <span class="o">=</span> <span class="n">n_segments</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_interval</span> <span class="o">=</span> <span class="n">interval</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_n_knots</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PositiveInt</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_segments</span> <span class="o">-</span> <span class="mi">1</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">n_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PositiveInt</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_segments</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_knots</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">identity_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+            <span class="p">(</span>
+                <span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">(</span>
+                    <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_segments</span><span class="p">,),</span>
+                    <span class="n">fill_value</span><span class="o">=</span><span class="mi">1</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_segments</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_n_knots</span><span class="p">)</span><span class="o">.</span><span class="n">exp</span><span class="p">()</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">log</span><span class="p">(),</span>
+            <span class="p">),</span>
+            <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="RQSplineTransform.handle_inputs_outside_interval"><a class="viewcode-back" href="../../torchnf.transformers.html#torchnf.transformers.RQSplineTransform.handle_inputs_outside_interval">[docs]</a>    <span class="k">def</span> <span class="nf">handle_inputs_outside_interval</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">outside_interval_mask</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">BoolTensor</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Handle inputs falling outside the spline interval.</span>
+
+<span class="sd">        Unless overridden, this method submits a :code:`log.debug` logging</span>
+<span class="sd">        event if more than 1/1000 inputs fall outside the spline interval.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            outside_interval_mask</span>
+<span class="sd">                BoolTensor of the same shape as the layer input where the</span>
+<span class="sd">                :code:`True` elements correspond to inputs which fell outside</span>
+<span class="sd">                the spline interval.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">outside_interval_mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">outside_interval_mask</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">/</span> <span class="mi">1000</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="s2">&quot;More than 1/1000 inputs fell outside the spline interval&quot;</span>
+            <span class="p">)</span></div>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_pad_derivs</span><span class="p">(</span><span class="n">derivs</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">F</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span><span class="n">derivs</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="s2">&quot;constant&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+<div class="viewcode-block" id="RQSplineTransform.build_spline"><a class="viewcode-back" href="../../torchnf.transformers.html#torchnf.transformers.RQSplineTransform.build_spline">[docs]</a>    <span class="k">def</span> <span class="nf">build_spline</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">widths</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">heights</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">derivs</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Builds a rational quadratic spline function.</span>
+
+<span class="sd">        This uses the parametrisation introduced by Gregory and Delbourgo</span>
+<span class="sd">        (1983)</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            widths</span>
+<span class="sd">                Un-normalised segment sizes in the domain</span>
+<span class="sd">            heights</span>
+<span class="sd">                Un-normalised segment sizes in the codomain</span>
+<span class="sd">            derivs</span>
+<span class="sd">                Unconstrained derivatives at the knots</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of tensors containing (1) Normalised segment sizes in</span>
+<span class="sd">            the domain, (2) Normalised segment sizes in the codomain, (3)</span>
+<span class="sd">            Constrained derivatives at the knots, (4) Coordinates of the</span>
+<span class="sd">            knots in the domain, (5) Coordinates of the knots in the codomain</span>
+
+
+<span class="sd">        References:</span>
+<span class="sd">            Gregory, J. A. &amp; Delbourgo, R. C2 Rational \</span>
+<span class="sd">Quadratic Spline Interpolation to Monotonic Data, IMA Journal of \</span>
+<span class="sd">Numerical Analysis, 1983, 3, 141-152</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Normalise the widths and heights to the interval</span>
+        <span class="n">interval_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interval</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interval</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">widths</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">widths</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="n">interval_size</span><span class="p">)</span>
+        <span class="n">heights</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">heights</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="n">interval_size</span><span class="p">)</span>
+
+        <span class="c1"># Let the derivatives be positive definite</span>
+        <span class="n">derivs</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">softplus</span><span class="p">(</span><span class="n">derivs</span><span class="p">)</span>
+        <span class="n">derivs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pad_derivs</span><span class="p">(</span><span class="n">derivs</span><span class="p">)</span>
+
+        <span class="c1"># Just a convenient way to ensure it&#39;s on the correct device</span>
+        <span class="n">zeros</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">widths</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">knots_xcoords</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+            <span class="p">(</span>
+                <span class="n">zeros</span><span class="p">,</span>
+                <span class="n">torch</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">widths</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span>
+            <span class="p">),</span>
+            <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_interval</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">knots_ycoords</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+            <span class="p">(</span>
+                <span class="n">zeros</span><span class="p">,</span>
+                <span class="n">torch</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">heights</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span>
+            <span class="p">),</span>
+            <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_interval</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">widths</span><span class="p">,</span> <span class="n">heights</span><span class="p">,</span> <span class="n">derivs</span><span class="p">,</span> <span class="n">knots_xcoords</span><span class="p">,</span> <span class="n">knots_ycoords</span></div>
+
+<div class="viewcode-block" id="RQSplineTransform._forward"><a class="viewcode-back" href="../../torchnf.transformers.html#torchnf.transformers.RQSplineTransform._forward">[docs]</a>    <span class="k">def</span> <span class="nf">_forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">movedim</span><span class="p">(</span>
+            <span class="n">params</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="p">)</span>  <span class="c1"># searchsorted requires bins dim = -1</span>
+        <span class="n">widths</span><span class="p">,</span> <span class="n">heights</span><span class="p">,</span> <span class="n">derivs</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">split</span><span class="p">(</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_n_segments</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_segments</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_knots</span><span class="p">),</span>
+            <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="p">(</span>
+            <span class="n">widths</span><span class="p">,</span>
+            <span class="n">heights</span><span class="p">,</span>
+            <span class="n">derivs</span><span class="p">,</span>
+            <span class="n">knots_xcoords</span><span class="p">,</span>
+            <span class="n">knots_ycoords</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_spline</span><span class="p">(</span><span class="n">widths</span><span class="p">,</span> <span class="n">heights</span><span class="p">,</span> <span class="n">derivs</span><span class="p">)</span>
+
+        <span class="n">outside_interval_mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">logical_or</span><span class="p">(</span>
+            <span class="n">x</span> <span class="o">&lt;</span> <span class="n">knots_xcoords</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+            <span class="n">x</span> <span class="o">&gt;</span> <span class="n">knots_xcoords</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">handle_inputs_outside_interval</span><span class="p">(</span><span class="n">outside_interval_mask</span><span class="p">)</span>
+
+        <span class="n">segment_idx</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">knots_xcoords</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">segment_idx</span><span class="o">.</span><span class="n">clamp_</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_segments</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Get parameters of the segments that x falls in</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="n">widths</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">segment_idx</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="n">heights</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">segment_idx</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">d0</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="n">derivs</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">segment_idx</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">d1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="n">derivs</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">segment_idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">x0</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="n">knots_xcoords</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">segment_idx</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">y0</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="n">knots_ycoords</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">segment_idx</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># NOTE: these will fail because some x are outside interval</span>
+        <span class="c1"># Hence, alpha.clamp_(0, 1) will silently hide bugs</span>
+        <span class="c1"># TODO: thnk of a smart and cheap way to check</span>
+        <span class="c1"># eps = 1e-5</span>
+        <span class="c1"># assert torch.all(x &gt; x0 - eps)</span>
+        <span class="c1"># assert torch.all(x &lt; x0 + w + eps)</span>
+
+        <span class="n">s</span> <span class="o">=</span> <span class="n">h</span> <span class="o">/</span> <span class="n">w</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">x0</span><span class="p">)</span> <span class="o">/</span> <span class="n">w</span>
+        <span class="n">alpha</span><span class="o">.</span><span class="n">clamp_</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">denominator_recip</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">reciprocal</span><span class="p">(</span>
+            <span class="n">s</span> <span class="o">+</span> <span class="p">(</span><span class="n">d1</span> <span class="o">+</span> <span class="n">d0</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">s</span><span class="p">)</span> <span class="o">*</span> <span class="n">alpha</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">beta</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">s</span> <span class="o">*</span> <span class="n">alpha</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="n">d0</span> <span class="o">*</span> <span class="n">alpha</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">)</span>
+        <span class="p">)</span> <span class="o">*</span> <span class="n">denominator_recip</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">y0</span> <span class="o">+</span> <span class="n">h</span> <span class="o">*</span> <span class="n">beta</span>
+
+        <span class="n">gradient</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+            <span class="o">*</span> <span class="p">(</span>
+                <span class="n">d1</span> <span class="o">*</span> <span class="n">alpha</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+                <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">s</span> <span class="o">*</span> <span class="n">alpha</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">)</span>
+                <span class="o">+</span> <span class="n">d0</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">)</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="o">*</span> <span class="n">denominator_recip</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">assert</span> <span class="n">torch</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">gradient</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="n">y</span><span class="p">[</span><span class="n">outside_interval_mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">outside_interval_mask</span><span class="p">]</span>
+
+        <span class="n">ldj</span> <span class="o">=</span> <span class="n">sum_except_batch</span><span class="p">(</span><span class="n">gradient</span><span class="o">.</span><span class="n">log</span><span class="p">())</span>
+
+        <span class="k">return</span> <span class="n">y</span><span class="p">,</span> <span class="n">ldj</span></div>
+
+<div class="viewcode-block" id="RQSplineTransform._inverse"><a class="viewcode-back" href="../../torchnf.transformers.html#torchnf.transformers.RQSplineTransform._inverse">[docs]</a>    <span class="k">def</span> <span class="nf">_inverse</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">movedim</span><span class="p">(</span>
+            <span class="n">params</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="p">)</span>  <span class="c1"># searchsorted requires bins dim = -1</span>
+        <span class="n">widths</span><span class="p">,</span> <span class="n">heights</span><span class="p">,</span> <span class="n">derivs</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">split</span><span class="p">(</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_n_segments</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_segments</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_knots</span><span class="p">),</span>
+            <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="p">(</span>
+            <span class="n">widths</span><span class="p">,</span>
+            <span class="n">heights</span><span class="p">,</span>
+            <span class="n">derivs</span><span class="p">,</span>
+            <span class="n">knots_xcoords</span><span class="p">,</span>
+            <span class="n">knots_ycoords</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_spline</span><span class="p">(</span><span class="n">widths</span><span class="p">,</span> <span class="n">heights</span><span class="p">,</span> <span class="n">derivs</span><span class="p">)</span>
+
+        <span class="n">outside_interval_mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">logical_or</span><span class="p">(</span>
+            <span class="n">y</span> <span class="o">&lt;</span> <span class="n">knots_ycoords</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+            <span class="n">y</span> <span class="o">&gt;</span> <span class="n">knots_ycoords</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">outside_interval_mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mf">0.001</span> <span class="o">*</span> <span class="n">y</span><span class="o">.</span><span class="n">numel</span><span class="p">():</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="s2">&quot;More than 1/1000 inputs fell outside the spline interval&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">segment_idx</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">knots_ycoords</span><span class="p">,</span> <span class="n">y</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">segment_idx</span><span class="o">.</span><span class="n">clamp_</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_segments</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Get parameters of the segments that x falls in</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="n">widths</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">segment_idx</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="n">heights</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">segment_idx</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">d0</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="n">derivs</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">segment_idx</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">d1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="n">derivs</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">segment_idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">x0</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="n">knots_xcoords</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">segment_idx</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">y0</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="n">knots_ycoords</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">segment_idx</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># eps = 1e-5</span>
+        <span class="c1"># assert torch.all(y &gt; y0 - eps)</span>
+        <span class="c1"># assert torch.all(y &lt; y0 + h + eps)</span>
+
+        <span class="n">s</span> <span class="o">=</span> <span class="n">h</span> <span class="o">/</span> <span class="n">w</span>
+        <span class="n">beta</span> <span class="o">=</span> <span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="n">y0</span><span class="p">)</span> <span class="o">/</span> <span class="n">h</span>
+        <span class="n">beta</span><span class="o">.</span><span class="n">clamp_</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">b</span> <span class="o">=</span> <span class="n">d0</span> <span class="o">-</span> <span class="p">(</span><span class="n">d1</span> <span class="o">+</span> <span class="n">d0</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">s</span><span class="p">)</span> <span class="o">*</span> <span class="n">beta</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">s</span> <span class="o">-</span> <span class="n">b</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="o">-</span><span class="n">s</span> <span class="o">*</span> <span class="n">beta</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">c</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">reciprocal</span><span class="p">(</span><span class="n">b</span> <span class="o">+</span> <span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">a</span> <span class="o">*</span> <span class="n">c</span><span class="p">)</span><span class="o">.</span><span class="n">sqrt</span><span class="p">())</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x0</span> <span class="o">+</span> <span class="n">w</span> <span class="o">*</span> <span class="n">alpha</span>
+
+        <span class="n">denominator_recip</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">reciprocal</span><span class="p">(</span>
+            <span class="n">s</span> <span class="o">+</span> <span class="p">(</span><span class="n">d1</span> <span class="o">+</span> <span class="n">d0</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">s</span><span class="p">)</span> <span class="o">*</span> <span class="n">alpha</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">gradient_fwd</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+            <span class="o">*</span> <span class="p">(</span>
+                <span class="n">d1</span> <span class="o">*</span> <span class="n">alpha</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+                <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">s</span> <span class="o">*</span> <span class="n">alpha</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">)</span>
+                <span class="o">+</span> <span class="n">d0</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">)</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="o">*</span> <span class="n">denominator_recip</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="n">ldj</span> <span class="o">=</span> <span class="n">sum_except_batch</span><span class="p">(</span><span class="n">gradient_fwd</span><span class="o">.</span><span class="n">log</span><span class="p">()</span><span class="o">.</span><span class="n">neg</span><span class="p">())</span>
+
+        <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">ldj</span></div></div>
+
+
+<div class="viewcode-block" id="RQSplineTransformIntervalDomain"><a class="viewcode-back" href="../../torchnf.transformers.html#torchnf.transformers.RQSplineTransformIntervalDomain">[docs]</a><span class="k">class</span> <span class="nc">RQSplineTransformIntervalDomain</span><span class="p">(</span><span class="n">RQSplineTransform</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">n_segments</span><span class="p">:</span> <span class="n">PositiveInt</span><span class="p">,</span>
+        <span class="n">interval</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">n_segments</span><span class="p">,</span> <span class="n">interval</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">domain</span> <span class="o">=</span> <span class="n">interval</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">codomain</span> <span class="o">=</span> <span class="n">interval</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_n_knots</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PositiveInt</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_segments</span> <span class="o">+</span> <span class="mi">1</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_pad_derivs</span><span class="p">(</span><span class="n">derivs</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">derivs</span></div>
+
+
+<div class="viewcode-block" id="RQSplineTransformCircularDomain"><a class="viewcode-back" href="../../torchnf.transformers.html#torchnf.transformers.RQSplineTransformCircularDomain">[docs]</a><span class="k">class</span> <span class="nc">RQSplineTransformCircularDomain</span><span class="p">(</span><span class="n">RQSplineTransform</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">n_segments</span><span class="p">:</span> <span class="n">PositiveInt</span><span class="p">,</span>
+        <span class="n">interval</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">n_segments</span><span class="p">,</span> <span class="n">interval</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">math</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">interval</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">interval</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">PI</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">domain</span> <span class="o">=</span> <span class="n">interval</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">codomain</span> <span class="o">=</span> <span class="n">interval</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_n_knots</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PositiveInt</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_segments</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_pad_derivs</span><span class="p">(</span><span class="n">derivs</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">F</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span><span class="n">derivs</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="s2">&quot;circular&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span>
+            <span class="o">*</span><span class="n">derivs</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Joe Marsh Rossney.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

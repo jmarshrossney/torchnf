@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchnf.metrics &mdash; torchnf 0.1.0 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> torchnf
+          </a>
+              <div class="version">
+                0.1.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../torchnf.html">torchnf</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">torchnf</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      <li>torchnf.metrics</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchnf.metrics</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Metrics for validating and testing trained models.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">torchmetrics</span>
+
+<span class="kn">from</span> <span class="nn">torchnf.utils.mcmc</span> <span class="kn">import</span> <span class="n">metropolis_test</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;ShiftedKLDivergence&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;EffectiveSampleSize&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;IntegratedAutocorrelation&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;AcceptanceRate&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;LongestRejectionRun&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;LogStatWeightMetricCollection&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<span class="k">class</span> <span class="nc">LogStatWeightMetric</span><span class="p">(</span><span class="n">torchmetrics</span><span class="o">.</span><span class="n">Metric</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base class for metrics which require log statistical weights.</span>
+
+<span class="sd">    &#39;Log-weight&#39; refers to the logarithm of the statistical weight of a</span>
+<span class="sd">    generated data element, :math:`y` (e.g. the output of a Normalizing</span>
+<span class="sd">    Flow). The log weight is defined as</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \log w(y) = \log p(y) - \log q(y)</span>
+
+<span class="sd">    where :math:`p(y)` and :math:`q(y)` are the target and model</span>
+<span class="sd">    probability densities, respectively.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        reduce: If true, ``compute`` returns a single metric calculated</span>
+<span class="sd">                using the concatenated log-weights. Otherwise, each</span>
+<span class="sd">                ``update`` represents its own metric.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">is_differentiable</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">full_state_update</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_state</span><span class="p">(</span>
+            <span class="s2">&quot;log_weights&quot;</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="nb">list</span><span class="p">(),</span>
+            <span class="n">dist_reduce_fx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">log_weights</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Update the state with log-weights.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="p">(</span>
+            <span class="n">log_weights</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span>
+        <span class="p">),</span> <span class="s2">&quot;log_weights should be a one-dimensional tensor&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_weights</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">log_weights</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+
+<span class="k">class</span> <span class="nc">LogStatWeightMetricMCMC</span><span class="p">(</span><span class="n">LogStatWeightMetric</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base class for metrics arising from a Metropolis-Hastings simulation.</span>
+
+<span class="sd">    .. seealso: :py:func:`torchnf.utils.mcmc.metropolis_test`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">is_differentiable</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_state</span><span class="p">(</span>
+            <span class="s2">&quot;history&quot;</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="nb">list</span><span class="p">(),</span>
+            <span class="n">dist_reduce_fx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">log_weights</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Update the state with log-weights.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">log_weights</span><span class="p">)</span>
+
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">metropolis_test</span><span class="p">(</span><span class="n">log_weights</span><span class="p">)</span>
+        <span class="n">history</span> <span class="o">=</span> <span class="p">[</span><span class="n">indices</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span>
+            <span class="n">indices</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">indices</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="n">history</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">history</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+
+        <span class="c1"># Sanity check that num transitions (acceptances) agree</span>
+        <span class="n">transitions</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span>
+        <span class="n">transitions</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># there was no transition *to* 0th state</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">transitions</span><span class="p">)</span> <span class="o">==</span> <span class="nb">int</span><span class="p">(</span><span class="n">history</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">history</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ShiftedKLDivergence"><a class="viewcode-back" href="../../torchnf.metrics.html#torchnf.metrics.ShiftedKLDivergence">[docs]</a><span class="k">class</span> <span class="nc">ShiftedKLDivergence</span><span class="p">(</span><span class="n">LogStatWeightMetric</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Shifted Kullbach-Leibler divergence of the sample.</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \tilde{D}_{KL} = \frac{1}{N} \sum_{\{y\}} - \log w(y)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">higher_is_better</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+
+<div class="viewcode-block" id="ShiftedKLDivergence.compute"><a class="viewcode-back" href="../../torchnf.metrics.html#torchnf.metrics.ShiftedKLDivergence.compute">[docs]</a>    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Computes the shifted KL.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">log_weights</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log_weights</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">log_weights</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">neg</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="EffectiveSampleSize"><a class="viewcode-back" href="../../torchnf.metrics.html#torchnf.metrics.EffectiveSampleSize">[docs]</a><span class="k">class</span> <span class="nc">EffectiveSampleSize</span><span class="p">(</span><span class="n">LogStatWeightMetric</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Effective sample size normalised by the size of the sample.</span>
+
+<span class="sd">    The effective sample size is defined by</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        N_{eff} = \frac{</span>
+<span class="sd">            \left[ \frac{1}{N} \sum_{\{y\}} w(y) \right]^2</span>
+<span class="sd">            }{</span>
+<span class="sd">            \frac{1}{N} \sum_{\{y\}} w(y)^2</span>
+<span class="sd">        }</span>
+
+<span class="sd">    The quantity returned is actually :math:`N_{eff} / N`.</span>
+
+<span class="sd">    References:</span>
+<span class="sd">        :arxiv:`2101.08176`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">higher_is_better</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
+<div class="viewcode-block" id="EffectiveSampleSize.compute"><a class="viewcode-back" href="../../torchnf.metrics.html#torchnf.metrics.EffectiveSampleSize.compute">[docs]</a>    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">log_weights</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log_weights</span><span class="p">)</span>
+        <span class="n">ess</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span>
+            <span class="n">log_weights</span><span class="o">.</span><span class="n">logsumexp</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+            <span class="o">-</span> <span class="n">log_weights</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">logsumexp</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">ess</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="n">log_weights</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span></div></div>
+
+
+<div class="viewcode-block" id="AcceptanceRate"><a class="viewcode-back" href="../../torchnf.metrics.html#torchnf.metrics.AcceptanceRate">[docs]</a><span class="k">class</span> <span class="nc">AcceptanceRate</span><span class="p">(</span><span class="n">LogStatWeightMetricMCMC</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Fraction of proposals accepted during Metropolis-Hastings.</span>
+
+<span class="sd">    Given target probability density :math:`p(y)`, data elements</span>
+<span class="sd">    generated by the model, :math:`\{ y \sim q(y) \}`, are</span>
+<span class="sd">    accepted with a probability</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        A(y \to y^\prime) = \min \left( 1,</span>
+<span class="sd">        \frac{q(y)}{p(y)} \frac{p(y^\prime)}{q(y^\prime)} \right) \, .</span>
+
+<span class="sd">    Generally speaking, the acceptance rate will be larger if the overlap</span>
+<span class="sd">    between the model and the target densities is larger.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">higher_is_better</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
+<div class="viewcode-block" id="AcceptanceRate.compute"><a class="viewcode-back" href="../../torchnf.metrics.html#torchnf.metrics.AcceptanceRate.compute">[docs]</a>    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">history</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">history</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="LongestRejectionRun"><a class="viewcode-back" href="../../torchnf.metrics.html#torchnf.metrics.LongestRejectionRun">[docs]</a><span class="k">class</span> <span class="nc">LongestRejectionRun</span><span class="p">(</span><span class="n">LogStatWeightMetricMCMC</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Largest number of consecutive rejections in the sampling phase.</span>
+
+<span class="sd">    Note that the computed metric is a ``FloatTensor`` so that the</span>
+<span class="sd">    mean can be computed without additional casting.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">higher_is_better</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+
+<div class="viewcode-block" id="LongestRejectionRun.compute"><a class="viewcode-back" href="../../torchnf.metrics.html#torchnf.metrics.LongestRejectionRun.compute">[docs]</a>    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">history</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">)</span><span class="o">.</span><span class="n">bool</span><span class="p">()</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">steps</span><span class="p">,</span> <span class="n">batches</span> <span class="o">=</span> <span class="n">history</span><span class="o">.</span><span class="n">shape</span>
+
+        <span class="n">this</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">batches</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+        <span class="n">longest</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">this</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="n">history</span><span class="p">:</span>
+            <span class="n">is_rej</span> <span class="o">=</span> <span class="n">step</span><span class="o">.</span><span class="n">logical_not</span><span class="p">()</span><span class="o">.</span><span class="n">int</span><span class="p">()</span>  <span class="c1"># 1 for rej, 0 for acc</span>
+            <span class="n">this</span><span class="o">.</span><span class="n">add_</span><span class="p">(</span><span class="n">is_rej</span><span class="p">)</span>  <span class="c1"># add 1 for rej</span>
+            <span class="n">this</span><span class="o">.</span><span class="n">mul_</span><span class="p">(</span><span class="n">is_rej</span><span class="p">)</span>  <span class="c1"># mult by 0 for acc</span>
+            <span class="n">longest</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">longest</span><span class="p">,</span> <span class="n">this</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">longest</span><span class="o">.</span><span class="n">float</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="IntegratedAutocorrelation"><a class="viewcode-back" href="../../torchnf.metrics.html#torchnf.metrics.IntegratedAutocorrelation">[docs]</a><span class="k">class</span> <span class="nc">IntegratedAutocorrelation</span><span class="p">(</span><span class="n">LogStatWeightMetricMCMC</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Integrated autocorrelation derived from the accept/reject history.</span>
+
+<span class="sd">    In the limit :math:`t \to \infty` the autocorrelation function can be</span>
+<span class="sd">    re-interpreted as the probability of failing to transition over a given</span>
+<span class="sd">    number of Markov chain steps.</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \frac{\Gamma(t)}{\Gamma(0)} =</span>
+<span class="sd">        \Pr(t \text{ consecutive rejections} )</span>
+
+<span class="sd">    An estimate of this probability is obtained by simply summing the</span>
+<span class="sd">    number of occurrences of a :math:`t` consecutive rejections, and</span>
+<span class="sd">    normalizing by the largest number of occurrences that are possible;</span>
+<span class="sd">    that is, by :math:`T - t + 1` where :math:`T` is the total number</span>
+<span class="sd">    of Markov chain steps.</span>
+
+<span class="sd">    References:</span>
+<span class="sd">        :arxiv:`1904.12072`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">higher_is_better</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+
+<div class="viewcode-block" id="IntegratedAutocorrelation.compute"><a class="viewcode-back" href="../../torchnf.metrics.html#torchnf.metrics.IntegratedAutocorrelation.compute">[docs]</a>    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+        <span class="c1"># MCMC history; True = acceptance, False = rejection</span>
+        <span class="n">history</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">)</span><span class="o">.</span><span class="n">bool</span><span class="p">()</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">steps</span><span class="p">,</span> <span class="n">batches</span> <span class="o">=</span> <span class="n">history</span><span class="o">.</span><span class="n">shape</span>
+
+        <span class="c1"># Counter tracks # instances of &#39;t&#39; consec. rej.</span>
+        <span class="n">counter</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">history</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+
+        <span class="c1"># Track no. consec. rej. in current run</span>
+        <span class="n">this_rejection_run</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">batches</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+
+        <span class="n">ones</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">history</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+        <span class="n">arange</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">steps</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">steps</span><span class="p">,</span> <span class="n">batches</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="n">history</span><span class="p">:</span>
+            <span class="n">is_rej</span> <span class="o">=</span> <span class="n">step</span><span class="o">.</span><span class="n">logical_not</span><span class="p">()</span><span class="o">.</span><span class="n">int</span><span class="p">()</span>  <span class="c1"># 1 for rej, 0 for acc</span>
+            <span class="n">this_rejection_run</span><span class="o">.</span><span class="n">add_</span><span class="p">(</span><span class="n">is_rej</span><span class="p">)</span>  <span class="c1"># add 1 for rej</span>
+            <span class="n">this_rejection_run</span><span class="o">.</span><span class="n">mul_</span><span class="p">(</span><span class="n">is_rej</span><span class="p">)</span>  <span class="c1"># mult by 0 for acc</span>
+
+            <span class="c1"># Add one to counter for each i &lt;= t</span>
+            <span class="n">counter</span><span class="o">.</span><span class="n">add_</span><span class="p">(</span><span class="n">ones</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="n">arange</span> <span class="o">&lt;=</span> <span class="n">this_rejection_run</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)))</span>
+
+        <span class="c1"># Normalise counter to make it a probability mass function</span>
+        <span class="c1"># Normalisation = count we would have if all rejected</span>
+        <span class="n">autocorrelation</span> <span class="o">=</span> <span class="n">counter</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="n">arange</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,)))</span>
+
+        <span class="c1"># Return integrated autocorrelation</span>
+        <span class="k">return</span> <span class="n">autocorrelation</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="LogStatWeightMetricCollection"><a class="viewcode-back" href="../../torchnf.metrics.html#torchnf.metrics.LogStatWeightMetricCollection">[docs]</a><span class="k">class</span> <span class="nc">LogStatWeightMetricCollection</span><span class="p">(</span><span class="n">torchmetrics</span><span class="o">.</span><span class="n">MetricCollection</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Collection of metrics computed using log statistical weights.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        mcmc</span>
+<span class="sd">            If True, applies the Metropolis test to the log-weights,</span>
+<span class="sd">            as though they corresponded to a sequence of proposals</span>
+<span class="sd">            for a Metropolis-Hastings simulation, and computes</span>
+<span class="sd">            additional metrics based on the accept/reject history.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mcmc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">metrics</span> <span class="o">=</span> <span class="p">[</span><span class="n">ShiftedKLDivergence</span><span class="p">(),</span> <span class="n">EffectiveSampleSize</span><span class="p">()]</span>
+        <span class="n">compute_groups</span> <span class="o">=</span> <span class="p">[[</span><span class="s2">&quot;ShiftedKLDivergence&quot;</span><span class="p">,</span> <span class="s2">&quot;EffectiveSampleSize&quot;</span><span class="p">]]</span>
+        <span class="k">if</span> <span class="n">mcmc</span><span class="p">:</span>
+            <span class="n">metrics</span> <span class="o">+=</span> <span class="p">[</span>
+                <span class="n">AcceptanceRate</span><span class="p">(),</span>
+                <span class="n">LongestRejectionRun</span><span class="p">(),</span>
+                <span class="n">IntegratedAutocorrelation</span><span class="p">(),</span>
+            <span class="p">]</span>
+            <span class="n">compute_groups</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="s2">&quot;AcceptanceRate&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;LongestRejectionRun&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;IntegratedAutocorrelation&quot;</span><span class="p">,</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">metrics</span><span class="o">=</span><span class="n">metrics</span><span class="p">,</span> <span class="n">compute_groups</span><span class="o">=</span><span class="n">compute_groups</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Joe Marsh Rossney.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

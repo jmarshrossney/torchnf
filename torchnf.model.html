@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchnf.model &mdash; torchnf 0.1.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="torchnf.networks" href="torchnf.networks.html" />
+    <link rel="prev" title="torchnf.metrics" href="torchnf.metrics.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> torchnf
+          </a>
+              <div class="version">
+                0.1.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="torchnf.html">torchnf</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="torchnf.abc.html">torchnf.abc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="torchnf.conditioners.html">torchnf.conditioners</a></li>
+<li class="toctree-l2"><a class="reference internal" href="torchnf.layers.html">torchnf.layers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="torchnf.metrics.html">torchnf.metrics</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">torchnf.model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="torchnf.networks.html">torchnf.networks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="torchnf.transformers.html">torchnf.transformers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="torchnf.utils.html">torchnf.utils</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">torchnf</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="torchnf.html">torchnf</a> &raquo;</li>
+      <li>torchnf.model</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/torchnf.model.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-torchnf.model">
+<span id="torchnf-model"></span><h1>torchnf.model<a class="headerlink" href="#module-torchnf.model" title="Permalink to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="torchnf.model.FlowBasedModel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchnf.model.</span></span><span class="sig-name descname"><span class="pre">FlowBasedModel</span></span><a class="reference internal" href="_modules/torchnf/model.html#FlowBasedModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchnf.model.FlowBasedModel" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="torchnf.model.FlowBasedModel.decode">
+<span class="sig-name descname"><span class="pre">decode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)"><span class="pre">Tensor</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.10)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/torchnf/model.html#FlowBasedModel.decode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchnf.model.FlowBasedModel.decode" title="Permalink to this definition"></a></dt>
+<dd><p>Decoding transformation.</p>
+<p>By default, this just passes the inputs to <a class="reference internal" href="#torchnf.model.FlowBasedModel.flow_inverse" title="torchnf.model.FlowBasedModel.flow_inverse"><code class="xref py py-meth docutils literal notranslate"><span class="pre">flow_inverse()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchnf.model.FlowBasedModel.encode">
+<span class="sig-name descname"><span class="pre">encode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)"><span class="pre">Tensor</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.10)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/torchnf/model.html#FlowBasedModel.encode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchnf.model.FlowBasedModel.encode" title="Permalink to this definition"></a></dt>
+<dd><p>Encoding transformation.</p>
+<p>By default, this just passes the inputs to <a class="reference internal" href="#torchnf.model.FlowBasedModel.flow_forward" title="torchnf.model.FlowBasedModel.flow_forward"><code class="xref py py-meth docutils literal notranslate"><span class="pre">flow_forward()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchnf.model.FlowBasedModel.flow_forward">
+<span class="sig-name descname"><span class="pre">flow_forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)"><span class="pre">Tensor</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.10)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/torchnf/model.html#FlowBasedModel.flow_forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchnf.model.FlowBasedModel.flow_forward" title="Permalink to this definition"></a></dt>
+<dd><p>Forward transformation of the Normalizing Flow.</p>
+<p>By default, this returns <code class="docutils literal notranslate"><span class="pre">self.flow(inputs)</span></code>.</p>
+<div class="admonition-requires-attribute admonition">
+<p class="admonition-title">Requires Attribute</p>
+<p><code class="docutils literal notranslate"><span class="pre">flow</span></code> - A <a class="reference internal" href="torchnf.layers.html#torchnf.layers.Flow" title="torchnf.layers.Flow"><code class="xref py py-class docutils literal notranslate"><span class="pre">torchnf.layers.Flow</span></code></a> or another <code class="docutils literal notranslate"><span class="pre">Module</span></code>
+that implements a <code class="docutils literal notranslate"><span class="pre">forward</span></code> method.</p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchnf.model.FlowBasedModel.flow_inverse">
+<span class="sig-name descname"><span class="pre">flow_inverse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)"><span class="pre">Tensor</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.10)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/torchnf/model.html#FlowBasedModel.flow_inverse"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchnf.model.FlowBasedModel.flow_inverse" title="Permalink to this definition"></a></dt>
+<dd><p>Inverse transformation of the Normalizing Flow.</p>
+<p>By default, this returns <code class="docutils literal notranslate"><span class="pre">self.flow.inverse(inputs)</span></code>.</p>
+<div class="admonition-requires-attribute admonition">
+<p class="admonition-title">Requires Attribute</p>
+<p><code class="docutils literal notranslate"><span class="pre">flow</span></code> - A <a class="reference internal" href="torchnf.layers.html#torchnf.layers.Flow" title="torchnf.layers.Flow"><code class="xref py py-class docutils literal notranslate"><span class="pre">torchnf.layers.Flow</span></code></a> or another <code class="docutils literal notranslate"><span class="pre">Module</span></code>
+that implements an <code class="docutils literal notranslate"><span class="pre">inverse</span></code> method.</p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchnf.model.FlowBasedModel.importance_sampling_step">
+<span class="sig-name descname"><span class="pre">importance_sampling_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)"><span class="pre">Tensor</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.10)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/torchnf/model.html#FlowBasedModel.importance_sampling_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchnf.model.FlowBasedModel.importance_sampling_step" title="Permalink to this definition"></a></dt>
+<dd><p>Decodes the latents and computes importance weights.</p>
+<p><em>Sampling:</em></p>
+<p>See documentation for <a class="reference internal" href="#torchnf.model.FlowBasedModel.sampling_step" title="torchnf.model.FlowBasedModel.sampling_step"><code class="xref py py-meth docutils literal notranslate"><span class="pre">sampling_step()</span></code></a>.</p>
+<p><em>Importance weights:</em></p>
+<p>The importance weights allow us to compute expectation values
+for the target distribution by sampling from the model.</p>
+<div class="math notranslate nohighlight">
+\[\log w(x) := \log \frac{p(x)}{q(x)}
+= \log p(x) - \log q(x)\]</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>noise</strong> – A batch of variables <span class="math notranslate nohighlight">\(z\)</span> drawn from the latent</p></li>
+<li><p><strong>distribution</strong> (<em>(</em><em>prior</em><em>)</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>sample</strong> – the encoded sample, <span class="math notranslate nohighlight">\(z\)</span></p></li>
+<li><p><strong>log_prob</strong> – the log probability density, <span class="math notranslate nohighlight">\(\log q(x)\)</span></p></li>
+<li><p><strong>log_weight</strong> – the importance weights, <span class="math notranslate nohighlight">\(\log w(x)\)</span></p></li>
+<li><p><strong>loss</strong> – the KL divergence estimate</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.10)">dict</a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)">str</a>, <a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)">torch.Tensor</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchnf.model.FlowBasedModel.inference_step">
+<span class="sig-name descname"><span class="pre">inference_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)"><span class="pre">Tensor</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.10)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/torchnf/model.html#FlowBasedModel.inference_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchnf.model.FlowBasedModel.inference_step" title="Permalink to this definition"></a></dt>
+<dd><p>Encodes the data and computes the density under the model.</p>
+<p><em>Encoding step:</em></p>
+<p>First, <a class="reference internal" href="#torchnf.model.FlowBasedModel.encode" title="torchnf.model.FlowBasedModel.encode"><code class="xref py py-meth docutils literal notranslate"><span class="pre">encode()</span></code></a> is called to transform the data <span class="math notranslate nohighlight">\(x\)</span>
+to <span class="math notranslate nohighlight">\(z = \mathrm{encode}(x)\)</span>, and compute the log Jacobian
+determinant <span class="math notranslate nohighlight">\(\log \lvert \partial z / \partial x \rvert\)</span>
+of the transformation.</p>
+<p><em>Density estimation:</em></p>
+<p>Computes an estimate of the log probability density of the input data.</p>
+<p>This estimate is the log probability density of the data under the
+model, <span class="math notranslate nohighlight">\(q(x)\)</span>. That is, the push-forward of <span class="math notranslate nohighlight">\(q(z)\)</span> by the
+decoding transformation. Since the encoder/decoder is invertible, this
+can be calculated as follows:</p>
+<div class="math notranslate nohighlight">
+\[\log q(x) = \log q(z) + \log
+\left\lvert \frac{\partial z}{\partial x} \right\rvert\]</div>
+<p><em>Log likelihood:</em></p>
+<p>The log-likelihood of the input data with respect to the model
+is given by</p>
+<div class="math notranslate nohighlight">
+\[\log \ell(\{x\}) = \frac{1}{n} \sum_{\{x\}}
+- \log q(x) \, .\]</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>data</strong> – the input data, <span class="math notranslate nohighlight">\(x\)</span></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>sample</strong> – the encoded sample, <span class="math notranslate nohighlight">\(z\)</span></p></li>
+<li><p><strong>log_prob</strong> – the log probability density, <span class="math notranslate nohighlight">\(\log q(x)\)</span></p></li>
+<li><p><strong>loss</strong> – the negative log-likelihood, <span class="math notranslate nohighlight">\(\log \ell(\{x\})\)</span></p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.10)">dict</a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)">str</a>, <a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)">torch.Tensor</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchnf.model.FlowBasedModel.prior_log_prob">
+<span class="sig-name descname"><span class="pre">prior_log_prob</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)"><span class="pre">Tensor</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)"><span class="pre">Tensor</span></a></span></span><a class="reference internal" href="_modules/torchnf/model.html#FlowBasedModel.prior_log_prob"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchnf.model.FlowBasedModel.prior_log_prob" title="Permalink to this definition"></a></dt>
+<dd><p>Returns the log-probability density of the prior distribution.</p>
+<p>By default, this returns <code class="docutils literal notranslate"><span class="pre">self.prior.log_prob(sample)</span></code>.</p>
+<div class="admonition-requires-attribute admonition">
+<p class="admonition-title">Requires Attribute</p>
+<p><code class="docutils literal notranslate"><span class="pre">prior</span></code> - A <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.distributions.Distribution</span></code>,
+or another object that implements a <code class="docutils literal notranslate"><span class="pre">log_prob</span></code> method.</p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchnf.model.FlowBasedModel.prior_sample">
+<span class="sig-name descname"><span class="pre">prior_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">PositiveInt</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)"><span class="pre">Tensor</span></a></span></span><a class="reference internal" href="_modules/torchnf/model.html#FlowBasedModel.prior_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchnf.model.FlowBasedModel.prior_sample" title="Permalink to this definition"></a></dt>
+<dd><p>Samples from the prior (latent) distribution.</p>
+<p>By default, this calls <code class="docutils literal notranslate"><span class="pre">self.prior.sample([sample_size])</span></code>.</p>
+<div class="admonition-requires-attribute admonition">
+<p class="admonition-title">Requires Attribute</p>
+<p><code class="docutils literal notranslate"><span class="pre">prior</span></code> - A <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.distributions.Distribution</span></code>,
+or another object that implements a <code class="docutils literal notranslate"><span class="pre">log_prob</span></code> method.</p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchnf.model.FlowBasedModel.sample">
+<span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">PositiveInt</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)"><span class="pre">Tensor</span></a></span></span><a class="reference internal" href="_modules/torchnf/model.html#FlowBasedModel.sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchnf.model.FlowBasedModel.sample" title="Permalink to this definition"></a></dt>
+<dd><p>Generates synthetic data by sampling from the model.</p>
+<p>The sample is generated by first sampling a set of latent variables
+using <a class="reference internal" href="#torchnf.model.FlowBasedModel.prior_sample" title="torchnf.model.FlowBasedModel.prior_sample"><code class="xref py py-meth docutils literal notranslate"><span class="pre">prior_sample()</span></code></a>, and then calling <a class="reference internal" href="#torchnf.model.FlowBasedModel.sampling_step" title="torchnf.model.FlowBasedModel.sampling_step"><code class="xref py py-meth docutils literal notranslate"><span class="pre">sampling_step()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>sample_size</strong> – Size of the sample.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A sample drawn from the model.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)">torch.Tensor</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchnf.model.FlowBasedModel.sampling_step">
+<span class="sig-name descname"><span class="pre">sampling_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)"><span class="pre">Tensor</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.10)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/torchnf/model.html#FlowBasedModel.sampling_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchnf.model.FlowBasedModel.sampling_step" title="Permalink to this definition"></a></dt>
+<dd><p>Decodes the latents and computes the density under the model.</p>
+<p><em>Decoding step:</em></p>
+<p>First, <a class="reference internal" href="#torchnf.model.FlowBasedModel.decode" title="torchnf.model.FlowBasedModel.decode"><code class="xref py py-meth docutils literal notranslate"><span class="pre">decode()</span></code></a> is called to transform the latent variables
+<span class="math notranslate nohighlight">\(z\)</span> to <span class="math notranslate nohighlight">\(x = \mathrm{decode}(z)\)</span>, and compute the log
+Jacobian determinant of the transformation,
+<span class="math notranslate nohighlight">\(\log\lvert\partial x/\partial z\rvert\)</span></p>
+<p><em>Push-forward:</em></p>
+<p>The probability density at point <span class="math notranslate nohighlight">\(x = \mathrm{decode}(z)\)</span>
+is the push-forward of <span class="math notranslate nohighlight">\(q(z)\)</span> by the decoding transform:</p>
+<div class="math notranslate nohighlight">
+\[\log q(x) = \log q(z)
+- \log \left\lvert \frac{\partial x}{\partial z} \right\rvert\]</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>noise</strong> – A batch of variables <span class="math notranslate nohighlight">\(z\)</span> drawn from the latent</p></li>
+<li><p><strong>distribution</strong> (<em>(</em><em>prior</em><em>)</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>sample</strong> – the decoded sample, <span class="math notranslate nohighlight">\(x\)</span></p></li>
+<li><p><strong>log_prob</strong> – the log probability density, <span class="math notranslate nohighlight">\(\log q(x)\)</span></p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.10)">dict</a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)">str</a>, <a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)">torch.Tensor</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchnf.model.FlowBasedModel.target_log_prob">
+<span class="sig-name descname"><span class="pre">target_log_prob</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)"><span class="pre">Tensor</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)"><span class="pre">Tensor</span></a></span></span><a class="reference internal" href="_modules/torchnf/model.html#FlowBasedModel.target_log_prob"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchnf.model.FlowBasedModel.target_log_prob" title="Permalink to this definition"></a></dt>
+<dd><p>Returns the log-probability density of the target distribution.</p>
+<p>By default, this returns <code class="docutils literal notranslate"><span class="pre">self.target.log_prob(sample)</span></code>.</p>
+<div class="admonition-requires-attribute admonition">
+<p class="admonition-title">Requires Attribute</p>
+<p><code class="docutils literal notranslate"><span class="pre">target</span></code> - A :py:class`torch.distributions.Distribution`,
+or another object that implements a <code class="docutils literal notranslate"><span class="pre">log_prob</span></code> method.</p>
+</div>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchnf.model.FlowBasedModel.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><span class="pre">bool</span></a></em><a class="headerlink" href="#torchnf.model.FlowBasedModel.training" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchnf.model.FlowBasedModel.weighted_sample">
+<span class="sig-name descname"><span class="pre">weighted_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">PositiveInt</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.10)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)"><span class="pre">torch.Tensor</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/torchnf/model.html#FlowBasedModel.weighted_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchnf.model.FlowBasedModel.weighted_sample" title="Permalink to this definition"></a></dt>
+<dd><p>Generates synthetic data along with importance weights.</p>
+<p>The sample is generated by first sampling a set of latent variables
+using <a class="reference internal" href="#torchnf.model.FlowBasedModel.prior_sample" title="torchnf.model.FlowBasedModel.prior_sample"><code class="xref py py-meth docutils literal notranslate"><span class="pre">prior_sample()</span></code></a>, and then calling
+<a class="reference internal" href="#torchnf.model.FlowBasedModel.importance_sampling_step" title="torchnf.model.FlowBasedModel.importance_sampling_step"><code class="xref py py-meth docutils literal notranslate"><span class="pre">importance_sampling_step()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>sample_size</strong> – Size of the sample.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A sample drawn from the model, along with its importance
+weight with respect to the target distribution defined by
+<a class="reference internal" href="#torchnf.model.FlowBasedModel.target_log_prob" title="torchnf.model.FlowBasedModel.target_log_prob"><code class="xref py py-meth docutils literal notranslate"><span class="pre">target_log_prob()</span></code></a>.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.10)">tuple</a>[<a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)">torch.Tensor</a>, <a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v1.12)">torch.Tensor</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="torchnf.metrics.html" class="btn btn-neutral float-left" title="torchnf.metrics" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="torchnf.networks.html" class="btn btn-neutral float-right" title="torchnf.networks" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Joe Marsh Rossney.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
