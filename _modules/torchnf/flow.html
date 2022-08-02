@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchnf.flow &mdash; torchnf 0.2.0 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> torchnf
+          </a>
+              <div class="version">
+                0.2.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../torchnf.html">torchnf</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">torchnf</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      <li>torchnf.flow</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchnf.flow</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+
+<span class="kn">from</span> <span class="nn">torchnf.abc</span> <span class="kn">import</span> <span class="n">Conditioner</span><span class="p">,</span> <span class="n">Transformer</span><span class="p">,</span> <span class="n">DensityTransform</span>
+<span class="kn">import</span> <span class="nn">torchnf.utils.flow</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;FlowLayer&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Composition&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Flow&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="FlowLayer"><a class="viewcode-back" href="../../torchnf.flow.html#torchnf.flow.FlowLayer">[docs]</a><span class="k">class</span> <span class="nc">FlowLayer</span><span class="p">(</span><span class="n">DensityTransform</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Class representing a Normalizing Flow layer.</span>
+
+<span class="sd">    This is a subclass of :py:class:`torch.nn.Module` with a specific</span>
+<span class="sd">    modular structure that provides the flexibility to construct a variety</span>
+<span class="sd">    of different types of conditional density transformations. Such</span>
+<span class="sd">    transformations can be chained to make a Normalizing Flow.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        transformer</span>
+<span class="sd">            A class which implements the forward and inverse transformations,</span>
+<span class="sd">            given an input tensor and a tensor of parameters which the</span>
+<span class="sd">            transformation is conditioned on</span>
+<span class="sd">        conditioner</span>
+<span class="sd">            A class whose :code:`forward` method takes the inputs and returns</span>
+<span class="sd">            a tensor of parameters for the transformer</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">transformer</span><span class="p">:</span> <span class="n">Transformer</span><span class="p">,</span>
+        <span class="n">conditioner</span><span class="p">:</span> <span class="n">Conditioner</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transformer</span> <span class="o">=</span> <span class="n">transformer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">conditioner</span> <span class="o">=</span> <span class="n">conditioner</span>
+
+<div class="viewcode-block" id="FlowLayer.inverted"><a class="viewcode-back" href="../../torchnf.flow.html#torchnf.flow.FlowLayer.inverted">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">inverted</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">transformer</span><span class="p">:</span> <span class="n">Transformer</span><span class="p">,</span>
+        <span class="n">conditioner</span><span class="p">:</span> <span class="n">Conditioner</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;FlowLayer&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">torchnf</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">flow</span><span class="o">.</span><span class="n">inverted</span><span class="p">(</span><span class="bp">cls</span><span class="p">)(</span><span class="n">transformer</span><span class="p">,</span> <span class="n">conditioner</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="FlowLayer.conditioner_forward"><a class="viewcode-back" href="../../torchnf.flow.html#torchnf.flow.FlowLayer.conditioner_forward">[docs]</a>    <span class="k">def</span> <span class="nf">conditioner_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xy</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Forward pass of the conditioner.</span>
+
+<span class="sd">        Unless overriden, this method simply returns</span>
+<span class="sd">        :code:`self.conditioner(xy, self.context)`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">conditioner</span><span class="p">(</span><span class="n">xy</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="FlowLayer.transformer_forward"><a class="viewcode-back" href="../../torchnf.flow.html#torchnf.flow.FlowLayer.transformer_forward">[docs]</a>    <span class="k">def</span> <span class="nf">transformer_forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">params</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Forward pass of the transformer.</span>
+
+<span class="sd">        Unless overriden, this method simply returns</span>
+<span class="sd">        :code:`self.transfomer(x, params, self.context)`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">transformer</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="FlowLayer.transformer_inverse"><a class="viewcode-back" href="../../torchnf.flow.html#torchnf.flow.FlowLayer.transformer_inverse">[docs]</a>    <span class="k">def</span> <span class="nf">transformer_inverse</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">y</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">params</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Inverse pass of the transformer.</span>
+
+<span class="sd">        Unless overriden, this method simply returns</span>
+<span class="sd">        :code:`self.transfomer.inverse(y, params, self.context)`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">transformer</span><span class="o">.</span><span class="n">inverse</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="FlowLayer.forward"><a class="viewcode-back" href="../../torchnf.flow.html#torchnf.flow.FlowLayer.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">ldj</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Forward pass of the density transformation.</span>
+
+<span class="sd">        Unless overridden, this method does the following:</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            self.context = context</span>
+<span class="sd">            params = self.conditioner_forward(x)</span>
+<span class="sd">            y, ldj_this = self.transformer_forward(x, params)</span>
+<span class="sd">            ldj += ldj_this</span>
+<span class="sd">            return y, ldj</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">context</span> <span class="o">=</span> <span class="n">context</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conditioner_forward</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">y</span><span class="p">,</span> <span class="n">ldj_this</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transformer_forward</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+        <span class="n">ldj</span><span class="o">.</span><span class="n">add_</span><span class="p">(</span><span class="n">ldj_this</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">y</span><span class="p">,</span> <span class="n">ldj</span></div>
+
+<div class="viewcode-block" id="FlowLayer.inverse"><a class="viewcode-back" href="../../torchnf.flow.html#torchnf.flow.FlowLayer.inverse">[docs]</a>    <span class="k">def</span> <span class="nf">inverse</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">ldj</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The inverse of :meth:`forward`.</span>
+
+<span class="sd">        Unless overridden, this method does the following:</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            self.context = context</span>
+<span class="sd">            params = self.conditioner_forward(y)</span>
+<span class="sd">            x, ldj_this = self.transformer_inverse(y, params)</span>
+<span class="sd">            ldj += ldj_this</span>
+<span class="sd">            return x, ldj</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">context</span> <span class="o">=</span> <span class="n">context</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conditioner_forward</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">ldj_this</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transformer_inverse</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+        <span class="n">ldj</span><span class="o">.</span><span class="n">add_</span><span class="p">(</span><span class="n">ldj_this</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">ldj</span></div>
+
+<div class="viewcode-block" id="FlowLayer.freeze"><a class="viewcode-back" href="../../torchnf.flow.html#torchnf.flow.FlowLayer.freeze">[docs]</a>    <span class="k">def</span> <span class="nf">freeze</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Detaches all parameters from the autograd graph.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">():</span>
+            <span class="n">param</span><span class="o">.</span><span class="n">requires_grad</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="FlowLayer.unfreeze"><a class="viewcode-back" href="../../torchnf.flow.html#torchnf.flow.FlowLayer.unfreeze">[docs]</a>    <span class="k">def</span> <span class="nf">unfreeze</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Reattaches all parameters from the autograd graph.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">():</span>
+            <span class="n">param</span><span class="o">.</span><span class="n">requires_grad</span> <span class="o">=</span> <span class="kc">True</span></div></div>
+
+
+<div class="viewcode-block" id="Composition"><a class="viewcode-back" href="../../torchnf.flow.html#torchnf.flow.Composition">[docs]</a><span class="k">class</span> <span class="nc">Composition</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Composes density transformations.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="n">transforms</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
+            <span class="n">DensityTransform</span><span class="p">,</span> <span class="n">OrderedDict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">DensityTransform</span><span class="p">]</span>
+        <span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">transforms</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Composition.inverted"><a class="viewcode-back" href="../../torchnf.flow.html#torchnf.flow.Composition.inverted">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">inverted</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="o">*</span><span class="n">transforms</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
+            <span class="n">DensityTransform</span><span class="p">,</span> <span class="n">OrderedDict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">DensityTransform</span><span class="p">]</span>
+        <span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Composition&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">torchnf</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">flow</span><span class="o">.</span><span class="n">inverted</span><span class="p">(</span><span class="bp">cls</span><span class="p">)(</span><span class="o">*</span><span class="n">transforms</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Composition.forward"><a class="viewcode-back" href="../../torchnf.flow.html#torchnf.flow.Composition.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">ldj</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">context</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{},</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Forward pass of the density transformation.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">x</span>
+        <span class="k">for</span> <span class="n">transform</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="n">y</span><span class="p">,</span> <span class="n">ldj</span> <span class="o">=</span> <span class="n">transform</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">ldj</span><span class="p">,</span> <span class="n">context</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">y</span><span class="p">,</span> <span class="n">ldj</span></div>
+
+<div class="viewcode-block" id="Composition.inverse"><a class="viewcode-back" href="../../torchnf.flow.html#torchnf.flow.Composition.inverse">[docs]</a>    <span class="k">def</span> <span class="nf">inverse</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">ldj</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Inverse of :meth:`forward`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">y</span>
+        <span class="k">for</span> <span class="n">transform</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="n">x</span><span class="p">,</span> <span class="n">ldj</span> <span class="o">=</span> <span class="n">transform</span><span class="o">.</span><span class="n">inverse</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">ldj</span><span class="p">,</span> <span class="n">context</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">ldj</span></div></div>
+
+
+<div class="viewcode-block" id="Flow"><a class="viewcode-back" href="../../torchnf.flow.html#torchnf.flow.Flow">[docs]</a><span class="k">class</span> <span class="nc">Flow</span><span class="p">(</span><span class="n">Composition</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Composes density transformations, initalising the ldj with zeros.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Flow.forward"><a class="viewcode-back" href="../../torchnf.flow.html#torchnf.flow.Flow.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="n">ldj</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">ldj</span><span class="p">,</span> <span class="n">context</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Flow.inverse"><a class="viewcode-back" href="../../torchnf.flow.html#torchnf.flow.Flow.inverse">[docs]</a>    <span class="k">def</span> <span class="nf">inverse</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="n">ldj</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">y</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">inverse</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">ldj</span><span class="p">,</span> <span class="n">context</span><span class="p">)</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Joe Marsh Rossney.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
