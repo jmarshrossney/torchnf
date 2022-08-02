@@ -11,7 +11,7 @@ import torch
 from torchnf.abc import Transformer
 from torchnf.conditioners import MaskedConditioner, SimpleConditioner
 from torchnf.model import FlowBasedModel
-from torchnf.networks import DenseNet
+from torchnf.networks import DenseNetBuilder
 from torchnf.layers import FlowLayer, Flow
 from torchnf.transformers import Rescaling
 from torchnf.utils.datasets import Moons
@@ -108,7 +108,7 @@ class Model(FlowBasedModel, pl.LightningModule):
 
 def make_flow(
     transformer: Transformer,
-    net: DenseNet,
+    net: DenseNetBuilder,
     depth: PositiveInt,
 ) -> Flow:
     mask = torch.tensor([True, False], dtype=bool)

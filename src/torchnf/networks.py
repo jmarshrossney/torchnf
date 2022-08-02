@@ -11,15 +11,18 @@ TODO: document a convenient way of creating new class with identical
 parameters except for some user-specified changes E.g. dataclasses.replace
 """
 import dataclasses
-from typing import Optional
+from typing import Optional, Union
 
 from jsonargparse.typing import PositiveInt, restricted_number_type
 import torch
 
+# TODO: 'block builder' where user defines a custom block, e.g.
+# Linear -> ReLU -> BatchNorm, that has a __call__(size_in, size_out)
+
 __all__ = [
-    "DenseNet",
-    "ConvNet",
-    "ConvNetCircular",
+    "DenseNetBuilder",
+    "ConvNetBuilder",
+    "CircularConvNetBuilder",
     "GenericNetBuilder",
 ]
 
@@ -31,43 +34,70 @@ ConvDim = restricted_number_type(
     docstring="Convolution dimension: {1, 2, 3} are supported.",
 )
 
+# So the help isn't flooded with all available nn.Modules
+ACTIVATIONS = Union[
+    tuple(
+        getattr(torch.nn, a)
+        for a in [
+            "ELU",
+            "Hardshrink",
+            "Hardsigmoid",
+            "Hardtanh",
+            "Hardswish",
+            "LeakyReLU",
+            "LogSigmoid",
+            "PReLU",
+            "ReLU",
+            "ReLU6",
+            "RReLU",
+            "SELU",
+            "CELU",
+            "GELU",
+            "Sigmoid",
+            "SiLU",
+            "Mish",
+            "Softplus",
+            "Softshrink",
+            "Softsign",
+            "Tanh",
+            "Tanhshrink",
+            "Threshold",
+            "GLU",
+        ]
+    )
+]
+
 
 def raise_(exc: Exception):
     raise Exception
 
 
 @dataclasses.dataclass
-class DenseNet:
+class DenseNetBuilder:
     """
     Fully-connected feed-forward neural network.
 
     See :py:class:`torch.nn.Linear`.
 
-    .. note:: ``in_features`` and ``out_features`` may alternatively
-       be passed to ``__call__`` rather than ``__init__``
+    .. note:: ``in_features`` and ``out_features`` are specified in
+    ``__call__`` rather than ``__init__``.
     """
 
     hidden_shape: list[PositiveInt]
-    activation: str
-    activation_kwargs: dict = dataclasses.field(default_factory=dict)
+    activation: Union[str, ACTIVATIONS]
     skip_final_activation: bool = False
-    linear_kwargs: dict = dataclasses.field(default_factory=dict)
-    in_features: Optional[PositiveInt] = None
-    out_features: Optional[PositiveInt] = None
+    bias: bool = True
 
-    def _activation(self) -> torch.nn.Module:
-        return getattr(torch.nn, self.activation)(**self.activation_kwargs)
+    def __post_init__(self) -> None:
+        if isinstance(self.activation, str):
+            # Instantiate with no arguments
+            self.activation = getattr(torch.nn, self.activation)()
 
     def __call__(
         self,
-        in_features: Optional[PositiveInt] = None,
-        out_features: Optional[PositiveInt] = None,
+        in_features: Optional[PositiveInt],  # can pass None, but explicit
+        out_features: PositiveInt,
     ) -> torch.nn.Sequential:
-        # Maybe: (allows other recipes to set values, e.g. out_features)
-        # def __call__(self, replacements: dict):
-        #     self.__dict__.update(replacements)
-        # -- or, for frozen instance --
-        #     config = dataclasses.asdict(self).update(replacements)
         in_features = in_features or self.in_features
         out_features = (
             out_features
@@ -76,19 +106,19 @@ class DenseNet:
         )
 
         net_shape = [in_features, *self.hidden_shape, out_features]
-        activations = [self._activation() for _ in self.hidden_shape] + [
+        activations = [self.activation for _ in self.hidden_shape] + [
             torch.nn.Identity()
             if self.skip_final_activation
-            else self._activation()
+            else self.activation
         ]
         layers = []
         for f_in, f_out, activation in zip(
             net_shape[:-1], net_shape[1:], activations
         ):
             linear = (
-                torch.nn.LazyLinear(f_out, **self.linear_kwargs)
+                torch.nn.LazyLinear(f_out, bias=self.bias)
                 if f_in is None
-                else torch.nn.Linear(f_in, f_out, **self.linear_kwargs)
+                else torch.nn.Linear(f_in, f_out, bias=self.bias)
             )
             layers.append(linear)
             layers.append(activation)
@@ -97,7 +127,7 @@ class DenseNet:
 
 
 @dataclasses.dataclass
-class ConvNet:
+class ConvNetBuilder:
     """
     Convolutional neural network.
 
@@ -105,27 +135,26 @@ class ConvNet:
 
     .. note::
 
-        ``in_channels`` and ``out_channels`` may alternatively
-        be passed to ``__call__`` rather than ``__init__``
+        ``in_channels`` and ``out_channels`` are specified in
+        ``__call__`` rather than ``__init__``
     """
 
     dim: ConvDim
     hidden_shape: list[PositiveInt]
-    activation: str
+    activation: Union[str, ACTIVATIONS]
     kernel_size: PositiveInt
-    activation_kwargs: dict = dataclasses.field(default_factory=dict)
     skip_final_activation: bool = False
     conv_kwargs: dict = dataclasses.field(default_factory=dict)
-    in_channels: Optional[PositiveInt] = None
-    out_channels: Optional[PositiveInt] = None
 
-    def _activation(self) -> torch.nn.Module:
-        return getattr(torch.nn, self.activation)(**self.activation_kwargs)
+    def __post_init__(self) -> None:
+        if isinstance(self.activation, str):
+            # Instantiate with no arguments
+            self.activation = getattr(torch.nn, self.activation)()
 
     def __call__(
         self,
-        in_channels: Optional[PositiveInt] = None,
-        out_channels: Optional[PositiveInt] = None,
+        in_channels: Optional[PositiveInt],
+        out_channels: PositiveInt,
     ) -> torch.nn.Sequential:
 
         in_channels = in_channels or self.in_channels
@@ -136,10 +165,10 @@ class ConvNet:
         )
 
         net_shape = [in_channels, *self.hidden_shape, out_channels]
-        activations = [self._activation() for _ in self.hidden_shape] + [
+        activations = [self.activation for _ in self.hidden_shape] + [
             torch.nn.Identity()
             if self.skip_final_activation
-            else self._activation()
+            else self.activation
         ]
         Conv = {
             1: torch.nn.Conv1d,
@@ -168,7 +197,7 @@ class ConvNet:
 
 
 @dataclasses.dataclass
-class ConvNetCircular(ConvNet):
+class CircularConvNetBuilder(ConvNetBuilder):
     """
     Convolutional neural network with circular padding.
     """
