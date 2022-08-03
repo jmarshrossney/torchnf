@@ -3,15 +3,24 @@ The :code:`forward` method should return a set of parameters upon which the
 transformer should be conditioned.
 """
 from collections.abc import Iterable
-from typing import Callable, Optional, Union
-import torch
+from functools import partial
+from typing import Callable, Union
 
+from jsonargparse.typing import PositiveInt
+import torch
+from torch.nn.modules.lazy import LazyModuleMixin
+from torch.nn.parameter import UninitializedParameter, UninitializedBuffer
+
+from torchnf.abc import Transformer
 import torchnf.utils.tensor
+from torchnf.utils.nn import Activation, make_fnn
 
 __all__ = [
     "SimpleConditioner",
+    "LazySimpleConditioner",
     "MaskedConditioner",
-    "AutoregressiveConditioner",
+    "LazyMaskedConditioner",
+    # "AutoregressiveConditioner",
 ]
 
 
@@ -27,6 +36,8 @@ class SimpleConditioner(torch.nn.Module):
         init_params
             Initial values for the parameters
     """
+
+    transformer: Transformer
 
     def __init__(
         self,
@@ -56,138 +67,77 @@ class SimpleConditioner(torch.nn.Module):
         return params.expand([batch_size, -1, *data_shape])
 
 
-class MaskedConditioner(torch.nn.Module):
-    r"""
-    Masked conditioner.
+class LazySimpleConditioner(LazyModuleMixin, SimpleConditioner):
+    """
+    A lazily initialised version of SimpleConditioner.
 
-    In this conditioner, the inputs :math:`x` are first masked so that
-    only a subset can influence the resulting parameters. Furthermore,
-    the resulting parameters :math:`\{\lambda\}` are masked using the
-    logical negation of the original mask.
-
-    When a point-wise transformation of :math:`x` is conditioned on
-    :math:`\{\lambda\}`, the Jacobian is triangular.
-
-    A Normalizing Flow layer where the transformer is conditioned on
-    these parameters is called a Coupling Layer. The archetypal example
-    is Real NVP (:arxiv:`1605.08803`).
-
-    Derived classes may override :meth:`forward_` and :attr:`mask`.
-
-    Args:
-        net:
-            Neural network that takes the masked input tensor and returns
-            a set of parameters
-        mask:
-            Boolean mask where the 'False' elements are the masked ones,
-            i.e. they will not be passed to ``forward_``
-        create_channel_dim:
-            If True, an extra dimension of size 1 will be added to the
-            input tensor before passing it to ``forward_``
-        mask_mode:
-            TODO: document
+    The ``identity_params`` attribute of the transformer are used to
+    initialise the parameters of this conditioner.
     """
 
-    def __init__(
-        self,
-        net: Optional[torch.nn.Sequential] = None,
-        mask: Optional[torch.BoolTensor] = None,
-        mask_mode: Union[
-            str, Callable[[torch.Tensor, torch.BoolTensor, dict], torch.Tensor]
-        ] = "auto",
-        create_channel_dim: bool = False,
+    cls_to_become = SimpleConditioner
+
+    def __init__(self) -> None:
+        super().__init__([])
+        self.params = UninitializedParameter()
+
+    def initialize_parameters(
+        self, inputs: torch.Tensor, context: dict = {}
     ) -> None:
+        try:
+            init_params = self.transformer.identity_params
+        except AttributeError as exc:
+            raise AttributeError(
+                "Unable to initialize LazySimpleConditioner"
+            ) from exc
+
+        assert isinstance(init_params, torch.Tensor)
+
+        self.params = torch.nn.Parameter(init_params.float())
+
+
+class MaskedConditioner(torch.nn.Module):
+    def __init__(self) -> None:
         super().__init__()
-        if net is not None:
-            self.net = net
-        if mask is not None:
-            self.register_buffer("mask", mask)
 
-        if mask_mode == "index":
-            self._apply_mask_to_input = self.index_with_mask
-        elif mask_mode == "mul":
-            self._apply_mask_to_input = self.mul_by_mask
-        elif mask_mode == "auto":
-            self._apply_mask_to_input = self._choose_mask_fn()
-        elif callable(mask_mode):
-            self._apply_mask_to_input = mask_mode
-        else:
-            raise ValueError(
-                f"Expected 'mask_mode' to be one of ('auto', 'index', 'mul', Callable) but got '{mask_mode}'"  # noqa: E501
-            )
-
-        self.create_channel_dim = create_channel_dim
-
-    def _choose_mask_fn(self) -> None:
-        """
-        Auto-decide how to apply mask based on type of layers in network.
-        """
-        assert hasattr(
-            self, "net"
-        ), "Cannot auto-choose mask mode: require `net` attribute"
-        Conv = torch.nn.modules.conv._ConvNd
-        Linear = torch.nn.modules.linear.Linear
-        # Look for first layer that is either a Conv or Linear
-        for layer in self.net:
-            if isinstance(layer, Conv):
-                return self.mul_by_mask
-            elif isinstance(layer, Linear):
-                return self.index_with_mask
-
-        raise Exception(
-            "Net has no Linear or Convolutional layers. Unable to auto-decide mask func"  # noqa: E501
-        )
-
-    def get_mask(self) -> torch.BoolTensor:
+    def get_mask(
+        self, x: torch.Tensor, context: dict = {}
+    ) -> torch.BoolTensor:
         """
         Returns the mask that delineates the partitions of the coupling layer.
         """
-        # NOTE: for variable shaped inputs, use self.context to get shape
-        return self.mask
+        raise NotImplementedError
 
     @staticmethod
-    def index_with_mask(x: torch.Tensor, mask: torch.Tensor, context: dict):
+    def index_input_with_mask(self, input):
         """
         Use the mask to index the input tensor.
         """
-        return x[:, mask]
+        x, *ctx = input
+        mask = self.get_mask(*input)
+        return (x[:, mask], *ctx)
 
     @staticmethod
-    def mul_by_mask(x: torch.Tensor, mask: torch.Tensor, context: dict):
+    def mul_input_by_mask(self, input):
         """
-        Multiply the input tensor by the binary mask
+        Multiply the input tensor by the binary mask.
         """
-        return x.mul(mask)
+        x, *ctx = input
+        mask = self.get_mask(*input)
+        return (x.mul(mask), *ctx)
 
-    def apply_mask_to_input(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        Applies mask to the input tensor.
-        """
-        return self._apply_mask_to_input(x, self.get_mask(), self.context)
+    @staticmethod
+    def set_output_to_nan_where_mask(self, input, output):
+        mask = self.get_mask(*input)
+        params = output
+        # TODO: check if params[mask] = float("nan") is faster
+        return params.masked_fill(mask, float("nan"))
 
-    def apply_mask_to_output(self, params: torch.Tensor) -> torch.Tensor:
-        r"""
-        Applies mask to the output parameters.
-
-        The output parameters must be either (a) a tensor of dimension >2
-        where the dimensions are ``(batch_size, n_params, *data_shape)``,
-        or (b) a tensor of dimension 2, where the dimensions are
-        ``(batch_size, n_params * n_masked_elements)``.
-
-        Returns:
-            A tensor with dimensions ``(batch_size, n_params, *data_shape)``,
-            where the elements corresponding to input data that was *not*
-            masked are ``NaN``
-        """
-        mask = self.get_mask()
-
-        # If output has dims (n_batch, n_params, ...)
-        if params.dim() > 2:
-            # TODO: check if params[mask] = float("nan") is faster
-            return params.masked_fill(mask, float("nan"))
-
-        # Otherwise, assume flattened data dimension containing the
-        # correct number of parameters (corresponding to masked elements)
+    @staticmethod
+    def scatter_output_into_nantensor(self, input, output):
+        mask = self.get_mask(*input)
+        params = output
+        assert params.dim() == 2
         params_shape = torch.Size(
             [
                 params.shape[0],
@@ -200,41 +150,127 @@ class MaskedConditioner(torch.nn.Module):
             mask.logical_not(), params
         )
 
-    def forward_(self, x_masked: torch.Tensor) -> torch.Tensor:
-        """
-        Computes and returns the parameters.
+    def forward(self, x: torch.Tensor, context: dict = {}) -> torch.Tensor:
+        raise NotImplementedError
 
-        Unless overridden, this simply called the :code:`forward`
-        method of ``self.net``.
-        """
-        return self.net(x_masked)
+
+class LazyMaskedConditioner(LazyModuleMixin, MaskedConditioner):
+    cls_to_become = MaskedConditioner
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.mask = UninitializedBuffer()
+
+    def get_mask(
+        self, x: torch.Tensor, context: dict = {}
+    ) -> torch.BoolTensor:
+        return self.mask
+
+    def initialize_parameters(
+        self, inputs: torch.Tensor, context: dict = {}
+    ) -> None:
+        raise NotImplementedError
+
+
+class MaskedConditionerFNN(MaskedConditioner):
+    def __init__(
+        self,
+        mask: torch.BoolTensor,
+        hidden_shape: list[PositiveInt],
+        activation: Activation,
+        final_activation: Activation = torch.nn.Identity(),
+        bias: bool = True,
+    ) -> None:
+        super().__init__()
+
+        self.register_buffer("mask", mask)
+        self.register_forward_pre_hook(self.index_input_with_mask)
+        self.register_forward_hook(self.scatter_output_into_nantensor)
+
+        # make net
+        net = make_fnn(
+            in_features=int(mask.sum()),
+            out_features=int(mask.logical_not().sum()),
+            hidden_shape=hidden_shape,
+            activation=activation,
+            final_activation=final_activation,
+            bias=bias,
+        )
+        self.register_module("net", net)
+
+    def get_mask(
+        self, x: torch.Tensor, context: dict = {}
+    ) -> torch.BoolTensor:
+        return self.mask
 
     def forward(self, x: torch.Tensor, context: dict = {}) -> torch.Tensor:
-        """
-        Returns the parameters, after masking.
+        return self.net(x)
 
-        Masked elements are NaN's.
 
-        This does the following:
+class LazyMaskedConditionerFNN(LazyModuleMixin, MaskedConditioner):
+    cls_to_become = MaskedConditioner
 
-        .. code-block:: python
-          :linenos:
+    def __init__(
+        self,
+        mask_fn: Callable[Iterable[PositiveInt], torch.BoolTensor],
+        hidden_shape: list[PositiveInt],
+        activation: Activation,
+        final_activation: Activation = torch.nn.Identity(),
+        bias: bool = True,
+    ) -> None:
+        super().__init__()
+        self.mask = UninitializedBuffer()
+        self.net = UninitializedParameter()
 
-            self.context = context
-            x_masked = self.apply_mask_to_input(x)
-            if self.create_channel_dim:
-                x_masked.unsqueeze_(1)
-            params = self._forward(x_masked)
-            params = self.apply_mask_to_output(params)
-            return params
-        """
-        self.context = context
-        x_masked = self.apply_mask_to_input(x)
-        if self.create_channel_dim:
-            x_masked.unsqueeze_(1)
-        params = self.forward_(x_masked)
-        params = self.apply_mask_to_output(params)
-        return params
+        self._mask_fn = mask_fn
+        self._net_fn = partial(
+            make_fnn(
+                hidden_shape=hidden_shape,
+                activation=activation,
+                final_activation=final_activation,
+                bias=bias,
+            )
+        )
+
+    def initialize_parameters(
+        self, inputs: torch.Tensor, context: dict = {}
+    ) -> None:
+        data_shape = inputs.shape[1:]
+        mask = self._mask_fn(data_shape)
+        net = self._net_fn(
+            in_features=int(mask.sum()),
+            out_features=int(mask.logical_not().sum()),
+        )
+        self.mask = mask
+        self.net = net
+
+        del self._mask_fn
+        del self._net_fn
+
+    def forward(self, x: torch.Tensor, context: dict = {}) -> torch.Tensor:
+        return self.net(x)
+
+
+"""
+class MaskedConditionerCNN(MaskedConditioner):
+    def __init__(
+        self,
+        mask: torch.BoolTensor,
+        dim: ConvDim,
+        hidden_shape: list[PositiveInt],
+        activation: Union[ACTIVATIONS],
+        kernel_size: PositiveInt,
+        skip_final_activation: bool = False,
+        circular: bool = False,
+        conv_kwargs: dict = {},
+    ) -> None:
+        super().__init__(mask)
+
+        self.register_forward_pre_hook(self.mul_input_by_mask)
+        self.register_forward_hook(self.set_output_to_nan_where_mask)
+
+        net = make_cnn(...)
+"""
 
 
 class AutoregressiveConditioner(torch.nn.Module):

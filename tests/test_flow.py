@@ -3,7 +3,6 @@ import torch
 
 from torchnf.conditioners import *
 from torchnf.flow import *
-from torchnf.networks import *
 from torchnf.transformers import *
 
 

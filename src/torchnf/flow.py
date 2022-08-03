@@ -41,6 +41,9 @@ class FlowLayer(DensityTransform):
         self.transformer = transformer
         self.conditioner = conditioner
 
+        # Let the conditioner know about the transformer
+        self.conditioner.transformer = transformer
+
     @classmethod
     def inverted(
         cls,
