@@ -97,9 +97,6 @@ class LazySimpleConditioner(LazyModuleMixin, SimpleConditioner):
 
 
 class MaskedConditioner(torch.nn.Module):
-    def __init__(self) -> None:
-        super().__init__()
-
     def get_mask(
         self, x: torch.Tensor, context: dict = {}
     ) -> torch.BoolTensor:
@@ -187,7 +184,6 @@ class MaskedConditionerFNN(MaskedConditioner):
         self.register_forward_pre_hook(self.index_input_with_mask)
         self.register_forward_hook(self.scatter_output_into_nantensor)
 
-        # make net
         net = make_fnn(
             in_features=int(mask.sum()),
             out_features=int(mask.logical_not().sum()),
