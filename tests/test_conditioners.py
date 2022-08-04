@@ -6,8 +6,8 @@ from torchnf.conditioners import *
 from torchnf.transformers import Rescaling
 
 
-def test_simple_conditioner():
-    conditioner = SimpleConditioner([0])
+def test_trainable_parameters():
+    conditioner = TrainableParameters([0])
     data = torch.empty(100, 4, 4)
     params = conditioner(data)
 
@@ -16,8 +16,8 @@ def test_simple_conditioner():
 
 
 @pytest.mark.filterwarnings("ignore:Lazy modules")
-def test_lazy_simple_conditioner():
-    conditioner = LazySimpleConditioner()
+def test_lazy_trainable_parameters():
+    conditioner = TrainableParameters()
     transformer = Rescaling()
     conditioner.transformer = transformer
 

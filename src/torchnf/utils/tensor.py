@@ -10,6 +10,7 @@ __all__ = [
     "stacked_nan_to_num",
     "sum_except_batch",
     "tuple_concat",
+    "dict_concat",
 ]
 
 
@@ -148,3 +149,23 @@ def dict_concat(
             k: torch.cat([d.get(k, torch.tensor([])) for d in dicts])
             for k in keys
         }
+
+
+def set_to_nan_where_mask(tensor: torch.Tensor, mask: torch.BoolTensor):
+    # TODO: check if params[mask] = float("nan") is faster
+    return tensor.masked_fill(mask, float("nan"))
+
+
+def scatter_into_nantensor(tensor: torch.Tensor, mask: torch.BoolTensor):
+    assert tensor.dim() == 2
+    output_shape = torch.Size(
+        [
+            tensor.shape[0],
+            tensor[0].numel() // int(mask.logical_not().sum()),
+            *mask.shape,
+        ]
+    )
+    # TODO: check if tensor indexing is faster
+    return torch.full(output_shape, float("nan")).masked_scatter(
+        mask.logical_not(), tensor
+    )

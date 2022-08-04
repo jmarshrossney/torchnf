@@ -3,28 +3,30 @@ The :code:`forward` method should return a set of parameters upon which the
 transformer should be conditioned.
 """
 from collections.abc import Iterable
-from functools import partial
-from typing import Callable, Union
+from typing import Optional, Union
 
 from jsonargparse.typing import PositiveInt
 import torch
 from torch.nn.modules.lazy import LazyModuleMixin
-from torch.nn.parameter import UninitializedParameter, UninitializedBuffer
+from torch.nn.parameter import UninitializedParameter
 
 from torchnf.abc import Transformer
-import torchnf.utils.tensor
-from torchnf.utils.nn import Activation, make_fnn
+from torchnf.utils.tensor import (
+    expand_elements,
+    set_to_nan_where_mask,
+    scatter_into_nantensor,
+)
+from torchnf.utils.nn import Activation, make_fnn, make_cnn
 
 __all__ = [
-    "SimpleConditioner",
-    "LazySimpleConditioner",
+    "TrainableParameters",
     "MaskedConditioner",
-    "LazyMaskedConditioner",
-    # "AutoregressiveConditioner",
+    "simple_fnn_conditioner",
+    "simple_cnn_conditioner",
 ]
 
 
-class SimpleConditioner(torch.nn.Module):
+class _TrainableParameters(torch.nn.Module):
     """
     Conditioner in which the parameters are independent of the input.
 
@@ -57,7 +59,7 @@ class SimpleConditioner(torch.nn.Module):
         """
         batch_size, *data_shape = inputs.shape
         if self.params.dim() == 1:
-            params = torchnf.utils.tensor.expand_elements(
+            params = expand_elements(
                 self.params,
                 data_shape,
                 stack_dim=0,
@@ -67,15 +69,15 @@ class SimpleConditioner(torch.nn.Module):
         return params.expand([batch_size, -1, *data_shape])
 
 
-class LazySimpleConditioner(LazyModuleMixin, SimpleConditioner):
+class _LazyTrainableParameters(LazyModuleMixin, _TrainableParameters):
     """
-    A lazily initialised version of SimpleConditioner.
+    A lazily initialised version of TrainableParameters.
 
     The ``identity_params`` attribute of the transformer are used to
     initialise the parameters of this conditioner.
     """
 
-    cls_to_become = SimpleConditioner
+    cls_to_become = _TrainableParameters
 
     def __init__(self) -> None:
         super().__init__([])
@@ -96,7 +98,21 @@ class LazySimpleConditioner(LazyModuleMixin, SimpleConditioner):
         self.params = torch.nn.Parameter(init_params.float())
 
 
+def TrainableParameters(
+    init_params: Optional[torch.Tensor] = None,
+) -> Union[_TrainableParameters, _LazyTrainableParameters]:
+    if init_params is None:
+        return _LazyTrainableParameters()
+    else:
+        return _TrainableParameters(init_params)
+
+
 class MaskedConditioner(torch.nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        self.register_forward_pre_hook(self._forward_pre_hook)
+        self.register_forward_hook(self._forward_post_hook)
+
     def get_mask(
         self, x: torch.Tensor, context: dict = {}
     ) -> torch.BoolTensor:
@@ -106,174 +122,96 @@ class MaskedConditioner(torch.nn.Module):
         raise NotImplementedError
 
     @staticmethod
-    def index_input_with_mask(self, input):
-        """
-        Use the mask to index the input tensor.
-        """
-        x, *ctx = input
-        mask = self.get_mask(*input)
-        return (x[:, mask], *ctx)
+    def _forward_pre_hook(
+        self, inputs: tuple[torch.Tensor, dict]
+    ) -> torch.Tensor:
+        x, _ = inputs
+        mask = self.get_mask(*inputs)
+        return self.apply_mask_to_input(x, mask)
 
     @staticmethod
-    def mul_input_by_mask(self, input):
-        """
-        Multiply the input tensor by the binary mask.
-        """
-        x, *ctx = input
-        mask = self.get_mask(*input)
-        return (x.mul(mask), *ctx)
+    def _forward_post_hook(
+        self, inputs: tuple[torch.Tensor, dict], output: torch.Tensor
+    ) -> torch.Tensor:
+        mask = self.get_mask(*inputs)
+        return self.apply_mask_to_output(output, mask)
 
     @staticmethod
-    def set_output_to_nan_where_mask(self, input, output):
-        mask = self.get_mask(*input)
-        params = output
-        # TODO: check if params[mask] = float("nan") is faster
-        return params.masked_fill(mask, float("nan"))
+    def apply_mask_to_input(
+        x: torch.Tensor, mask: torch.BoolTensor
+    ) -> torch.Tensor:
+        raise NotImplementedError
 
     @staticmethod
-    def scatter_output_into_nantensor(self, input, output):
-        mask = self.get_mask(*input)
-        params = output
-        assert params.dim() == 2
-        params_shape = torch.Size(
-            [
-                params.shape[0],
-                params[0].numel() // int(mask.logical_not().sum()),
-                *mask.shape,
-            ]
-        )
-        # TODO: check if tensor indexing is faster
-        return torch.full(params_shape, float("nan")).masked_scatter(
-            mask.logical_not(), params
-        )
+    def apply_mask_to_output(
+        params: torch.Tensor, mask: torch.BoolTensor
+    ) -> torch.Tensor:
+        raise NotImplementedError
 
     def forward(self, x: torch.Tensor, context: dict = {}) -> torch.Tensor:
         raise NotImplementedError
 
 
-class LazyMaskedConditioner(LazyModuleMixin, MaskedConditioner):
-    cls_to_become = MaskedConditioner
+def simple_fnn_conditioner(
+    transformer: Transformer,
+    mask: torch.BoolTensor,
+    hidden_shape: list[PositiveInt],
+    activation: Activation,
+    final_activation: Activation = torch.nn.Identity(),
+    bias: bool = True,
+) -> torch.nn.Sequential:
 
-    def __init__(self) -> None:
-        super().__init__()
-        self.mask = UninitializedBuffer()
+    net = make_fnn(
+        in_features=int(mask.sum()),
+        out_features=int(mask.logical_not().sum()) * transformer.n_params,
+        hidden_shape=hidden_shape,
+        activation=activation,
+        final_activation=final_activation,
+        bias=bias,
+    )
 
-    def get_mask(
-        self, x: torch.Tensor, context: dict = {}
-    ) -> torch.BoolTensor:
-        return self.mask
+    def apply_mask_to_input(self, inputs):
+        return inputs[0][:, self.mask]
 
-    def initialize_parameters(
-        self, inputs: torch.Tensor, context: dict = {}
-    ) -> None:
-        raise NotImplementedError
+    def apply_mask_to_output(self, inputs, output):
+        return scatter_into_nantensor(output, self.mask)
 
+    net.register_buffer("mask", mask)
+    net.register_forward_pre_hook(apply_mask_to_input)
+    net.register_forward_hook(apply_mask_to_output)
 
-class MaskedConditionerFNN(MaskedConditioner):
-    def __init__(
-        self,
-        mask: torch.BoolTensor,
-        hidden_shape: list[PositiveInt],
-        activation: Activation,
-        final_activation: Activation = torch.nn.Identity(),
-        bias: bool = True,
-    ) -> None:
-        super().__init__()
-
-        self.register_buffer("mask", mask)
-        self.register_forward_pre_hook(self.index_input_with_mask)
-        self.register_forward_hook(self.scatter_output_into_nantensor)
-
-        net = make_fnn(
-            in_features=int(mask.sum()),
-            out_features=int(mask.logical_not().sum()),
-            hidden_shape=hidden_shape,
-            activation=activation,
-            final_activation=final_activation,
-            bias=bias,
-        )
-        self.register_module("net", net)
-
-    def get_mask(
-        self, x: torch.Tensor, context: dict = {}
-    ) -> torch.BoolTensor:
-        return self.mask
-
-    def forward(self, x: torch.Tensor, context: dict = {}) -> torch.Tensor:
-        return self.net(x)
+    return net
 
 
-class LazyMaskedConditionerFNN(LazyModuleMixin, MaskedConditioner):
-    cls_to_become = MaskedConditioner
+def simple_cnn_conditioner(
+    transformer: Transformer,
+    mask: torch.BoolTensor,
+    hidden_shape: list[PositiveInt],
+    kernel_size: PositiveInt,
+    activation: Activation,
+    final_activation: Activation = torch.nn.Identity(),
+    circular: bool = False,
+    conv_kwargs: dict = {},
+) -> torch.nn.Sequential:
 
-    def __init__(
-        self,
-        mask_fn: Callable[Iterable[PositiveInt], torch.BoolTensor],
-        hidden_shape: list[PositiveInt],
-        activation: Activation,
-        final_activation: Activation = torch.nn.Identity(),
-        bias: bool = True,
-    ) -> None:
-        super().__init__()
-        self.mask = UninitializedBuffer()
-        self.net = UninitializedParameter()
+    net = make_cnn(
+        dim=mask.dim(),
+        in_channels=1,
+        out_channels=transformer.n_params,
+        hidden_shape=hidden_shape,
+        kernel_size=kernel_size,
+        activation=activation,
+        final_activation=final_activation,
+        circular=circular,
+        conv_kwargs=conv_kwargs,
+    )
 
-        self._mask_fn = mask_fn
-        self._net_fn = partial(
-            make_fnn(
-                hidden_shape=hidden_shape,
-                activation=activation,
-                final_activation=final_activation,
-                bias=bias,
-            )
-        )
+    def apply_mask_to_input(self, inputs):
+        return inputs[0].mul(self.mask).unsqueeze(dim=1)
 
-    def initialize_parameters(
-        self, inputs: torch.Tensor, context: dict = {}
-    ) -> None:
-        data_shape = inputs.shape[1:]
-        mask = self._mask_fn(data_shape)
-        net = self._net_fn(
-            in_features=int(mask.sum()),
-            out_features=int(mask.logical_not().sum()),
-        )
-        self.mask = mask
-        self.net = net
+    def apply_mask_to_output(self, inputs, output):
+        return set_to_nan_where_mask(output, self.mask)
 
-        del self._mask_fn
-        del self._net_fn
-
-    def forward(self, x: torch.Tensor, context: dict = {}) -> torch.Tensor:
-        return self.net(x)
-
-
-"""
-class MaskedConditionerCNN(MaskedConditioner):
-    def __init__(
-        self,
-        mask: torch.BoolTensor,
-        dim: ConvDim,
-        hidden_shape: list[PositiveInt],
-        activation: Union[ACTIVATIONS],
-        kernel_size: PositiveInt,
-        skip_final_activation: bool = False,
-        circular: bool = False,
-        conv_kwargs: dict = {},
-    ) -> None:
-        super().__init__(mask)
-
-        self.register_forward_pre_hook(self.mul_input_by_mask)
-        self.register_forward_hook(self.set_output_to_nan_where_mask)
-
-        net = make_cnn(...)
-"""
-
-
-class AutoregressiveConditioner(torch.nn.Module):
-    """
-    TODO
-
-    Results in a triangular determinant.
-    """
-
-    pass
+    net.register_buffer("mask", mask)
+    net.register_forward_pre_hook(apply_mask_to_input)
+    net.register_forward_hook(apply_mask_to_output)

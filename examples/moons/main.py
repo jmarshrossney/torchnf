@@ -9,7 +9,7 @@ import pytorch_lightning as pl
 import torch
 
 from torchnf.abc import Transformer
-from torchnf.conditioners import SimpleConditioner
+from torchnf.conditioners import TrainableParameters
 from torchnf.model import FlowBasedModel
 from torchnf.flow import FlowLayer, Flow
 from torchnf.transformers import Rescaling
@@ -143,7 +143,7 @@ def make_flow(
 
         flow.append(FlowLayer(transformer, net))
 
-    flow.append(FlowLayer(Rescaling(), SimpleConditioner([0])))
+    flow.append(FlowLayer(Rescaling(), TrainableParameters([0])))
     return Flow(*flow)
 
 
