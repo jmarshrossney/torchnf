@@ -11,7 +11,7 @@ license = "GPLv3"
 
 [tool.poetry.dependencies]
 python = "^3.8"
-torch = "^1.11.0"
+torch = "1.12.0"
 pytorch-lightning = "^1.6.3"
 protobuf = "3.19"
 torchmetrics = "^0.9.1"
