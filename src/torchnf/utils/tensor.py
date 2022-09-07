@@ -11,6 +11,8 @@ __all__ = [
     "sum_except_batch",
     "tuple_concat",
     "dict_concat",
+    "set_to_nan_where_mask",
+    "scatter_into_nantensor",
 ]
 
 

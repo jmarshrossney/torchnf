@@ -3,7 +3,7 @@ import torch
 from torch.nn.parameter import UninitializedParameter
 
 from torchnf.conditioners import *
-from torchnf.transformers import Rescaling
+from torchnf.transformers import Translation, Rescaling
 
 
 def test_trainable_parameters():
@@ -43,3 +43,26 @@ def test_lazy_trainable_parameters():
     assert torch.allclose(
         conditioner.params, transformer.identity_params.float()
     )
+
+
+def test_simple_fnn_conditioner():
+    N = 4
+    mask = torch.tensor([True, False])
+    net = simple_fnn_conditioner(
+        transformer=Translation(),
+        mask=mask,
+        hidden_shape=[100],
+        activation=torch.nn.Identity(),
+        final_activation=torch.nn.Identity(),
+        bias=True,
+    )
+    input = torch.rand(N, 2)
+
+    # Check correct shape
+    assert net(input).shape == torch.Size([N, 1, 2])
+
+    # Check outputs are NaNs where inputs were not masked
+    assert torch.equal(net(input).isnan(), mask.expand(N, 1, 2))
+
+    input_2 = torch.stack([input[:, 0], torch.rand(N)], dim=1)
+    assert torch.allclose(net(input), net(input_2), equal_nan=True)

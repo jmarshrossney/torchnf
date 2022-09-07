@@ -215,3 +215,5 @@ def simple_cnn_conditioner(
     net.register_buffer("mask", mask)
     net.register_forward_pre_hook(apply_mask_to_input)
     net.register_forward_hook(apply_mask_to_output)
+
+    return net
