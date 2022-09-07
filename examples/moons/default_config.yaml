@@ -2,10 +2,9 @@ epochs: 10
 
 flow:
     transformer: torchnf.transformers.AffineTransform
-    net:
-        hidden_shape: [100]
-        activation: Tanh
-        skip_final_activation: false
+    net_hidden_shape: [16, 32, 64, 32, 16]
+    net_activation: torch.nn.LeakyReLU
+    net_final_activation: torch.nn.Tanh
     depth: 12
 
 moons:

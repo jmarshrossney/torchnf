@@ -1,4 +1,4 @@
-import itertools
+from itertools import cycle
 import pathlib
 import warnings
 
@@ -9,14 +9,14 @@ import pytorch_lightning as pl
 import torch
 
 from torchnf.abc import Transformer
-from torchnf.conditioners import MaskedConditioner, SimpleConditioner
+from torchnf.conditioners import TrainableParameters
 from torchnf.model import FlowBasedModel
-from torchnf.networks import DenseNetBuilder
 from torchnf.flow import FlowLayer, Flow
 from torchnf.transformers import Rescaling
 from torchnf.utils.datasets import Moons
 from torchnf.utils.distribution import diagonal_gaussian
 from torchnf.utils.decorators import skip_if_logging_disabled
+from torchnf.utils.nn import Activation, make_fnn
 
 DEFAULT_CONFIG = pathlib.Path(__file__).with_name("default_config.yaml")
 
@@ -108,19 +108,43 @@ class Model(FlowBasedModel, pl.LightningModule):
 
 def make_flow(
     transformer: Transformer,
-    net: DenseNetBuilder,
+    net_hidden_shape: list[PositiveInt],
+    net_activation: Activation,
+    net_final_activation: Activation,
     depth: PositiveInt,
 ) -> Flow:
-    mask = torch.tensor([True, False], dtype=bool)
-    conditioner = lambda mask_: MaskedConditioner(  # noqa: E731
-        net(1, transformer.n_params), mask_
+
+    select_x = (
+        lambda mod, input: input[0].select(1, 0).unsqueeze(-1)
+    )  # noqa: E731
+    select_y = (
+        lambda mod, input: input[0].select(1, 1).unsqueeze(-1)
+    )  # noqa: E731
+    join_x = lambda mod, input, output: torch.dstack(  # noqa: E731
+        (torch.full_like(output, float("nan")), output)
     )
-    layers = [
-        FlowLayer(transformer, conditioner(m))
-        for _, m in zip(range(depth), itertools.cycle([mask, ~mask]))
-    ]
-    layers.append(FlowLayer(Rescaling(), SimpleConditioner([0])))
-    return Flow(*layers)
+    join_y = lambda mod, input, output: torch.dstack(  # noqa: E731
+        (output, torch.full_like(output, float("nan")))
+    )
+
+    flow = []
+    for _, pre_hook, post_hook in zip(
+        range(depth), cycle((select_x, select_y)), cycle((join_x, join_y))
+    ):
+        net = make_fnn(
+            in_features=1,
+            out_features=transformer.n_params,
+            hidden_shape=net_hidden_shape,
+            activation=net_activation,
+            final_activation=net_final_activation,
+        )
+        net.register_forward_pre_hook(pre_hook)
+        net.register_forward_hook(post_hook)
+
+        flow.append(FlowLayer(transformer, net))
+
+    flow.append(FlowLayer(Rescaling(), TrainableParameters([0])))
+    return Flow(*flow)
 
 
 parser = ArgumentParser(default_config_files=[str(DEFAULT_CONFIG)])

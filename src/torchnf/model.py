@@ -5,7 +5,10 @@ from torchnf.utils.flow import eval_mode
 
 
 class FlowBasedModel(torch.nn.Module):
-    def flow_forward(
+
+    forward_is_encode: bool = True
+
+    def forward(
         self, inputs: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """
@@ -20,7 +23,7 @@ class FlowBasedModel(torch.nn.Module):
         """
         return self.flow(inputs)
 
-    def flow_inverse(
+    def inverse(
         self, inputs: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """
@@ -39,17 +42,19 @@ class FlowBasedModel(torch.nn.Module):
         """
         Encoding transformation.
 
-        By default, this just passes the inputs to :meth:`flow_forward`.
+        By default, this just passes the inputs to :meth:`forward`
+        or :meth:`inverse`, depending on ``forward_is_encode``.
         """
-        return self.flow_forward(data)
+        return self(data) if self.forward_is_encode else self.inverse(data)
 
     def decode(self, noise: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Decoding transformation.
 
-        By default, this just passes the inputs to :meth:`flow_inverse`.
+        By default, this just passes the inputs to :meth:`inverse`
+        or :meth:`forward`, depending on ``forward_is_encode``.
         """
-        return self.flow_inverse(noise)
+        return self.inverse(noise) if self.forward_is_encode else self(noise)
 
     def prior_sample(self, sample_size: PositiveInt) -> torch.Tensor:
         """
@@ -217,8 +222,8 @@ class FlowBasedModel(torch.nn.Module):
         """
         z = noise
         outputs = self.sampling_step(z)
-        log_p = self.log_p(outputs["data"])
-        log_w = log_p - outputs["log_q"]
+        log_p = self.target_log_prob(outputs["sample"])
+        log_w = log_p - outputs["log_prob"]
         kl_div = log_w.negative().mean(dim=0, keepdim=True)
         outputs |= dict(log_weight=log_w, loss=kl_div)
         return outputs
